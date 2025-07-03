@@ -1770,7 +1770,7 @@ export class PgStorage implements IStorage {
   async getActiveEmployees(): Promise<Employee[]> {
     try {
       const result = await this.sql`
-        SELECT * FROM employees WHERE status = 'active' ORDER BY name
+        SELECT * FROM employees WHERE active = true ORDER BY name
       `;
       return result as Employee[];
     } catch (error) {

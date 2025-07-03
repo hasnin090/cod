@@ -291,17 +291,38 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard routes
-  app.get("/api/dashboard", async (req: Request, res: Response) => {
+  app.get("/api/dashboard", authenticate, async (req: Request, res: Response) => {
     try {
-      // Return basic dashboard stats
+      // Calculate actual dashboard stats from database
+      const transactions = await storage.listTransactions();
+      const projects = await storage.listProjects();
+      const deferredPayments = await storage.listDeferredPayments();
+      
+      const totalIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const totalExpenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const balance = totalIncome - totalExpenses;
+      
       const stats = {
-        totalTransactions: 0,
-        totalIncome: 0,
-        totalExpenses: 0,
-        activeProjects: 0
+        totalTransactions: transactions.length,
+        totalIncome: totalIncome,
+        totalExpenses: totalExpenses,
+        activeProjects: projects.length,
+        balance: balance,
+        deferredPaymentsCount: deferredPayments.length,
+        pendingPayments: deferredPayments.filter(p => p.status === 'pending').length
       };
+      
+      // Add cache-control to prevent caching
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.status(200).json(stats);
     } catch (error) {
+      console.error('Dashboard error:', error);
       return res.status(500).json({ message: "خطأ في استرجاع بيانات لوحة التحكم" });
     }
   });
@@ -315,6 +336,17 @@ async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       return res.status(500).json({ message: "خطأ في قاعدة البيانات" });
+    }
+  });
+
+  // Deferred payments route
+  app.get("/api/deferred-payments", authenticate, async (req: Request, res: Response) => {
+    try {
+      const deferredPayments = await storage.listDeferredPayments();
+      return res.status(200).json(deferredPayments);
+    } catch (error) {
+      console.error('Deferred payments error:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع المستحقات" });
     }
   });
 
