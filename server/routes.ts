@@ -22,12 +22,26 @@ import MemoryStore from "memorystore";
 import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
-import { storageManager } from './storage-manager';
+// storageManager import removed - file moved to ztrashz
 import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
 
 const sql = neon(process.env.DATABASE_URL!);
+
+// إضافة نوع الجلسة
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      id: number;
+      username: string;
+      name: string;
+      email: string;
+      role: string;
+      permissions: string[];
+    };
+  }
+}
 
 // إعداد multer لتحميل الملفات
 const upload = multer({
@@ -84,12 +98,18 @@ export function registerRoutes(app: Express): Server {
   }
 
   // تسجيل الدخول
-  app.post("/api/login", async (req, res) => {
+  app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByUsername(username);
-      if (!user || !await bcrypt.compare(password, user.passwordHash)) {
+      // استعلام مباشر للحصول على المستخدم
+      const [user] = await sql`
+        SELECT id, username, password, name, email, role, permissions, active 
+        FROM users 
+        WHERE username = ${username}
+      `;
+
+      if (!user || !await bcrypt.compare(password, user.password)) {
         return res.status(401).json({ message: "معلومات تسجيل الدخول غير صحيحة" });
       }
 
@@ -101,18 +121,18 @@ export function registerRoutes(app: Express): Server {
         id: user.id,
         username: user.username,
         name: user.name,
-        email: user.email,
+        email: user.email || '',
         role: user.role,
-        permissions: user.permissions
+        permissions: Array.isArray(user.permissions) ? user.permissions : []
       };
 
       res.json({
         id: user.id,
         username: user.username,
         name: user.name,
-        email: user.email,
+        email: user.email || '',
         role: user.role,
-        permissions: user.permissions
+        permissions: Array.isArray(user.permissions) ? user.permissions : []
       });
     } catch (error) {
       console.error('خطأ في تسجيل الدخول:', error);
@@ -121,7 +141,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // تسجيل الخروج
-  app.post("/api/logout", (req, res) => {
+  app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
