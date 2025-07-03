@@ -29,6 +29,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
   listUsers(): Promise<User[]>;
+  getUsers(): Promise<User[]>;  // Alias for listUsers
   deleteUser(id: number): Promise<boolean>;
   validatePassword(storedPassword: string, inputPassword: string): Promise<boolean>;
 
@@ -37,6 +38,7 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, project: Partial<Project>): Promise<Project | undefined>;
   listProjects(): Promise<Project[]>;
+  getProjects(): Promise<Project[]>;  // Alias for listProjects
   deleteProject(id: number): Promise<boolean>;
   
   // User Projects (علاقات المستخدمين والمشاريع)
@@ -51,6 +53,7 @@ export interface IStorage {
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction | undefined>;
   listTransactions(): Promise<Transaction[]>;
+  getTransactions(): Promise<Transaction[]>;  // Alias for listTransactions
   getTransactionsByProject(projectId: number): Promise<Transaction[]>;
   deleteTransaction(id: number): Promise<boolean>;
 
@@ -83,6 +86,13 @@ export interface IStorage {
   getSetting(key: string): Promise<Setting | undefined>;
   updateSetting(key: string, value: string): Promise<Setting | undefined>;
   listSettings(): Promise<Setting[]>;
+  getSettings(): Promise<Setting[]>;  // Alias for listSettings
+  
+  // Dashboard stats
+  getDashboardStats(): Promise<any>;
+  
+  // Expense Types
+  getExpenseTypes(): Promise<ExpenseType[]>;
 
   // Expense Types
   getExpenseType(id: number): Promise<ExpenseType | undefined>;

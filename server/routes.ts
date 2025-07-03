@@ -162,7 +162,22 @@ export function registerRoutes(app: Express): Server {
   // لوحة التحكم
   app.get("/api/dashboard", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      // احصائيات أساسية باستخدام SQL مباشر
+      const usersCount = await sql`SELECT COUNT(*) FROM users`;
+      const projectsCount = await sql`SELECT COUNT(*) FROM projects`;
+      const transactionsCount = await sql`SELECT COUNT(*) FROM transactions`;
+      const totalIncome = await sql`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'`;
+      const totalExpenses = await sql`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'`;
+      
+      const stats = {
+        users: parseInt(usersCount[0].count),
+        projects: parseInt(projectsCount[0].count),
+        transactions: parseInt(transactionsCount[0].count),
+        totalIncome: parseFloat(totalIncome[0].coalesce),
+        totalExpenses: parseFloat(totalExpenses[0].coalesce),
+        balance: parseFloat(totalIncome[0].coalesce) - parseFloat(totalExpenses[0].coalesce)
+      };
+      
       res.json(stats);
     } catch (error) {
       console.error('خطأ في لوحة التحكم:', error);
@@ -173,7 +188,10 @@ export function registerRoutes(app: Express): Server {
   // المعاملات
   app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
-      const transactions = await storage.getTransactions();
+      const transactions = await sql`
+        SELECT * FROM transactions 
+        ORDER BY date DESC
+      `;
       res.json(transactions);
     } catch (error) {
       console.error('خطأ في جلب المعاملات:', error);
@@ -214,7 +232,7 @@ export function registerRoutes(app: Express): Server {
   // المشاريع
   app.get("/api/projects", requireAuth, async (req, res) => {
     try {
-      const projects = await storage.getProjects();
+      const projects = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
       res.json(projects);
     } catch (error) {
       console.error('خطأ في جلب المشاريع:', error);
@@ -241,7 +259,7 @@ export function registerRoutes(app: Express): Server {
   // المستخدمون
   app.get("/api/users", requireAuth, async (req, res) => {
     try {
-      const users = await storage.getUsers();
+      const users = await sql`SELECT id, username, name, email, role, active FROM users ORDER BY name`;
       res.json(users);
     } catch (error) {
       console.error('خطأ في جلب المستخدمين:', error);
@@ -252,7 +270,7 @@ export function registerRoutes(app: Express): Server {
   // أنواع المصروفات
   app.get("/api/expense-types", requireAuth, async (req, res) => {
     try {
-      const expenseTypes = await storage.getExpenseTypes();
+      const expenseTypes = await sql`SELECT * FROM expense_types ORDER BY name`;
       res.json(expenseTypes);
     } catch (error) {
       console.error('خطأ في جلب أنواع المصروفات:', error);
@@ -274,7 +292,7 @@ export function registerRoutes(app: Express): Server {
   // الإعدادات
   app.get("/api/settings", requireAuth, async (req, res) => {
     try {
-      const settings = await storage.getSettings();
+      const settings = await sql`SELECT * FROM settings ORDER BY key`;
       res.json(settings);
     } catch (error) {
       console.error('خطأ في جلب الإعدادات:', error);
