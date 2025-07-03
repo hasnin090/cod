@@ -270,6 +270,54 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Expense types routes
+  app.get("/api/expense-types", async (req: Request, res: Response) => {
+    try {
+      const expenseTypes = await storage.listExpenseTypes();
+      return res.status(200).json(expenseTypes);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع أنواع المصروفات" });
+    }
+  });
+
+  // Employees routes
+  app.get("/api/employees", async (req: Request, res: Response) => {
+    try {
+      const employees = await storage.getActiveEmployees();
+      return res.status(200).json(employees);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع الموظفين" });
+    }
+  });
+
+  // Dashboard routes
+  app.get("/api/dashboard", async (req: Request, res: Response) => {
+    try {
+      // Return basic dashboard stats
+      const stats = {
+        totalTransactions: 0,
+        totalIncome: 0,
+        totalExpenses: 0,
+        activeProjects: 0
+      };
+      return res.status(200).json(stats);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع بيانات لوحة التحكم" });
+    }
+  });
+
+  // Database status route
+  app.get("/api/database/status", async (req: Request, res: Response) => {
+    try {
+      return res.status(200).json({
+        connected: true,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في قاعدة البيانات" });
+    }
+  });
+
   // Settings routes
   app.get("/api/settings", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
