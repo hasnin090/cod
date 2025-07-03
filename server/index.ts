@@ -4,8 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import * as path from "path";
 import pgSession from 'connect-pg-simple';
-import { backupSystem } from "./backup-system";
-import { initializeBackupDatabase } from "./backup-db";
+// Backup system imports removed - files moved to ztrashz
 
 const app = express();
 app.use(express.json());
@@ -99,12 +98,7 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // تفعيل نظام النسخ الاحتياطي التلقائي
-    try {
-      backupSystem.startAutoBackup();
-      log('Automatic backup system activated');
-    } catch (error) {
-      console.error('Failed to start backup system:', error);
-    }
+    // النسخ الاحتياطي معطل - ملفات النظام منقولة إلى ztrashz
+    log('Server started successfully - backup system disabled');
   });
 })();
