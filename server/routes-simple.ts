@@ -1,0 +1,292 @@
+import type { Express, Request, Response, NextFunction } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import session from "express-session";
+import { 
+  loginSchema, 
+  insertUserSchema, 
+  insertProjectSchema, 
+  insertTransactionSchema,
+  insertDocumentSchema,
+  insertActivityLogSchema,
+  insertSettingSchema,
+  insertAccountCategorySchema,
+  insertDeferredPaymentSchema,
+  funds,
+  employees,
+  type Transaction
+} from "../shared/schema";
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import MemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { db } from "./db";
+import { neon } from '@neondatabase/serverless';
+import { eq, and } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// إنشاء متغير يحل محل __dirname مع ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// إعداد multer لمعالجة تحميل الملفات
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      // إنشاء مجلد التحميلات إذا لم يكن موجودًا
+      const uploadDir = './uploads';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      // إنشاء اسم فريد للملف
+      const uniqueName = `${Date.now()}_${uuidv4()}_${file.originalname.replace(/\s+/g, '_')}`;
+      cb(null, uniqueName);
+    }
+  }),
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB
+  },
+  fileFilter: (req, file, cb) => {
+    // التحقق من نوع الملف (اختياري)
+    cb(null, true);
+  }
+});
+
+async function registerRoutes(app: Express): Promise<Server> {
+  const MemoryStoreSession = MemoryStore(session);
+  
+  // إعداد محسن للجلسات مع Memory Store
+  let sessionStore = new MemoryStoreSession({
+    checkPeriod: 86400000, // فحص كل 24 ساعة
+    max: 5000, // حد أقصى أعلى للجلسات
+    ttl: 24 * 60 * 60 * 1000, // 24 ساعة
+    dispose: (key: string, value: any) => {
+      console.log(`تم حذف الجلسة: ${key}`);
+    },
+    stale: false // عدم إرجاع جلسات منتهية الصلاحية
+  });
+  console.log("استخدام Memory Store المحسن للجلسات");
+
+  app.use(session({
+    secret: process.env.SESSION_SECRET || "accounting-app-secret-key-2025",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/'
+    },
+    store: sessionStore,
+    name: 'accounting.sid'
+  }));
+  
+  // middleware للجلسة
+  app.use((req, res, next) => {
+    next();
+  });
+
+  // Authentication middleware
+  const authenticate = (req: Request, res: Response, next: Function) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
+
+    req.session.lastActivity = new Date().toISOString();
+    
+    (req as any).user = {
+      id: req.session.userId,
+      username: req.session.username,
+      role: req.session.role
+    };
+    
+    next();
+  };
+
+  // مسار لعرض الملفات المحفوظة محلياً
+  app.get("/uploads/*", (req: Request, res: Response) => {
+    const filePath = req.params[0];
+    const fullPath = path.join(__dirname, '../uploads', filePath);
+    
+    const uploadsDir = path.resolve(__dirname, '../uploads');
+    const requestedPath = path.resolve(fullPath);
+    
+    if (!requestedPath.startsWith(uploadsDir)) {
+      return res.status(403).json({ message: "مسار غير مسموح" });
+    }
+    
+    if (fs.existsSync(requestedPath)) {
+      return res.sendFile(requestedPath);
+    } else {
+      return res.status(404).json({ message: "الملف غير موجود" });
+    }
+  });
+
+  // Role-based authorization middleware
+  const authorize = (roles: string[]) => {
+    return (req: Request, res: Response, next: Function) => {
+      if (!req.session.userId || !roles.includes(req.session.role as string)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      next();
+    };
+  };
+
+  // Authentication routes
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const credentials = loginSchema.parse(req.body);
+      const user = await storage.getUserByUsername(credentials.username);
+      
+      if (!user) {
+        return res.status(401).json({ message: "معلومات تسجيل الدخول غير صحيحة" });
+      }
+      
+      const isPasswordValid = await storage.validatePassword(user.password, credentials.password);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "معلومات تسجيل الدخول غير صحيحة" });
+      }
+      
+      req.session.userId = user.id;
+      req.session.username = user.username;
+      req.session.role = user.role;
+      req.session.lastActivity = new Date().toISOString();
+      
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error saving session:', err);
+        }
+      });
+      
+      await storage.createActivityLog({
+        action: "login",
+        entityType: "user",
+        entityId: user.id,
+        details: "تسجيل دخول",
+        userId: user.id
+      });
+      
+      return res.status(200).json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      return res.status(500).json({ message: "خطأ في تسجيل الدخول" });
+    }
+  });
+
+  app.post("/api/auth/logout", authenticate, async (req: Request, res: Response) => {
+    const userId = req.session.userId;
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
+      }
+      
+      if (userId) {
+        storage.createActivityLog({
+          action: "logout",
+          entityType: "user",
+          entityId: userId,
+          details: "تسجيل خروج",
+          userId: userId
+        });
+      }
+      
+      res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
+    });
+  });
+
+  app.get("/api/auth/session", async (req: Request, res: Response) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
+    
+    const user = await storage.getUser(req.session.userId);
+    
+    if (!user) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
+    
+    return res.status(200).json({
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions
+    });
+  });
+
+  // Users routes
+  app.get("/api/users", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const users = await storage.listUsers();
+      const safeUsers = users.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      
+      return res.status(200).json(safeUsers);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع المستخدمين" });
+    }
+  });
+
+  // Projects routes
+  app.get("/api/projects", authenticate, async (req: Request, res: Response) => {
+    try {
+      const projects = await storage.listProjects();
+      return res.status(200).json(projects);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع المشاريع" });
+    }
+  });
+
+  // Transactions routes  
+  app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
+    try {
+      const transactions = await storage.listTransactions();
+      return res.status(200).json(transactions);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع المعاملات" });
+    }
+  });
+
+  // Settings routes
+  app.get("/api/settings", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.listSettings();
+      return res.status(200).json(settings);
+    } catch (error) {
+      return res.status(500).json({ message: "خطأ في استرجاع الإعدادات" });
+    }
+  });
+
+  // Simple health check
+  app.get("/api/health", (req: Request, res: Response) => {
+    res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+  });
+
+  const server = createServer(app);
+  return server;
+}
+
+export { registerRoutes };

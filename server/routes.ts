@@ -22,53 +22,11 @@ import MemoryStore from "memorystore";
 import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
-import { backupSystem } from "./backup-system";
-import { 
-  initializeBackupDatabase, 
-  checkDatabasesHealth, 
-  switchDatabase, 
-  syncDatabaseToBackup 
-} from './backup-db-simple';
-import {
-  initializeSupabase,
-  checkSupabaseHealth,
-  syncToSupabase,
-  copyFilesToSupabase,
-  uploadToSupabase,
-  deleteFromSupabase
-} from './supabase-db';
-import {
-  initializeSupabaseSimple,
-  checkSupabaseSimpleHealth,
-  uploadToSupabaseSimple,
-  deleteFromSupabaseSimple,
-  copyFilesToSupabaseSimple
-} from './supabase-simple';
-import { diagnoseSupabaseConnection, getSuggestions } from './supabase-diagnostics';
-import { 
-  setupSupabaseAsMainDatabase, 
-  migrateFilesToSupabase, 
-  updateFileUrlsToSupabase, 
-  checkSupabaseMigrationStatus 
-} from './supabase-primary';
-import {
-  initializeFirebase,
-  checkFirebaseHealth,
-  uploadToFirebase,
-  deleteFromFirebase
-} from './firebase-storage';
-import { storageManager } from './storage-manager';
-import { fileMigration } from './file-migration';
-import { databaseCleanup } from './database-cleanup';
-import { simpleMigration } from './simple-migration';
-import { missingFilesFixer } from './fix-missing-files';
 import { eq, and } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-// استيراد وظائف التخزين المحلي
-import { uploadFile as localUpload, deleteFile as localDelete } from "./firebase-utils";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
