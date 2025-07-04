@@ -91,11 +91,24 @@ export function Charts({ income, expenses, profit, displayMode = 'admin' }: Char
     
     // إضافة مستمع لتحديث المخططات عند تغيير وضع السمة (مظلم/فاتح)
     const themeChangeHandler = () => {
-      createOrUpdateCharts();
+      setTimeout(() => {
+        createOrUpdateCharts();
+      }, 100); // تأخير قصير للتأكد من تطبيق السمة الجديدة
     };
     
-    // إضافة مستمع للمحتوى الجذري لمراقبة تغييرات السمة
-    document.documentElement.addEventListener('classChange', themeChangeHandler);
+    // مراقبة تغييرات الفئة 'dark' على العنصر الجذري
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          themeChangeHandler();
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
     
     // تنظيف عند فك تركيب المكون
     return () => {
@@ -104,8 +117,8 @@ export function Charts({ income, expenses, profit, displayMode = 'admin' }: Char
         chart.destroy();
       });
       
-      // إزالة مستمع التغيير
-      document.documentElement.removeEventListener('classChange', themeChangeHandler);
+      // إزالة مراقب التغييرات
+      observer.disconnect();
     };
   }, [income, expenses, profit, displayMode]);
   
@@ -117,11 +130,11 @@ export function Charts({ income, expenses, profit, displayMode = 'admin' }: Char
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-5 mt-4 sm:mt-5 lg:mt-6">
       <div className={`rounded-xl shadow-card p-4 sm:p-5 lg:p-6 ${
         isShowingAdmin 
-          ? 'bg-blue-50/50 border border-blue-100' 
-          : 'bg-green-50/50 border border-green-100'
+          ? 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50' 
+          : 'bg-green-50/50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50'
       }`}>
         <h3 className={`text-base sm:text-lg font-bold mb-3 sm:mb-4 ${
-          isShowingAdmin ? 'text-blue-700' : 'text-green-700'
+          isShowingAdmin ? 'text-blue-700 dark:text-blue-300' : 'text-green-700 dark:text-green-300'
         }`}>
           {canViewIncome 
             ? (isShowingAdmin ? 'ملخص الصندوق الرئيسي' : 'ملخص أموال المشاريع')
@@ -135,11 +148,11 @@ export function Charts({ income, expenses, profit, displayMode = 'admin' }: Char
       
       <div className={`rounded-xl shadow-card p-4 sm:p-5 lg:p-6 ${
         isShowingAdmin 
-          ? 'bg-blue-50/50 border border-blue-100' 
-          : 'bg-green-50/50 border border-green-100'
+          ? 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50' 
+          : 'bg-green-50/50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50'
       }`}>
         <h3 className={`text-base sm:text-lg font-bold mb-3 sm:mb-4 ${
-          isShowingAdmin ? 'text-blue-700' : 'text-green-700'
+          isShowingAdmin ? 'text-blue-700 dark:text-blue-300' : 'text-green-700 dark:text-green-300'
         }`}>
           {isShowingAdmin 
             ? 'توزيع مصروفات الصندوق الرئيسي' 
