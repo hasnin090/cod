@@ -439,6 +439,253 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Projects routes
+  app.post("/api/projects", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const projectData = {
+        ...req.body,
+        createdBy: req.session.userId as number,
+        startDate: req.body.startDate || new Date(),
+        progress: req.body.progress || 0
+      };
+      
+      const project = await storage.createProject(projectData);
+
+      await storage.createActivityLog({
+        action: "create_project",
+        entityType: "project",
+        entityId: project.id,
+        details: `تم إنشاء مشروع جديد: ${project.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(project);
+    } catch (error: any) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ message: "خطأ في إنشاء المشروع" });
+    }
+  });
+
+  app.patch("/api/projects/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const project = await storage.updateProject(id, req.body);
+      
+      if (!project) {
+        return res.status(404).json({ message: "المشروع غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_project",
+        entityType: "project",
+        entityId: id,
+        details: `تم تحديث المشروع: ${project.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(project);
+    } catch (error: any) {
+      console.error("Error updating project:", error);
+      res.status(500).json({ message: "خطأ في تحديث المشروع" });
+    }
+  });
+
+  // Documents routes
+  app.post("/api/documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const documentData = {
+        ...req.body,
+        createdBy: req.session.userId as number
+      };
+      
+      const document = await storage.createDocument(documentData);
+
+      await storage.createActivityLog({
+        action: "create_document",
+        entityType: "document",
+        entityId: document.id,
+        details: `تم إنشاء مستند جديد: ${document.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(document);
+    } catch (error: any) {
+      console.error("Error creating document:", error);
+      res.status(500).json({ message: "خطأ في إنشاء المستند" });
+    }
+  });
+
+  app.patch("/api/documents/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.updateDocument(id, req.body);
+      
+      if (!document) {
+        return res.status(404).json({ message: "المستند غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_document",
+        entityType: "document",
+        entityId: id,
+        details: `تم تحديث المستند: ${document.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(document);
+    } catch (error: any) {
+      console.error("Error updating document:", error);
+      res.status(500).json({ message: "خطأ في تحديث المستند" });
+    }
+  });
+
+  // Deferred payments routes
+  app.post("/api/deferred-payments", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const paymentData = {
+        ...req.body,
+        userId: req.session.userId as number
+      };
+      
+      const payment = await storage.createDeferredPayment(paymentData);
+
+      await storage.createActivityLog({
+        action: "create_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: payment.id,
+        details: `تم إنشاء مدفوعة مؤجلة جديدة: ${payment.beneficiaryName}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(payment);
+    } catch (error: any) {
+      console.error("Error creating deferred payment:", error);
+      res.status(500).json({ message: "خطأ في إنشاء المدفوعة المؤجلة" });
+    }
+  });
+
+  app.patch("/api/deferred-payments/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.updateDeferredPayment(id, req.body);
+      
+      if (!payment) {
+        return res.status(404).json({ message: "المدفوعة المؤجلة غير موجودة" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: id,
+        details: `تم تحديث المدفوعة المؤجلة: ${payment.beneficiaryName}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(payment);
+    } catch (error: any) {
+      console.error("Error updating deferred payment:", error);
+      res.status(500).json({ message: "خطأ في تحديث المدفوعة المؤجلة" });
+    }
+  });
+
+  // Completed works routes
+  app.post("/api/completed-works", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const workData = {
+        ...req.body,
+        createdBy: req.session.userId as number
+      };
+      
+      const work = await storage.createCompletedWork(workData);
+
+      await storage.createActivityLog({
+        action: "create_completed_work",
+        entityType: "completed_work",
+        entityId: work.id,
+        details: `تم إنشاء عمل منجز جديد: ${work.title}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(work);
+    } catch (error: any) {
+      console.error("Error creating completed work:", error);
+      res.status(500).json({ message: "خطأ في إنشاء العمل المنجز" });
+    }
+  });
+
+  app.patch("/api/completed-works/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const work = await storage.updateCompletedWork(id, req.body);
+      
+      if (!work) {
+        return res.status(404).json({ message: "العمل المنجز غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_completed_work",
+        entityType: "completed_work",
+        entityId: id,
+        details: `تم تحديث العمل المنجز: ${work.title}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(work);
+    } catch (error: any) {
+      console.error("Error updating completed work:", error);
+      res.status(500).json({ message: "خطأ في تحديث العمل المنجز" });
+    }
+  });
+
+  // Completed works documents routes
+  app.post("/api/completed-works-documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const docData = {
+        ...req.body,
+        createdBy: req.session.userId as number
+      };
+      
+      const doc = await storage.createCompletedWorksDocument(docData);
+
+      await storage.createActivityLog({
+        action: "create_completed_works_document",
+        entityType: "completed_works_document",
+        entityId: doc.id,
+        details: `تم إنشاء مستند عمل منجز جديد: ${doc.title}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(doc);
+    } catch (error: any) {
+      console.error("Error creating completed works document:", error);
+      res.status(500).json({ message: "خطأ في إنشاء مستند العمل المنجز" });
+    }
+  });
+
+  app.patch("/api/completed-works-documents/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const doc = await storage.updateCompletedWorksDocument(id, req.body);
+      
+      if (!doc) {
+        return res.status(404).json({ message: "مستند العمل المنجز غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_completed_works_document",
+        entityType: "completed_works_document",
+        entityId: id,
+        details: `تم تحديث مستند العمل المنجز: ${doc.title}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(doc);
+    } catch (error: any) {
+      console.error("Error updating completed works document:", error);
+      res.status(500).json({ message: "خطأ في تحديث مستند العمل المنجز" });
+    }
+  });
+
   // Employees routes
   app.get("/api/employees", async (req: Request, res: Response) => {
     try {
@@ -992,6 +1239,244 @@ async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('خطأ في تحديث إعدادات التخزين:', error);
       res.status(500).json({ error: 'خطأ في تحديث الإعدادات', details: error.message });
+    }
+  });
+
+  // مسارات الحذف المفقودة
+  // حذف مدفوعة مؤجلة
+  app.delete("/api/deferred-payments/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteDeferredPayment(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "المدفوعة المؤجلة غير موجودة" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: id,
+        details: `تم حذف المدفوعة المؤجلة: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف المدفوعة المؤجلة بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting deferred payment:", error);
+      res.status(500).json({ message: "خطأ في حذف المدفوعة المؤجلة" });
+    }
+  });
+
+  // حذف موظف
+  app.delete("/api/employees/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteEmployee(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "الموظف غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_employee",
+        entityType: "employee",
+        entityId: id,
+        details: `تم حذف الموظف: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف الموظف بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting employee:", error);
+      res.status(500).json({ message: "خطأ في حذف الموظف" });
+    }
+  });
+
+  // إضافة موظف
+  app.post("/api/employees", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const employeeData = {
+        ...req.body,
+        createdBy: req.session.userId as number
+      };
+      
+      const employee = await storage.createEmployee(employeeData);
+
+      await storage.createActivityLog({
+        action: "create_employee",
+        entityType: "employee",
+        entityId: employee.id,
+        details: `تم إضافة موظف جديد: ${employee.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(201).json(employee);
+    } catch (error: any) {
+      console.error("Error creating employee:", error);
+      res.status(500).json({ message: "خطأ في إضافة الموظف" });
+    }
+  });
+
+  // تحديث موظف
+  app.patch("/api/employees/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const employee = await storage.updateEmployee(id, req.body);
+      
+      if (!employee) {
+        return res.status(404).json({ message: "الموظف غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "update_employee",
+        entityType: "employee",
+        entityId: id,
+        details: `تم تحديث بيانات الموظف: ${employee.name}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(employee);
+    } catch (error: any) {
+      console.error("Error updating employee:", error);
+      res.status(500).json({ message: "خطأ في تحديث الموظف" });
+    }
+  });
+
+  // حذف مستند
+  app.delete("/api/documents/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteDocument(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "المستند غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_document",
+        entityType: "document",
+        entityId: id,
+        details: `تم حذف المستند: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف المستند بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "خطأ في حذف المستند" });
+    }
+  });
+
+  // حذف مشروع
+  app.delete("/api/projects/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteProject(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "المشروع غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_project",
+        entityType: "project",
+        entityId: id,
+        details: `تم حذف المشروع: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف المشروع بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ message: "خطأ في حذف المشروع" });
+    }
+  });
+
+  // حذف أعمال منجزة
+  app.delete("/api/completed-works/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCompletedWork(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "العمل المنجز غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_completed_work",
+        entityType: "completed_work",
+        entityId: id,
+        details: `تم حذف العمل المنجز: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف العمل المنجز بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting completed work:", error);
+      res.status(500).json({ message: "خطأ في حذف العمل المنجز" });
+    }
+  });
+
+  // حذف مستند أعمال منجزة
+  app.delete("/api/completed-works-documents/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCompletedWorksDocument(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "مستند العمل المنجز غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        action: "delete_completed_works_document",
+        entityType: "completed_works_document",
+        entityId: id,
+        details: `تم حذف مستند العمل المنجز: ${id}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json({ message: "تم حذف مستند العمل المنجز بنجاح" });
+    } catch (error: any) {
+      console.error("Error deleting completed works document:", error);
+      res.status(500).json({ message: "خطأ في حذف مستند العمل المنجز" });
+    }
+  });
+
+  // مسار للمعاملات المؤرشفة
+  app.get("/api/transactions/archived", authenticate, async (req: Request, res: Response) => {
+    try {
+      const transactions = await storage.listTransactions();
+      const archivedTransactions = transactions.filter(t => t.archived === true);
+      res.status(200).json(archivedTransactions);
+    } catch (error: any) {
+      console.error("Error fetching archived transactions:", error);
+      res.status(500).json({ message: "خطأ في استرجاع المعاملات المؤرشفة" });
+    }
+  });
+
+  // مسار لأرشفة معاملة
+  app.patch("/api/transactions/:id/archive", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const transaction = await storage.updateTransaction(id, { archived: true });
+      
+      if (!transaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+
+      await storage.createActivityLog({
+        action: "archive_transaction",
+        entityType: "transaction",
+        entityId: id,
+        details: `تم أرشفة المعاملة: ${transaction.description}`,
+        userId: req.session.userId as number
+      });
+
+      res.status(200).json(transaction);
+    } catch (error: any) {
+      console.error("Error archiving transaction:", error);
+      res.status(500).json({ message: "خطأ في أرشفة المعاملة" });
     }
   });
 

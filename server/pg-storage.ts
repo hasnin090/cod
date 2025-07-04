@@ -353,8 +353,17 @@ export class PgStorage implements IStorage {
   async createProject(project: InsertProject): Promise<Project> {
     try {
       const result = await this.sql`
-        INSERT INTO projects (name, description, start_date, budget, spent, created_by)
-        VALUES (${project.name}, ${project.description || null}, ${project.startDate}, ${project.budget || 0}, ${project.spent || 0}, ${project.createdBy})
+        INSERT INTO projects (name, description, start_date, status, progress, budget, spent, created_by)
+        VALUES (
+          ${project.name}, 
+          ${project.description || null}, 
+          ${project.startDate || new Date()}, 
+          ${project.status || 'active'},
+          ${project.progress || 0},
+          ${project.budget || 0}, 
+          ${project.spent || 0}, 
+          ${project.createdBy}
+        )
         RETURNING *
       `;
       return result[0] as Project;
@@ -1634,8 +1643,14 @@ export class PgStorage implements IStorage {
 
   async deleteDeferredPayment(id: number): Promise<boolean> {
     try {
-      const result = await this.sql`DELETE FROM deferred_payments WHERE id = ${id}`;
-      return result.length > 0;
+      // Check if payment exists first
+      const existingPayment = await this.getDeferredPayment(id);
+      if (!existingPayment) {
+        return false;
+      }
+      
+      await this.sql`DELETE FROM deferred_payments WHERE id = ${id}`;
+      return true;
     } catch (error) {
       console.error('Error deleting deferred payment:', error);
       return false;
