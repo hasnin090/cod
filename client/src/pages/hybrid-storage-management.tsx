@@ -14,7 +14,8 @@ import {
   Upload,
   Settings,
   RefreshCw,
-  Shield
+  Shield,
+  AlertCircle
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
@@ -42,6 +43,9 @@ interface SupabaseHealth {
   client: boolean;
   database: boolean;
   storage: boolean;
+  lastCheck: string;
+  message?: string;
+  error?: string;
 }
 
 const storageProviders: Record<string, StorageProvider> = {
@@ -413,26 +417,39 @@ export default function HybridStorageManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {supabaseHealth?.health ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex justify-between items-center p-3 border rounded">
-                    <span>العميل:</span>
-                    {getHealthBadge(supabaseHealth.health.client)}
+              {supabaseHealth ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <span>العميل:</span>
+                      {getHealthBadge(supabaseHealth.client)}
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <span>قاعدة البيانات:</span>
+                      {getHealthBadge(supabaseHealth.database)}
+                    </div>
+                    <div className="flex justify-between items-center p-3 border rounded">
+                      <span>التخزين:</span>
+                      {getHealthBadge(supabaseHealth.storage)}
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-3 border rounded">
-                    <span>قاعدة البيانات:</span>
-                    {getHealthBadge(supabaseHealth.health.database)}
-                  </div>
-                  <div className="flex justify-between items-center p-3 border rounded">
-                    <span>التخزين:</span>
-                    {getHealthBadge(supabaseHealth.health.storage)}
+                  {supabaseHealth.message && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {supabaseHealth.message}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="text-sm text-muted-foreground">
+                    آخر فحص: {new Date(supabaseHealth.lastCheck).toLocaleString('ar-SA')}
                   </div>
                 </div>
               ) : (
                 <Alert>
                   <XCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Supabase غير مكون. يرجى التأكد من إعداد متغيرات البيئة المطلوبة.
+                    جاري تحميل حالة Supabase...
                   </AlertDescription>
                 </Alert>
               )}

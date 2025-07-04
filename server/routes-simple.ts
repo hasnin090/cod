@@ -695,6 +695,31 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supabase health check
+  app.get("/api/supabase/health", async (req: Request, res: Response) => {
+    try {
+      // بما أن Supabase غير مهيأ في routes-simple، نرسل حالة افتراضية
+      const health = {
+        client: false,
+        database: false,
+        storage: false,
+        lastCheck: new Date().toISOString(),
+        message: "Supabase غير مهيأ في النظام الحالي"
+      };
+      
+      res.status(200).json(health);
+    } catch (error) {
+      console.error("Error checking Supabase health:", error);
+      res.status(500).json({ 
+        client: false,
+        database: false,
+        storage: false,
+        lastCheck: new Date().toISOString(),
+        error: "فشل في فحص حالة Supabase"
+      });
+    }
+  });
+
   // Simple health check
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
