@@ -328,6 +328,103 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create expense type
+  app.post("/api/expense-types", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ message: "اسم نوع المصروف مطلوب" });
+      }
+
+      const expenseType = await storage.createExpenseType({
+        name: name.trim(),
+        description: description?.trim() || null,
+        isActive: true
+      });
+
+      return res.status(201).json(expenseType);
+    } catch (error) {
+      console.error('Error creating expense type:', error);
+      return res.status(500).json({ message: "خطأ في إنشاء نوع المصروف" });
+    }
+  });
+
+  // Update expense type
+  app.patch("/api/expense-types/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف نوع المصروف غير صحيح" });
+      }
+
+      const { name, description, isActive } = req.body;
+      const updatedExpenseType = await storage.updateExpenseType(id, {
+        name: name?.trim(),
+        description: description?.trim(),
+        isActive
+      });
+
+      if (!updatedExpenseType) {
+        return res.status(404).json({ message: "نوع المصروف غير موجود" });
+      }
+
+      return res.status(200).json(updatedExpenseType);
+    } catch (error) {
+      console.error('Error updating expense type:', error);
+      return res.status(500).json({ message: "خطأ في تحديث نوع المصروف" });
+    }
+  });
+
+  // Delete expense type
+  app.delete("/api/expense-types/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف نوع المصروف غير صحيح" });
+      }
+
+      // Check if expense type exists
+      const expenseType = await storage.getExpenseType(id);
+      if (!expenseType) {
+        return res.status(404).json({ message: "نوع المصروف غير موجود" });
+      }
+
+      // Check if there are any ledger entries using this expense type
+      const ledgerEntries = await storage.getLedgerEntriesByExpenseType(id);
+      if (ledgerEntries.length > 0) {
+        return res.status(400).json({ 
+          message: `لا يمكن حذف نوع المصروف لأنه مرتبط بـ ${ledgerEntries.length} قيد محاسبي. قم بإعادة تصنيف القيود أولاً.` 
+        });
+      }
+
+      const result = await storage.deleteExpenseType(id);
+      if (result) {
+        // Log the deletion activity
+        const currentUserId = req.session.userId;
+        if (currentUserId) {
+          await storage.createActivityLog({
+            userId: currentUserId,
+            action: "delete_expense_type",
+            entityType: "expense_type",
+            entityId: id,
+            details: `حذف نوع المصروف: ${expenseType.name}`
+          });
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: "تم حذف نوع المصروف بنجاح" 
+        });
+      } else {
+        return res.status(500).json({ message: "فشل في حذف نوع المصروف" });
+      }
+    } catch (error) {
+      console.error('Error deleting expense type:', error);
+      return res.status(500).json({ message: "خطأ في حذف نوع المصروف" });
+    }
+  });
+
   // Employees routes
   app.get("/api/employees", async (req: Request, res: Response) => {
     try {
