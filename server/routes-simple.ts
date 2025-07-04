@@ -950,6 +950,51 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // نقاط النهاية لنظام التخزين الهجين
+  app.get("/api/hybrid-storage/status", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { hybridStorage } = await import('./hybrid-storage-strategy.js');
+      const status = await hybridStorage.getSystemStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error('خطأ في فحص حالة التخزين الهجين:', error);
+      res.status(500).json({ error: 'خطأ في فحص حالة النظام', details: error.message });
+    }
+  });
+
+  app.post("/api/hybrid-storage/backup-now", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { hybridStorage } = await import('./hybrid-storage-strategy.js');
+      // تشغيل النسخ الاحتياطي فوراً
+      await (hybridStorage as any).createDatabaseBackup();
+      res.json({ 
+        success: true, 
+        message: 'تم تشغيل النسخ الاحتياطي بنجاح',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('خطأ في النسخ الاحتياطي:', error);
+      res.status(500).json({ error: 'خطأ في النسخ الاحتياطي', details: error.message });
+    }
+  });
+
+  app.post("/api/hybrid-storage/config", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { hybridStorage } = await import('./hybrid-storage-strategy.js');
+      const config = req.body;
+      
+      hybridStorage.updateConfig(config);
+      res.json({ 
+        success: true, 
+        message: 'تم تحديث إعدادات التخزين',
+        config 
+      });
+    } catch (error: any) {
+      console.error('خطأ في تحديث إعدادات التخزين:', error);
+      res.status(500).json({ error: 'خطأ في تحديث الإعدادات', details: error.message });
+    }
+  });
+
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
   });

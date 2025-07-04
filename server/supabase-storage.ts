@@ -99,11 +99,12 @@ export async function uploadToSupabase(
 
     const uniqueFileName = `${Date.now()}_${fileName}`;
 
-    // رفع الملف للسحابة كأولوية - بدون تحديد نوع المحتوى للسماح بجميع الأنواع
+    // رفع الملف الأصلي كما هو بدون تحديد نوع المحتوى
     const { data, error } = await supabaseClient.storage
       .from(bucket)
       .upload(uniqueFileName, fileBuffer, {
         upsert: true
+        // عدم تحديد contentType على الإطلاق
       });
 
     if (error) {
