@@ -634,6 +634,46 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Activity logs routes
+  app.get("/api/activity-logs", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { entityType, userId, startDate, endDate } = req.query;
+      
+      // Get all activity logs
+      const logs = await storage.listActivityLogs();
+      
+      let filteredLogs = logs;
+      
+      // Apply filters if provided
+      if (entityType && typeof entityType === 'string') {
+        filteredLogs = filteredLogs.filter(log => log.entityType === entityType);
+      }
+      
+      if (userId && typeof userId === 'string') {
+        const userIdNum = parseInt(userId);
+        if (!isNaN(userIdNum)) {
+          filteredLogs = filteredLogs.filter(log => log.userId === userIdNum);
+        }
+      }
+      
+      if (startDate && typeof startDate === 'string') {
+        const startDateTime = new Date(startDate);
+        filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) >= startDateTime);
+      }
+      
+      if (endDate && typeof endDate === 'string') {
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999); // End of day
+        filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) <= endDateTime);
+      }
+      
+      return res.status(200).json(filteredLogs);
+    } catch (error) {
+      console.error('Error getting activity logs:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع سجل النشاطات" });
+    }
+  });
+
   // Simple health check
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
