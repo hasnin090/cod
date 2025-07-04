@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { Activity, User, FileText, Settings, FolderOpen, Eye, Edit, Trash2, LogIn, LogOut, Plus, Clock, Filter } from 'lucide-react';
+import { Activity, User as UserIcon, FileText, Settings, FolderOpen, Eye, Edit, Trash2, LogIn, LogOut, Plus, Clock, Filter } from 'lucide-react';
 
 interface ActivityLog {
   id: number;
@@ -20,6 +20,13 @@ interface ActivityLog {
   details: string;
   timestamp: string;
   userId: number;
+}
+
+interface User {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
 }
 
 interface Filter {
@@ -52,8 +59,13 @@ export default function Activities() {
       const [_, filterParams] = queryKey;
       const params = new URLSearchParams();
       
-      if (filterParams.entityType) params.append('entityType', String(filterParams.entityType));
-      if (filterParams.userId) params.append('userId', String(filterParams.userId));
+      if (filterParams && typeof filterParams === 'object') {
+        const f = filterParams as Filter;
+        if (f.entityType) params.append('entityType', String(f.entityType));
+        if (f.userId) params.append('userId', String(f.userId));
+        if (f.startDate) params.append('startDate', String(f.startDate));
+        if (f.endDate) params.append('endDate', String(f.endDate));
+      }
       
       const response = await fetch(`/api/activity-logs?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch activity logs');
@@ -61,7 +73,7 @@ export default function Activities() {
     }
   });
   
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
   });
   
@@ -126,12 +138,13 @@ export default function Activities() {
 
   const getEntityIcon = (entityType: string) => {
     switch (entityType) {
-      case 'transaction': return <FileText className="w-4 h-4 text-blue-600" />;
-      case 'project': return <FolderOpen className="w-4 h-4 text-green-600" />;
-      case 'user': return <User className="w-4 h-4 text-purple-600" />;
-      case 'document': return <FileText className="w-4 h-4 text-orange-600" />;
-      case 'setting': return <Settings className="w-4 h-4 text-gray-600" />;
-      default: return <Activity className="w-4 h-4 text-gray-600" />;
+      case 'transaction': return <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+      case 'project': return <FolderOpen className="w-5 h-5 text-green-600 dark:text-green-400" />;
+      case 'user': return <UserIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />;
+      case 'document': return <FileText className="w-5 h-5 text-orange-600 dark:text-orange-400" />;
+      case 'setting': return <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />;
+      case 'expense_type': return <Settings className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />;
+      default: return <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />;
     }
   };
   
@@ -228,41 +241,51 @@ export default function Activities() {
         <div className="space-y-4" id="activitiesList">
           {logs.map((log) => (
             <Card key={log.id} className="border-0 shadow-md hover:shadow-lg transition-all duration-200 bg-white dark:bg-gray-800">
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   {/* أيقونة نوع العنصر */}
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center border border-blue-100 dark:border-blue-800">
                     {getEntityIcon(log.entityType)}
                   </div>
                   
                   {/* المحتوى الرئيسي */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge 
-                        variant="outline" 
-                        className={`${getActionColor(log.action)} border text-xs font-medium flex items-center gap-1`}
-                      >
-                        {getActionIcon(log.action)}
-                        {getActionText(log.action)}
-                      </Badge>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {/* رأس البطاقة - اسم المستخدم والوقت */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">
+                          <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                            {getUserName(log.userId)}
+                          </span>
+                        </div>
+                        <Badge 
+                          variant="outline" 
+                          className={`${getActionColor(log.action)} border text-xs font-medium flex items-center gap-1.5 px-2.5 py-1`}
+                        >
+                          {getActionIcon(log.action)}
+                          {getActionText(log.action)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="font-medium">{formatTimestamp(log.timestamp)}</span>
+                      </div>
+                    </div>
+                    
+                    {/* نوع العنصر */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">النوع:</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
                         {getEntityTypeText(log.entityType)}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
-                      {log.details}
-                    </p>
-                    
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <User className="w-3 h-3" />
-                        <span>بواسطة: {getUserName(log.userId)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3 h-3" />
-                        <span>{formatTimestamp(log.timestamp)}</span>
-                      </div>
+                    {/* تفاصيل النشاط */}
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-100 dark:border-gray-600">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {log.details}
+                      </p>
                     </div>
                   </div>
                 </div>
