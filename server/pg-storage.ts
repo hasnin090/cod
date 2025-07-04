@@ -1189,7 +1189,7 @@ export class PgStorage implements IStorage {
     try {
       const result = await this.sql`
         INSERT INTO ledger_entries (transaction_id, entry_type, account_name, debit_amount, credit_amount, project_id, expense_type_id, description, entry_date)
-        VALUES (${entry.transactionId}, ${entry.entryType}, ${entry.accountName}, ${entry.debitAmount || 0}, ${entry.creditAmount || 0}, ${entry.projectId || null}, ${entry.expenseTypeId || null}, ${entry.description || null}, ${entry.entryDate})
+        VALUES (${entry.transactionId}, ${entry.entryType}, ${entry.accountName || null}, ${entry.debitAmount || 0}, ${entry.creditAmount || 0}, ${entry.projectId || null}, ${entry.expenseTypeId || null}, ${entry.description || null}, ${entry.date || entry.entryDate || new Date().toISOString()})
         RETURNING *
       `;
       return result[0] as LedgerEntry;
@@ -1756,9 +1756,11 @@ export class PgStorage implements IStorage {
           if (matchingExpenseType && transaction) {
             try {
               const ledgerEntry = {
-                date: new Date(),
+                date: new Date().toISOString(),
                 description: transactionDescription,
                 amount: paymentAmount,
+                debitAmount: paymentAmount,
+                creditAmount: 0,
                 entryType: 'expense',
                 projectId: null,
                 transactionId: transaction.id,

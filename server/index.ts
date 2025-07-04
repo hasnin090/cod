@@ -124,6 +124,47 @@ app.use((req, res, next) => {
   next();
 });
 
+// Pay deferred payment installment endpoint - MUST be before registerRoutes to avoid Vite conflicts
+app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
+
+    const id = parseInt(req.params.id);
+    const { amount } = req.body;
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "معرف المستحق غير صحيح" });
+    }
+    
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ message: "مبلغ الدفعة مطلوب ويجب أن يكون أكبر من الصفر" });
+    }
+    
+    console.log(`Processing payment for deferred payment ${id}, amount: ${numericAmount}, user: ${req.session.userId}`);
+    
+    const result = await storage.payDeferredPaymentInstallment(id, numericAmount, req.session.userId);
+    
+    await storage.createActivityLog({
+      userId: req.session.userId,
+      action: "pay_deferred_payment",
+      entityType: "deferred_payment",
+      entityId: id,
+      details: `دفع قسط بمبلغ ${numericAmount} للمستحق رقم ${id}`
+    });
+    
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("خطأ في تسجيل الدفعة:", error);
+    return res.status(500).json({ 
+      message: error instanceof Error ? error.message : "خطأ في تسجيل الدفعة" 
+    });
+  }
+});
+
 (async () => {
   const server = await registerRoutes(app);
 

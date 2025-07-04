@@ -157,6 +157,8 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * Fixed false error display in project deletion - now only shows errors for actual failures
   * Fixed transaction creation issue by moving POST /api/transactions before Vite middleware in index.ts
   * Resolved Vite middleware interference with API endpoints - transactions now create successfully
+  * Fixed deferred payment installment functionality by adding POST /api/deferred-payments/:id/pay to index.ts
+  * Resolved deferred payment processing - payments now register correctly with automatic transaction creation
   * **Status**: All reported functionality issues have been resolved successfully
 
 ## User Preferences
