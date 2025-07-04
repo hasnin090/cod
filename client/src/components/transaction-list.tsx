@@ -145,12 +145,18 @@ export function TransactionList({
         title: "تم الحذف بنجاح",
         description: "تم حذف المعاملة المالية بنجاح.",
       });
-      onTransactionUpdated();
-      // تحديث جميع الcaches المرتبطة
+      
+      // تحديث فوري لجميع الcaches المرتبطة
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ledger'] });
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      
+      // إجبار إعادة تحميل البيانات فوراً
+      queryClient.refetchQueries({ queryKey: ['/api/transactions'] });
+      queryClient.refetchQueries({ queryKey: ['/api/dashboard'] });
+      
+      onTransactionUpdated();
       setDeleteDialogOpen(false);
       setTransactionToDelete(null);
     },
@@ -176,10 +182,18 @@ export function TransactionList({
         title: "تم التحديث بنجاح",
         description: "تم تحديث المعاملة المالية بنجاح.",
       });
-      onTransactionUpdated();
-      // إضافة تحديث cache لدفتر الأستاذ
+      
+      // تحديث فوري لجميع الcaches المرتبطة
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ledger'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ledger/summary'] });
+      
+      // إجبار إعادة تحميل البيانات فوراً
+      queryClient.refetchQueries({ queryKey: ['/api/transactions'] });
+      queryClient.refetchQueries({ queryKey: ['/api/dashboard'] });
+      
+      onTransactionUpdated();
       setEditDialogOpen(false);
       setTransactionToEdit(null);
     },

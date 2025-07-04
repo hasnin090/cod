@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -436,6 +436,11 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
         title: "تم الحذف بنجاح",
         description: "تم حذف المستخدم بنجاح",
       });
+      
+      // تحديث فوري للكاش
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/users'] });
+      
       onUserUpdated();
     },
     onError: (error) => {
@@ -456,6 +461,11 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
         title: "تم التعديل بنجاح",
         description: "تم تعديل بيانات المستخدم بنجاح",
       });
+      
+      // تحديث فوري للكاش
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/users'] });
+      
       setEditDialogOpen(false);
       onUserUpdated();
     },

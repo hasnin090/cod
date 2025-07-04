@@ -62,12 +62,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-      staleTime: Infinity,
-      retry: false,
-      retryOnMount: false,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+      staleTime: 0, // البيانات تعتبر قديمة فوراً
+      retry: 1,
+      retryOnMount: true,
     },
     mutations: {
       retry: false,
