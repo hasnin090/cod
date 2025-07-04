@@ -571,13 +571,13 @@ function CompanyName() {
                   <button
                     onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                     className={`w-full flex items-center justify-between space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
-                      ["/settings", "/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/whatsapp-integration"].includes(location)
+                      ["/settings", "/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/cloud-migration", "/whatsapp-integration"].includes(location)
                         ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
                         : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
                     } transition-all duration-200 transform`}
                   >
                     <div className="flex items-center space-x-reverse space-x-3">
-                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${["/settings", "/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/whatsapp-integration"].includes(location) ? "bg-white/20 text-white" : "bg-blue-100"}`}>
+                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${["/settings", "/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/cloud-migration", "/whatsapp-integration"].includes(location) ? "bg-white/20 text-white" : "bg-blue-100"}`}>
                         <i className="fas fa-tools"></i>
                       </div>
                       <span className="text-sm sm:text-base">الإعدادات</span>
@@ -656,6 +656,20 @@ function CompanyName() {
                           <i className="fas fa-cloud-upload-alt text-xs"></i>
                         </div>
                         <span className="text-sm">نقل الملفات</span>
+                      </Link>
+                      
+                      <Link
+                        href="/cloud-migration"
+                        className={`flex items-center space-x-reverse space-x-2 px-3 py-2 rounded-lg no-flicker touch-target ${
+                          location === "/cloud-migration" 
+                            ? "bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] font-medium border-r-2 border-[hsl(var(--primary))]" 
+                            : "text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600"
+                        } transition-all duration-200`}
+                      >
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-gray-600">
+                          <i className="fas fa-cloud-upload-alt text-xs"></i>
+                        </div>
+                        <span className="text-sm">الانتقال للسحابة</span>
                       </Link>
                       
                       <Link

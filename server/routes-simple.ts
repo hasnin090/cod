@@ -29,6 +29,20 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { 
+  initializeSupabaseStorage, 
+  uploadToSupabase, 
+  uploadFromLocalFile, 
+  syncAllLocalFiles,
+  checkSupabaseStorageHealth,
+  isSupabaseInitialized 
+} from './supabase-storage';
+import { 
+  createPreMigrationBackup, 
+  verifyCurrentData, 
+  safeMigrateToCloud, 
+  restoreFromBackup 
+} from './migration-helper';
 
 // إنشاء متغير يحل محل __dirname مع ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -698,29 +712,244 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Supabase health check
   app.get("/api/supabase/health", async (req: Request, res: Response) => {
     try {
-      // بما أن Supabase غير مهيأ في routes-simple، نرسل حالة افتراضية
-      const health = {
-        client: false,
-        database: false,
-        storage: false,
-        lastCheck: new Date().toISOString(),
-        message: "Supabase غير مهيأ في النظام الحالي"
-      };
-      
-      res.status(200).json(health);
+      const health = await checkSupabaseStorageHealth();
+      res.status(200).json({
+        ...health,
+        message: health.client && health.storage ? "Supabase Storage متصل" : "Supabase Storage غير متصل"
+      });
     } catch (error) {
       console.error("Error checking Supabase health:", error);
       res.status(500).json({ 
         client: false,
         database: false,
         storage: false,
+        buckets: [],
         lastCheck: new Date().toISOString(),
         error: "فشل في فحص حالة Supabase"
       });
     }
   });
 
+  // تهيئة Supabase Storage
+  app.post("/api/supabase/init", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const success = await initializeSupabaseStorage();
+      
+      if (success) {
+        await storage.createActivityLog({
+          action: "supabase_init",
+          entityType: "system",
+          entityId: 0,
+          details: "تم تهيئة Supabase Storage",
+          userId: req.session.userId as number
+        });
+        
+        res.status(200).json({ 
+          success: true, 
+          message: "تم تهيئة Supabase Storage بنجاح" 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "فشل في تهيئة Supabase Storage" 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error initializing Supabase:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "خطأ في تهيئة Supabase: " + error.message 
+      });
+    }
+  });
+
+  // مزامنة جميع الملفات لـ Supabase
+  app.post("/api/supabase/sync-all", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const result = await syncAllLocalFiles();
+      
+      await storage.createActivityLog({
+        action: "supabase_sync",
+        entityType: "system",
+        entityId: 0,
+        details: `مزامنة الملفات: ${result.synced} نجحت، ${result.failed} فشلت`,
+        userId: req.session.userId as number
+      });
+      
+      res.status(200).json({
+        success: true,
+        message: `تمت مزامنة ${result.synced} ملف بنجاح، فشل في ${result.failed} ملف`,
+        ...result
+      });
+    } catch (error: any) {
+      console.error("Error syncing files:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "خطأ في مزامنة الملفات: " + error.message 
+      });
+    }
+  });
+
+  // مزامنة ملف واحد
+  app.post("/api/supabase/sync-file", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { filePath, bucket } = req.body;
+      
+      if (!filePath) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "مسار الملف مطلوب" 
+        });
+      }
+      
+      const result = await uploadFromLocalFile(filePath, bucket);
+      
+      if (result.success) {
+        await storage.createActivityLog({
+          action: "file_sync",
+          entityType: "file",
+          entityId: 0,
+          details: `تم مزامنة الملف: ${filePath}`,
+          userId: req.session.userId as number
+        });
+      }
+      
+      res.status(200).json(result);
+    } catch (error: any) {
+      console.error("Error syncing file:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "خطأ في مزامنة الملف: " + error.message 
+      });
+    }
+  });
+
+  // رفع ملف جديد للسحابة مع نسخة احتياطية محلية
+  app.post("/api/upload-cloud", upload.single('file'), authenticate, async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "لم يتم رفع أي ملف" });
+      }
+
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const bucket = req.body.bucket || 'documents';
+      
+      // رفع للسحابة أولاً
+      const cloudResult = await uploadToSupabase(fileBuffer, req.file.originalname, bucket, true);
+      
+      if (cloudResult.success) {
+        // حفظ رابط السحابة في قاعدة البيانات
+        await storage.createActivityLog({
+          action: "cloud_upload",
+          entityType: "file",
+          entityId: 0,
+          details: `تم رفع الملف للسحابة: ${req.file.originalname}`,
+          userId: req.session.userId as number
+        });
+
+        // حذف الملف المؤقت
+        fs.unlinkSync(req.file.path);
+        
+        return res.status(200).json({
+          success: true,
+          message: "تم رفع الملف للسحابة بنجاح",
+          cloudUrl: cloudResult.url,
+          localBackup: cloudResult.localPath
+        });
+      } else {
+        // في حالة فشل الرفع للسحابة، احتفظ بالملف محلياً كبديل
+        const localPath = `/uploads/${req.file.filename}`;
+        
+        await storage.createActivityLog({
+          action: "local_fallback",
+          entityType: "file",
+          entityId: 0,
+          details: `فشل الرفع للسحابة، تم الحفظ محلياً: ${req.file.originalname}`,
+          userId: req.session.userId as number
+        });
+
+        return res.status(200).json({
+          success: false,
+          message: "فشل الرفع للسحابة، تم حفظ الملف محلياً",
+          localPath: localPath,
+          error: cloudResult.error
+        });
+      }
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "خطأ في رفع الملف: " + error.message 
+      });
+    }
+  });
+
   // Simple health check
+  // إنشاء نسخة احتياطية قبل الانتقال
+  app.post("/api/migration/backup", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const result = await createPreMigrationBackup();
+      
+      if (result.success) {
+        await storage.createActivityLog({
+          action: "backup_created",
+          entityType: "system",
+          entityId: 0,
+          details: `تم إنشاء نسخة احتياطية قبل الانتقال: ${result.backupPath}`,
+          userId: req.session.userId as number
+        });
+      }
+      
+      res.status(200).json(result);
+    } catch (error: any) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // فحص البيانات الحالية
+  app.get("/api/migration/verify", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const result = await verifyCurrentData();
+      res.status(200).json(result);
+    } catch (error: any) {
+      console.error("Error verifying data:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // تنفيذ الانتقال الآمن للسحابة
+  app.post("/api/migration/to-cloud", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      console.log("🚀 بدء الانتقال للتخزين السحابي...");
+      
+      const result = await safeMigrateToCloud();
+      
+      // تسجيل نتيجة الانتقال
+      await storage.createActivityLog({
+        action: "cloud_migration",
+        entityType: "system",
+        entityId: 0,
+        details: `انتقال للسحابة: ${result.migratedFiles} نجح، ${result.failedFiles} فشل من أصل ${result.totalFiles} ملف`,
+        userId: req.session.userId as number
+      });
+      
+      res.status(200).json(result);
+    } catch (error: any) {
+      console.error("Error during migration:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
   });

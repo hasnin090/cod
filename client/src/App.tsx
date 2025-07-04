@@ -20,6 +20,7 @@ import DatabaseManagement from "@/pages/database-management";
 import HybridStorage from "@/pages/hybrid-storage";
 import SupabaseStatus from "@/pages/supabase-status";
 import FileMigration from "@/pages/file-migration";
+import CloudStorageMigration from "@/pages/cloud-storage-migration";
 import DeferredPayments from './pages/deferred-payments';
 import WhatsAppIntegration from './pages/whatsapp-integration';
 import SystemManagement from './pages/system-management';
@@ -146,6 +147,9 @@ function AppRoutes() {
               </Route>
               <Route path="/file-migration">
                 {user?.role === 'admin' ? <FileMigration /> : <NotFound />}
+              </Route>
+              <Route path="/cloud-migration">
+                {user?.role === 'admin' ? <CloudStorageMigration /> : <NotFound />}
               </Route>
               <Route path="/deferred-payments" component={DeferredPayments} />
               <Route path="/whatsapp-integration">
