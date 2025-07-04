@@ -19,7 +19,7 @@ interface ActivityLog {
   entityId: number;
   details: string;
   timestamp: string;
-  userId: number;
+  userId: number | null;
 }
 
 interface User {
@@ -92,23 +92,25 @@ export default function Activities() {
     return format(date, 'yyyy/MM/dd hh:mm a', { locale: ar });
   };
   
-  const getUserName = (userId: number) => {
+  const getUserName = (userId: number | null | undefined) => {
     if (usersLoading) {
       return 'جاري التحميل...';
     }
     
-    if (!users || users.length === 0) {
-      console.log('No users data available');
-      return 'لا توجد بيانات مستخدمين';
+    // إذا كان userId فارغ أو null أو undefined
+    if (!userId || userId === null || userId === undefined) {
+      return 'النظام';
     }
     
-    console.log('Looking for user:', userId, 'in users:', users);
-    const user = users.find(u => u.id === userId);
+    if (!users || users.length === 0) {
+      return 'غير محدد';
+    }
+    
+    const user = users.find(u => u.id === Number(userId));
     if (user) {
-      return user.name;
+      return user.name || user.username || `مستخدم #${userId}`;
     } else {
-      console.log('User not found:', userId);
-      return `مستخدم #${userId}`;
+      return `مستخدم غير معروف #${userId}`;
     }
   };
   
@@ -269,7 +271,7 @@ export default function Activities() {
                   <div className="flex items-center justify-between md:hidden">
                     <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">
                       <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                      <span className="text-sm font-semibold text-blue-700 dark:text-blue-300 min-w-0">
                         {getUserName(log.userId)}
                       </span>
                     </div>
@@ -293,7 +295,7 @@ export default function Activities() {
                       <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">
                           <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                          <span className="text-sm font-semibold text-blue-700 dark:text-blue-300 truncate">
                             {getUserName(log.userId)}
                           </span>
                         </div>
