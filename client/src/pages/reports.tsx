@@ -28,21 +28,24 @@ const formatCurrency = (amount: number): string => {
 };
 
 // دالة موحدة للحصول على نوع الحساب المحاسبي للمعاملة
-const getTransactionAccountType = (transaction: any, expenseTypes: any[], ledgerEntries: any[]): string => {
-  if (!Array.isArray(ledgerEntries) || !Array.isArray(expenseTypes)) return 'unclassified';
+const getTransactionAccountType = (transaction: any, expenseTypes: any, ledgerEntries: any): string => {
+  const expenseTypesArray = Array.isArray(expenseTypes) ? expenseTypes : [];
+  const ledgerEntriesArray = Array.isArray(ledgerEntries) ? ledgerEntries : [];
   
-  const ledgerEntry = ledgerEntries.find((entry: any) => 
+  const ledgerEntry = ledgerEntriesArray.find((entry: any) => 
     entry.transactionId === transaction.id || entry.transaction_id === transaction.id
   );
   
   if (ledgerEntry && (ledgerEntry.expenseTypeId || ledgerEntry.expense_type_id)) {
     const expenseTypeId = ledgerEntry.expenseTypeId || ledgerEntry.expense_type_id;
-    const expenseType = expenseTypes.find((type: any) => type.id === expenseTypeId);
+    const expenseType = expenseTypesArray.find((type: any) => type.id === expenseTypeId);
     if (expenseType) {
       return expenseType.name;
     }
   }
-  return 'unclassified';
+  
+  // إرجاع نوع حسب نوع المعاملة إذا لم تكن مصنفة
+  return transaction.type === 'income' ? 'إيرادات غير مصنفة' : 'مصروفات غير مصنفة';
 };
 
 export default function Reports() {
@@ -100,17 +103,9 @@ export default function Reports() {
     },
   });
 
-  // فلترة المعاملات المصنفة
+  // فلترة جميع المعاملات (مصنفة وغير مصنفة)
   const filteredTransactions = useMemo(() => {
-    const classifiedTransactions = transactions.filter(transaction => {
-      if (!Array.isArray(ledgerEntries)) return false;
-      return ledgerEntries.some((entry: any) => 
-        (entry.transactionId === transaction.id || entry.transaction_id === transaction.id) && 
-        (entry.expenseTypeId || entry.expense_type_id)
-      );
-    });
-
-    return classifiedTransactions.filter(transaction => {
+    return transactions.filter(transaction => {
       const matchesSearch = (transaction.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           transaction.amount.toString().includes(searchQuery);
       
@@ -143,7 +138,7 @@ export default function Reports() {
     
     // إضافة جميع أنواع المصروفات من قاعدة البيانات
     if (Array.isArray(expenseTypes)) {
-      expenseTypes.forEach((expenseType: any) => {
+      (expenseTypes as any[]).forEach((expenseType: any) => {
         const typeName = expenseType.name;
         if (!summary[typeName]) {
           summary[typeName] = {

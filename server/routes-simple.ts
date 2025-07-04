@@ -403,6 +403,53 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ledger routes
+  app.get("/api/ledger", authenticate, async (req: Request, res: Response) => {
+    try {
+      const ledgerEntries = await storage.listLedgerEntries();
+      return res.status(200).json(ledgerEntries);
+    } catch (error) {
+      console.error("خطأ في جلب إدخالات دفتر الأستاذ:", error);
+      return res.status(500).json({ message: "خطأ في جلب إدخالات دفتر الأستاذ" });
+    }
+  });
+
+  // إعادة تصنيف المعاملات
+  app.post("/api/ledger/reclassify-transactions", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const transactions = await storage.listTransactions();
+      const expenseTypes = await storage.listExpenseTypes();
+      
+      let reclassified = 0;
+      let skipped = 0;
+      
+      for (const transaction of transactions) {
+        if (transaction.type === 'expense') {
+          // محاولة تصنيف المعاملة تلقائياً
+          await storage.classifyExpenseTransaction(transaction, true);
+          reclassified++;
+        } else {
+          skipped++;
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        summary: {
+          reclassified,
+          skipped,
+          total: transactions.length
+        }
+      });
+    } catch (error) {
+      console.error("خطأ في إعادة تصنيف المعاملات:", error);
+      return res.status(500).json({ 
+        success: false,
+        message: "خطأ في إعادة تصنيف المعاملات" 
+      });
+    }
+  });
+
   // Simple health check
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
