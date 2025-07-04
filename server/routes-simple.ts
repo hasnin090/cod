@@ -518,12 +518,33 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Database status route
   app.get("/api/database/status", async (req: Request, res: Response) => {
     try {
+      // Test actual database connection
+      await storage.checkTableExists('users');
+      
+      // Get connection status from storage if available
+      const connectionStatus = (storage as any).getConnectionStatus ? (storage as any).getConnectionStatus() : { connected: true, retries: 0 };
+      
       return res.status(200).json({
         connected: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        message: "قاعدة البيانات متصلة",
+        retries: connectionStatus.retries,
+        status: connectionStatus.connected ? 'active' : 'recovering'
       });
     } catch (error) {
-      return res.status(500).json({ message: "خطأ في قاعدة البيانات" });
+      console.error('Database connectivity check failed:', error);
+      
+      // Try to get connection status even on error
+      const connectionStatus = (storage as any).getConnectionStatus ? (storage as any).getConnectionStatus() : { connected: false, retries: 0 };
+      
+      return res.status(500).json({ 
+        connected: false,
+        message: "خطأ في الاتصال بقاعدة البيانات",
+        timestamp: new Date().toISOString(),
+        retries: connectionStatus.retries,
+        status: 'disconnected',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

@@ -21,13 +21,138 @@ import { IStorage } from './storage';
 
 export class PgStorage implements IStorage {
   private sql = neon(process.env.DATABASE_URL!);
+  private connectionRetries = 0;
+  private maxRetries = 5;
+  private retryDelay = 1000; // 1 second
+  private isConnected = false;
 
   constructor() {
-    console.log('PgStorage: Connected to PostgreSQL database');
+    this.initializeConnection();
+    // Start periodic connection health check
+    this.startHealthCheck();
+  }
+
+  private async initializeConnection() {
+    try {
+      // Test the connection
+      await this.testConnection();
+      this.isConnected = true;
+      this.connectionRetries = 0;
+      console.log('PgStorage: Successfully connected to PostgreSQL database');
+    } catch (error) {
+      console.error('PgStorage: Failed to connect to database:', error);
+      await this.retryConnection();
+    }
+  }
+
+  private async testConnection(): Promise<void> {
+    await this.sql`SELECT 1`;
+  }
+
+  private async retryConnection(): Promise<void> {
+    if (this.connectionRetries >= this.maxRetries) {
+      console.error(`PgStorage: Max retries (${this.maxRetries}) reached. Connection failed.`);
+      return;
+    }
+
+    this.connectionRetries++;
+    console.log(`PgStorage: Retrying connection... Attempt ${this.connectionRetries}/${this.maxRetries}`);
+    
+    await new Promise(resolve => setTimeout(resolve, this.retryDelay * this.connectionRetries));
+    
+    try {
+      await this.testConnection();
+      this.isConnected = true;
+      this.connectionRetries = 0;
+      console.log('PgStorage: Reconnected to PostgreSQL database successfully');
+    } catch (error) {
+      console.error(`PgStorage: Retry ${this.connectionRetries} failed:`, error);
+      await this.retryConnection();
+    }
+  }
+
+  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      const result = await operation();
+      // Reset connection status on successful operation
+      if (!this.isConnected) {
+        this.isConnected = true;
+        this.connectionRetries = 0;
+        console.log('PgStorage: Connection restored');
+      }
+      return result;
+    } catch (error: any) {
+      console.error('PgStorage: Database operation failed:', error);
+      
+      // Check if it's a connection error
+      if (error.code === 'ECONNREFUSED' || 
+          error.code === 'ENOTFOUND' || 
+          error.code === 'ETIMEDOUT' ||
+          error.message?.includes('connection') ||
+          error.message?.includes('timeout') ||
+          error.message?.includes('network')) {
+        
+        this.isConnected = false;
+        console.log('PgStorage: Connection lost, attempting to reconnect...');
+        await this.retryConnection();
+        
+        // Retry the operation if reconnected
+        if (this.isConnected) {
+          console.log('PgStorage: Retrying failed operation after reconnection');
+          return await operation();
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  // Add a public method to check connection status
+  public getConnectionStatus(): { connected: boolean; retries: number } {
+    return {
+      connected: this.isConnected,
+      retries: this.connectionRetries
+    };
+  }
+
+  // Add a method to manually trigger reconnection
+  public async reconnect(): Promise<boolean> {
+    try {
+      await this.testConnection();
+      this.isConnected = true;
+      this.connectionRetries = 0;
+      console.log('PgStorage: Manual reconnection successful');
+      return true;
+    } catch (error) {
+      console.error('PgStorage: Manual reconnection failed:', error);
+      this.isConnected = false;
+      return false;
+    }
+  }
+
+  // Start periodic health check
+  private startHealthCheck(): void {
+    // Check connection every 30 seconds
+    setInterval(async () => {
+      try {
+        await this.testConnection();
+        if (!this.isConnected) {
+          this.isConnected = true;
+          this.connectionRetries = 0;
+          console.log('PgStorage: Health check - connection restored');
+        }
+      } catch (error) {
+        if (this.isConnected) {
+          console.log('PgStorage: Health check - connection lost');
+          this.isConnected = false;
+          // Don't start full retry process in health check, just mark as disconnected
+        }
+      }
+    }, 30000);
   }
 
   async checkTableExists(tableName: string): Promise<boolean> {
-    try {
+    return this.executeWithRetry(async () => {
       const result = await this.sql`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
@@ -36,21 +161,15 @@ export class PgStorage implements IStorage {
         );
       `;
       return result[0]?.exists || false;
-    } catch (error) {
-      console.error('Error checking table existence:', error);
-      return false;
-    }
+    });
   }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    try {
+    return this.executeWithRetry(async () => {
       const result = await this.sql`SELECT * FROM users WHERE id = ${id}`;
       return result[0] as User | undefined;
-    } catch (error) {
-      console.error('Error getting user:', error);
-      return undefined;
-    }
+    });
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
