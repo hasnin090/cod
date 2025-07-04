@@ -89,13 +89,64 @@ const userEditSchema = z.object({
 
 type UserEditFormValues = z.infer<typeof userEditSchema>;
 
-const permissions = [
-  { id: "viewReports", label: "عرض التقارير", icon: <EyeIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "manageProjects", label: "إدارة المشاريع", icon: <KeyIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "manageTransactions", label: "إدارة المعاملات المالية", icon: <KeyIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "viewOnly", label: "صلاحيات المشاهدة فقط", icon: <EyeOffIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "hideRevenue", label: "إخفاء الإيرادات", icon: <EyeOffIcon className="h-3.5 w-3.5 ml-1.5 text-red-400" /> },
-  { id: "manageDocuments", label: "إدارة المستندات", icon: <ShieldIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
+// الصلاحيات المنظمة بحسب الفئة
+const permissionCategories = [
+  {
+    title: "إدارة لوحة التحكم",
+    icon: <ShieldIcon className="h-4 w-4" />,
+    color: "emerald",
+    permissions: [
+      { id: "view_dashboard", label: "عرض لوحة التحكم", description: "الوصول إلى لوحة التحكم الرئيسية" },
+    ]
+  },
+  {
+    title: "إدارة المستخدمين",
+    icon: <UserIcon className="h-4 w-4" />,
+    color: "blue", 
+    permissions: [
+      { id: "manage_users", label: "إدارة المستخدمين", description: "إضافة وتعديل وحذف المستخدمين" },
+      { id: "view_users", label: "عرض المستخدمين", description: "عرض قائمة المستخدمين" },
+    ]
+  },
+  {
+    title: "إدارة المشاريع",
+    icon: <KeyIcon className="h-4 w-4" />,
+    color: "purple",
+    permissions: [
+      { id: "manage_projects", label: "إدارة المشاريع", description: "إنشاء وتعديل وحذف المشاريع" },
+      { id: "view_projects", label: "عرض المشاريع", description: "عرض قائمة المشاريع" },
+    ]
+  },
+  {
+    title: "إدارة المعاملات المالية",
+    icon: <LockIcon className="h-4 w-4" />,
+    color: "orange",
+    permissions: [
+      { id: "manage_transactions", label: "إدارة المعاملات", description: "إضافة وتعديل وحذف المعاملات المالية" },
+      { id: "view_transactions", label: "عرض المعاملات", description: "عرض قائمة المعاملات المالية" },
+      { id: "manage_project_transactions", label: "إدارة معاملات المشاريع", description: "إدارة المعاملات الخاصة بالمشاريع" },
+      { id: "view_project_transactions", label: "عرض معاملات المشاريع", description: "عرض المعاملات الخاصة بالمشاريع" },
+    ]
+  },
+  {
+    title: "إدارة المستندات",
+    icon: <InfoIcon className="h-4 w-4" />,
+    color: "teal",
+    permissions: [
+      { id: "manage_documents", label: "إدارة المستندات", description: "رفع وتعديل وحذف المستندات" },
+      { id: "view_documents", label: "عرض المستندات", description: "عرض وتحميل المستندات" },
+    ]
+  },
+  {
+    title: "التقارير والإعدادات",
+    icon: <EyeIcon className="h-4 w-4" />,
+    color: "pink",
+    permissions: [
+      { id: "view_reports", label: "عرض التقارير", description: "الوصول إلى التقارير المالية" },
+      { id: "view_activity_logs", label: "عرض سجل النشاطات", description: "مراجعة سجل العمليات والتغييرات" },
+      { id: "manage_settings", label: "إدارة الإعدادات", description: "تعديل إعدادات النظام" },
+    ]
+  }
 ];
 
 interface UserEditFormProps {
@@ -256,42 +307,76 @@ function UserEditForm({ user, onSubmit, isLoading }: UserEditFormProps) {
         />
 
         {showPermissions && (
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <FormLabel className="mb-2 block font-medium text-gray-800 dark:text-gray-200">الصلاحيات:</FormLabel>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {permissions.map((permission) => (
-                <FormField
-                  key={permission.id}
-                  control={form.control}
-                  name="permissions"
-                  render={({ field }) => {
-                    return (
-                      <FormItem
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <ShieldIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <FormLabel className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                إدارة الصلاحيات
+              </FormLabel>
+            </div>
+            
+            <div className="space-y-6">
+              {permissionCategories.map((category) => (
+                <div key={category.title} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`p-2 rounded-lg bg-${category.color}-100 dark:bg-${category.color}-900/30 text-${category.color}-600 dark:text-${category.color}-400`}>
+                      {category.icon}
+                    </div>
+                    <h4 className="font-medium text-gray-800 dark:text-gray-200">{category.title}</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    {category.permissions.map((permission) => (
+                      <FormField
                         key={permission.id}
-                        className="flex flex-row items-center space-x-reverse space-x-2 space-y-0 py-1.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <FormControl>
-                          <Checkbox
-                            checked={Array.isArray(field.value) && field.value.includes(permission.id)}
-                            onCheckedChange={(checked) => {
-                              const currentPermissions = Array.isArray(field.value) ? field.value : [];
-                              return checked
-                                ? field.onChange([...currentPermissions, permission.id])
-                                : field.onChange(
-                                    currentPermissions.filter((value) => value !== permission.id)
-                                  );
-                            }}
-                            className="border-blue-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                          />
-                        </FormControl>
-                        <FormLabel className="text-sm font-normal cursor-pointer flex items-center text-gray-700 dark:text-gray-300">
-                          {permission.icon}
-                          {permission.label}
-                        </FormLabel>
-                      </FormItem>
-                    );
-                  }}
-                />
+                        control={form.control}
+                        name="permissions"
+                        render={({ field }) => {
+                          const isChecked = Array.isArray(field.value) && field.value.includes(permission.id);
+                          return (
+                            <FormItem
+                              key={permission.id}
+                              className="flex flex-row items-start space-x-reverse space-x-3 space-y-0 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    const currentPermissions = Array.isArray(field.value) ? field.value : [];
+                                    return checked
+                                      ? field.onChange([...currentPermissions, permission.id])
+                                      : field.onChange(
+                                          currentPermissions.filter((value) => value !== permission.id)
+                                        );
+                                  }}
+                                  className={`mt-1 border-2 ${
+                                    isChecked 
+                                      ? `border-${category.color}-500 bg-${category.color}-500` 
+                                      : 'border-gray-300 dark:border-gray-600'
+                                  } data-[state=checked]:bg-${category.color}-500 data-[state=checked]:border-${category.color}-500`}
+                                />
+                              </FormControl>
+                              <div className="flex-1 cursor-pointer" onClick={() => {
+                                const currentPermissions = Array.isArray(field.value) ? field.value : [];
+                                const newValue = isChecked
+                                  ? currentPermissions.filter((value) => value !== permission.id)
+                                  : [...currentPermissions, permission.id];
+                                field.onChange(newValue);
+                              }}>
+                                <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer block">
+                                  {permission.label}
+                                </FormLabel>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {permission.description}
+                                </p>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

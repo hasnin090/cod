@@ -43,12 +43,64 @@ const userSchema = z.object({
 
 type UserFormValues = z.infer<typeof userSchema>;
 
-const permissions = [
-  { id: "viewReports", label: "عرض التقارير", icon: <EyeIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "manageProjects", label: "إدارة المشاريع", icon: <UsersIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "manageTransactions", label: "إدارة المعاملات المالية", icon: <KeyIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "viewOnly", label: "صلاحيات المشاهدة فقط", icon: <EyeOffIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
-  { id: "manageDocuments", label: "إدارة المستندات", icon: <ShieldIcon className="h-3.5 w-3.5 ml-1.5 text-blue-400" /> },
+// الصلاحيات المنظمة بحسب الفئة
+const permissionCategories = [
+  {
+    title: "إدارة لوحة التحكم",
+    icon: <ShieldIcon className="h-4 w-4" />,
+    color: "emerald",
+    permissions: [
+      { id: "view_dashboard", label: "عرض لوحة التحكم", description: "الوصول إلى لوحة التحكم الرئيسية" },
+    ]
+  },
+  {
+    title: "إدارة المستخدمين", 
+    icon: <UserIcon className="h-4 w-4" />,
+    color: "blue",
+    permissions: [
+      { id: "manage_users", label: "إدارة المستخدمين", description: "إضافة وتعديل وحذف المستخدمين" },
+      { id: "view_users", label: "عرض المستخدمين", description: "عرض قائمة المستخدمين" },
+    ]
+  },
+  {
+    title: "إدارة المشاريع",
+    icon: <FolderIcon className="h-4 w-4" />,
+    color: "purple", 
+    permissions: [
+      { id: "manage_projects", label: "إدارة المشاريع", description: "إنشاء وتعديل وحذف المشاريع" },
+      { id: "view_projects", label: "عرض المشاريع", description: "عرض قائمة المشاريع" },
+    ]
+  },
+  {
+    title: "إدارة المعاملات المالية",
+    icon: <KeyIcon className="h-4 w-4" />,
+    color: "orange",
+    permissions: [
+      { id: "manage_transactions", label: "إدارة المعاملات", description: "إضافة وتعديل وحذف المعاملات المالية" },
+      { id: "view_transactions", label: "عرض المعاملات", description: "عرض قائمة المعاملات المالية" },
+      { id: "manage_project_transactions", label: "إدارة معاملات المشاريع", description: "إدارة المعاملات الخاصة بالمشاريع" },
+      { id: "view_project_transactions", label: "عرض معاملات المشاريع", description: "عرض المعاملات الخاصة بالمشاريع" },
+    ]
+  },
+  {
+    title: "إدارة المستندات",
+    icon: <InfoIcon className="h-4 w-4" />,
+    color: "teal",
+    permissions: [
+      { id: "manage_documents", label: "إدارة المستندات", description: "رفع وتعديل وحذف المستندات" },
+      { id: "view_documents", label: "عرض المستندات", description: "عرض وتحميل المستندات" },
+    ]
+  },
+  {
+    title: "التقارير والإعدادات",
+    icon: <EyeIcon className="h-4 w-4" />,
+    color: "pink",
+    permissions: [
+      { id: "view_reports", label: "عرض التقارير", description: "الوصول إلى التقارير المالية" },
+      { id: "view_activity_logs", label: "عرض سجل النشاطات", description: "مراجعة سجل العمليات والتغييرات" },
+      { id: "manage_settings", label: "إدارة الإعدادات", description: "تعديل إعدادات النظام" },
+    ]
+  }
 ];
 
 interface Project {
@@ -361,7 +413,13 @@ export function UserForm({ onSubmit }: UserFormProps) {
                         </FormDescription>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {permissions.map((item) => (
+                        {permissionCategories.flatMap(category => 
+                          category.permissions.map(permission => ({
+                            id: permission.id,
+                            label: permission.label,
+                            icon: category.icon
+                          }))
+                        ).map((item) => (
                           <FormField
                             key={item.id}
                             control={form.control}
