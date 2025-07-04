@@ -155,6 +155,8 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * Added proper error handling and activity logging for all new endpoints
   * Tested and verified all operations work correctly with proper authentication and authorization
   * Fixed false error display in project deletion - now only shows errors for actual failures
+  * Fixed transaction creation issue by moving POST /api/transactions before Vite middleware in index.ts
+  * Resolved Vite middleware interference with API endpoints - transactions now create successfully
   * **Status**: All reported functionality issues have been resolved successfully
 
 ## User Preferences

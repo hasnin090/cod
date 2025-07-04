@@ -155,6 +155,11 @@ async function registerRoutes(app: Express): Promise<Server> {
     };
   };
 
+  // Test POST route
+  app.post("/api/test", (req: Request, res: Response) => {
+    return res.status(200).json({ message: "POST test successful", body: req.body });
+  });
+
   // Authentication routes
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
