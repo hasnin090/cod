@@ -739,7 +739,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivityLog({
           action: "supabase_init",
           entityType: "system",
-          entityId: 0,
+          entityId: 1,
           details: "تم تهيئة Supabase Storage",
           userId: req.session.userId as number
         });
@@ -771,7 +771,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivityLog({
         action: "supabase_sync",
         entityType: "system",
-        entityId: 0,
+        entityId: 1,
         details: `مزامنة الملفات: ${result.synced} نجحت، ${result.failed} فشلت`,
         userId: req.session.userId as number
       });
@@ -808,7 +808,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivityLog({
           action: "file_sync",
           entityType: "file",
-          entityId: 0,
+          entityId: 1,
           details: `تم مزامنة الملف: ${filePath}`,
           userId: req.session.userId as number
         });
@@ -842,7 +842,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivityLog({
           action: "cloud_upload",
           entityType: "file",
-          entityId: 0,
+          entityId: 1,
           details: `تم رفع الملف للسحابة: ${req.file.originalname}`,
           userId: req.session.userId as number
         });
@@ -863,7 +863,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivityLog({
           action: "local_fallback",
           entityType: "file",
-          entityId: 0,
+          entityId: 1,
           details: `فشل الرفع للسحابة، تم الحفظ محلياً: ${req.file.originalname}`,
           userId: req.session.userId as number
         });
@@ -894,7 +894,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         await storage.createActivityLog({
           action: "backup_created",
           entityType: "system",
-          entityId: 0,
+          entityId: 1,
           details: `تم إنشاء نسخة احتياطية قبل الانتقال: ${result.backupPath}`,
           userId: req.session.userId as number
         });
@@ -935,7 +935,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       await storage.createActivityLog({
         action: "cloud_migration",
         entityType: "system",
-        entityId: 0,
+        entityId: 1,
         details: `انتقال للسحابة: ${result.migratedFiles} نجح، ${result.failedFiles} فشل من أصل ${result.totalFiles} ملف`,
         userId: req.session.userId as number
       });

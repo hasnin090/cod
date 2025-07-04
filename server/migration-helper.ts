@@ -194,7 +194,7 @@ export async function safeMigrateToCloud(): Promise<MigrationResult> {
     // ملفات إضافية في مجلد uploads
     const uploadsDir = './uploads';
     if (fs.existsSync(uploadsDir)) {
-      const walkDir = (dir: string, bucket: string) => {
+      const walkDir = (dir: string, parentFolder: string) => {
         const files = fs.readdirSync(dir);
         files.forEach(file => {
           const filePath = path.join(dir, file);
@@ -205,9 +205,26 @@ export async function safeMigrateToCloud(): Promise<MigrationResult> {
           } else if (stat.isFile() && file !== '.gitkeep') {
             const existsInDb = filesToMigrate.some(f => f.localPath === filePath);
             if (!existsInDb) {
+              // تحديد bucket بناءً على مجلد الملف ونوعه
+              let bucket = 'files'; // bucket افتراضي
+              
+              if (parentFolder === 'transactions') {
+                bucket = 'transactions';
+              } else if (parentFolder === 'exports') {
+                bucket = 'exports';
+              } else if (parentFolder === 'completed-works-docs') {
+                bucket = 'completed-works';
+              } else if (file.endsWith('.json')) {
+                bucket = 'files'; // metadata files
+              } else if (file.endsWith('.csv')) {
+                bucket = 'exports';
+              } else {
+                bucket = 'files'; // صور وملفات عامة
+              }
+              
               filesToMigrate.push({
                 localPath: filePath,
-                bucket: bucket || 'general',
+                bucket: bucket,
                 tableName: 'documents'
               });
             }
@@ -215,7 +232,7 @@ export async function safeMigrateToCloud(): Promise<MigrationResult> {
         });
       };
       
-      walkDir(uploadsDir, 'general');
+      walkDir(uploadsDir, 'root');
     }
 
     result.totalFiles = filesToMigrate.length;

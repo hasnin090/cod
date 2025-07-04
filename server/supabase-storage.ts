@@ -99,12 +99,11 @@ export async function uploadToSupabase(
 
     const uniqueFileName = `${Date.now()}_${fileName}`;
 
-    // رفع الملف للسحابة كأولوية
+    // رفع الملف للسحابة كأولوية - بدون تحديد نوع المحتوى للسماح بجميع الأنواع
     const { data, error } = await supabaseClient.storage
       .from(bucket)
       .upload(uniqueFileName, fileBuffer, {
-        upsert: true,
-        contentType: getContentType(fileName)
+        upsert: true
       });
 
     if (error) {
@@ -357,7 +356,7 @@ function getContentType(fileName: string): string {
     '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     '.xls': 'application/vnd.ms-excel',
     '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    '.csv': 'text/csv',
+    '.csv': 'application/octet-stream',
     '.txt': 'text/plain'
   };
 
