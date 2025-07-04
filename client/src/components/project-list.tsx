@@ -127,6 +127,12 @@ export function ProjectList({ projects, isLoading, onProjectUpdated }: ProjectLi
       onProjectUpdated();
     },
     onError: async (error: any) => {
+      // التحقق من أن الخطأ ليس مجرد كائن فارغ أو undefined
+      if (!error || (typeof error === 'object' && Object.keys(error).length === 0)) {
+        console.log("Received empty error object, ignoring");
+        return;
+      }
+
       // محاولة استخراج رسالة الخطأ من استجابة الخادم
       let errorMessage = "فشل في حذف المشروع";
       let transactionsCount = 0;
@@ -160,16 +166,26 @@ export function ProjectList({ projects, isLoading, onProjectUpdated }: ProjectLi
             return; // الخروج مبكرًا لأننا سنعرض مربع حوار مخصص
           }
         }
+        
+        // إذا كان هناك خطأ فعلي في الشبكة أو الخادم
+        if (error.response && error.response.status >= 500) {
+          errorMessage = "خطأ في الخادم، يرجى المحاولة لاحقاً";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
       } catch (jsonError) {
         console.error("خطأ في معالجة استجابة الخطأ:", jsonError);
       }
       
-      // في حالة فشل استخراج تفاصيل الخطأ، نظهر إشعار toast قياسي
-      toast({
-        variant: "destructive",
-        title: "تعذر حذف المشروع",
-        description: errorMessage,
-      });
+      // عرض toast فقط للأخطاء الفعلية
+      if (error.response || error.message) {
+        toast({
+          variant: "destructive",
+          title: "تعذر حذف المشروع",
+          description: errorMessage,
+        });
+      }
       
       console.error("خطأ حذف المشروع:", error);
     },
