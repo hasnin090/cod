@@ -149,14 +149,16 @@ export default function Activities() {
   };
   
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-          <Activity className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">سجل النشاطات</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">تتبع جميع العمليات والأنشطة في النظام</p>
+    <div className="space-y-4 md:space-y-6 p-3 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 md:mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+            <Activity className="w-5 h-5 md:w-6 md:h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">سجل النشاطات</h1>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">تتبع جميع العمليات والأنشطة في النظام</p>
+          </div>
         </div>
       </div>
       
@@ -167,15 +169,15 @@ export default function Activities() {
             تصفية سجل النشاطات
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="w-full md:w-64">
-              <Label htmlFor="filterEntityType" className="block text-sm font-medium text-neutral mb-1">نوع العنصر</Label>
+        <CardContent className="p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="filterEntityType" className="text-sm font-medium text-gray-700 dark:text-gray-300">نوع العنصر</Label>
               <Select 
                 onValueChange={(value) => handleFilterChange({ entityType: value || undefined })}
                 value={filter.entityType || ""}
               >
-                <SelectTrigger id="filterEntityType" className="w-full px-4 py-2 h-auto rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light">
+                <SelectTrigger id="filterEntityType" className="w-full h-10">
                   <SelectValue placeholder="كل الأنواع" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,13 +191,13 @@ export default function Activities() {
               </Select>
             </div>
             
-            <div className="w-full md:w-64">
-              <Label htmlFor="filterUser" className="block text-sm font-medium text-neutral mb-1">المستخدم</Label>
+            <div className="space-y-2">
+              <Label htmlFor="filterUser" className="text-sm font-medium text-gray-700 dark:text-gray-300">المستخدم</Label>
               <Select 
                 onValueChange={(value) => handleFilterChange({ userId: value ? parseInt(value) : undefined })}
                 value={filter.userId?.toString() || ""}
               >
-                <SelectTrigger id="filterUser" className="w-full px-4 py-2 h-auto rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light">
+                <SelectTrigger id="filterUser" className="w-full h-10">
                   <SelectValue placeholder="كل المستخدمين" />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,22 +211,22 @@ export default function Activities() {
               </Select>
             </div>
             
-            <div className="w-full md:w-64">
-              <Label htmlFor="startDate" className="block text-sm font-medium text-neutral mb-1">من تاريخ</Label>
+            <div className="space-y-2">
+              <Label htmlFor="startDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">من تاريخ</Label>
               <Input
                 id="startDate"
                 type="date"
-                className="w-full px-4 py-2 h-auto rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light"
+                className="w-full h-10"
                 onChange={(e) => handleFilterChange({ startDate: e.target.value })}
               />
             </div>
             
-            <div className="w-full md:w-64">
-              <Label htmlFor="endDate" className="block text-sm font-medium text-neutral mb-1">إلى تاريخ</Label>
+            <div className="space-y-2">
+              <Label htmlFor="endDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">إلى تاريخ</Label>
               <Input
                 id="endDate"
                 type="date"
-                className="w-full px-4 py-2 h-auto rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light"
+                className="w-full h-10"
                 onChange={(e) => handleFilterChange({ endDate: e.target.value })}
               />
             </div>
@@ -241,18 +243,34 @@ export default function Activities() {
         <div className="space-y-4" id="activitiesList">
           {logs.map((log) => (
             <Card key={log.id} className="border-0 shadow-md hover:shadow-lg transition-all duration-200 bg-white dark:bg-gray-800">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
+              <CardContent className="p-4 md:p-5">
+                <div className="flex flex-col space-y-4 md:flex-row md:items-start md:gap-4 md:space-y-0">
+                  {/* رأس البطاقة للهاتف */}
+                  <div className="flex items-center justify-between md:hidden">
+                    <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">
+                      <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                        {getUserName(log.userId)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="font-medium">{formatTimestamp(log.timestamp)}</span>
+                    </div>
+                  </div>
+
                   {/* أيقونة نوع العنصر */}
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center border border-blue-100 dark:border-blue-800">
-                    {getEntityIcon(log.entityType)}
+                  <div className="flex-shrink-0 self-start">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl flex items-center justify-center border border-blue-100 dark:border-blue-800">
+                      {getEntityIcon(log.entityType)}
+                    </div>
                   </div>
                   
                   {/* المحتوى الرئيسي */}
-                  <div className="flex-1 min-w-0">
-                    {/* رأس البطاقة - اسم المستخدم والوقت */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0 space-y-3">
+                    {/* رأس البطاقة للكمبيوتر */}
+                    <div className="hidden md:flex md:items-center md:justify-between">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800">
                           <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -273,8 +291,23 @@ export default function Activities() {
                       </div>
                     </div>
                     
-                    {/* نوع العنصر */}
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* نوع العملية والعنصر للهاتف */}
+                    <div className="flex flex-wrap items-center gap-2 md:hidden">
+                      <Badge 
+                        variant="outline" 
+                        className={`${getActionColor(log.action)} border text-xs font-medium flex items-center gap-1.5 px-2.5 py-1`}
+                      >
+                        {getActionIcon(log.action)}
+                        {getActionText(log.action)}
+                      </Badge>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">على</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
+                        {getEntityTypeText(log.entityType)}
+                      </span>
+                    </div>
+
+                    {/* نوع العنصر للكمبيوتر */}
+                    <div className="hidden md:flex md:items-center md:gap-2">
                       <span className="text-xs text-gray-500 dark:text-gray-400">النوع:</span>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
                         {getEntityTypeText(log.entityType)}
@@ -283,7 +316,7 @@ export default function Activities() {
                     
                     {/* تفاصيل النشاط */}
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-100 dark:border-gray-600">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words">
                         {log.details}
                       </p>
                     </div>
