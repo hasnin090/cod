@@ -75,6 +75,12 @@ export default function Activities() {
   
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
+    queryFn: async () => {
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   
   const handleFilterChange = (newFilter: Partial<Filter>) => {
@@ -87,9 +93,23 @@ export default function Activities() {
   };
   
   const getUserName = (userId: number) => {
-    if (!users) return 'غير معروف';
+    if (usersLoading) {
+      return 'جاري التحميل...';
+    }
+    
+    if (!users || users.length === 0) {
+      console.log('No users data available');
+      return 'لا توجد بيانات مستخدمين';
+    }
+    
+    console.log('Looking for user:', userId, 'in users:', users);
     const user = users.find(u => u.id === userId);
-    return user ? user.name : 'غير معروف';
+    if (user) {
+      return user.name;
+    } else {
+      console.log('User not found:', userId);
+      return `مستخدم #${userId}`;
+    }
   };
   
   const getActionText = (action: string) => {
