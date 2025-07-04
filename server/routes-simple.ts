@@ -298,22 +298,65 @@ async function registerRoutes(app: Express): Promise<Server> {
       const projects = await storage.listProjects();
       const deferredPayments = await storage.listDeferredPayments();
       
-      const totalIncome = transactions
+      // Split transactions between admin (no project) and project transactions
+      const adminTransactions = transactions.filter(t => !t.projectId);
+      const projectTransactions = transactions.filter(t => t.projectId);
+      
+      // Calculate admin fund totals
+      const adminTotalIncome = adminTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const totalExpenses = transactions
+      const adminTotalExpenses = adminTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const balance = totalIncome - totalExpenses;
+      const adminNetProfit = adminTotalIncome - adminTotalExpenses;
+      
+      // Calculate project totals
+      const projectTotalIncome = projectTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const projectTotalExpenses = projectTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const projectNetProfit = projectTotalIncome - projectTotalExpenses;
+      
+      // Overall totals
+      const totalIncome = adminTotalIncome + projectTotalIncome;
+      const totalExpenses = adminTotalExpenses + projectTotalExpenses;
+      const netProfit = totalIncome - totalExpenses;
+      
+      // Get recent transactions (last 10)
+      const recentTransactions = transactions
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 10);
       
       const stats = {
-        totalTransactions: transactions.length,
+        // البيانات الإجمالية
         totalIncome: totalIncome,
         totalExpenses: totalExpenses,
+        netProfit: netProfit,
+        
+        // بيانات الصندوق الرئيسي
+        adminTotalIncome: adminTotalIncome,
+        adminTotalExpenses: adminTotalExpenses,
+        adminNetProfit: adminNetProfit,
+        adminFundBalance: adminNetProfit,
+        
+        // بيانات المشاريع
+        projectTotalIncome: projectTotalIncome,
+        projectTotalExpenses: projectTotalExpenses,
+        projectNetProfit: projectNetProfit,
+        
+        // بيانات أخرى
         activeProjects: projects.length,
-        balance: balance,
+        recentTransactions: recentTransactions,
+        projects: projects,
+        
+        // معلومات المستحقات
         deferredPaymentsCount: deferredPayments.length,
         pendingPayments: deferredPayments.filter(p => p.status === 'pending').length
       };
