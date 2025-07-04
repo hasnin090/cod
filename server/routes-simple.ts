@@ -393,6 +393,45 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get deferred payment details
+  app.get("/api/deferred-payments/:id/details", authenticate, async (req: Request, res: Response) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      if (isNaN(paymentId)) {
+        return res.status(400).json({ message: "معرف المستحق غير صحيح" });
+      }
+
+      // الحصول على المستحق
+      const payment = await storage.getDeferredPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: "المستحق غير موجود" });
+      }
+
+      // البحث عن المعاملات المرتبطة بهذا المستحق
+      const transactions = await storage.listTransactions();
+      const relatedTransactions = transactions.filter(t => 
+        t.description?.includes(payment.beneficiaryName) || 
+        t.description?.includes(`مستحق:${paymentId}`) ||
+        t.description?.includes(`مستحق ${paymentId}`)
+      );
+
+      // تنسيق البيانات للعرض
+      const paymentHistory = relatedTransactions.map(transaction => ({
+        id: transaction.id,
+        date: transaction.date,
+        amount: transaction.amount,
+        description: transaction.description,
+        transactionId: transaction.id,
+        type: transaction.type
+      }));
+
+      return res.status(200).json(paymentHistory);
+    } catch (error) {
+      console.error('Error fetching payment details:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع تفاصيل المستحق" });
+    }
+  });
+
   // Settings routes
   app.get("/api/settings", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {

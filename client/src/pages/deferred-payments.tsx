@@ -171,6 +171,115 @@ export default function DeferredPayments() {
   const totalPaid = payments.reduce((sum: number, payment: DeferredPayment) => sum + payment.paidAmount, 0);
   const totalRemaining = payments.reduce((sum: number, payment: DeferredPayment) => sum + payment.remainingAmount, 0);
 
+  // مكون لعرض تفاصيل المستحق - moved outside component
+  function PaymentDetailsDialog({ payment }: { payment: DeferredPayment }) {
+    const [paymentDetails, setPaymentDetails] = useState<any[]>([]);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+    useEffect(() => {
+      if (payment?.id) {
+        setIsLoadingDetails(true);
+        fetch(`/api/deferred-payments/${payment.id}/details`)
+          .then(response => response.json())
+          .then(data => {
+            setPaymentDetails(data || []);
+          })
+          .catch(error => {
+            console.error('Error fetching payment details:', error);
+            setPaymentDetails([]);
+          })
+          .finally(() => {
+            setIsLoadingDetails(false);
+          });
+      }
+    }, [payment?.id]);
+
+    return (
+      <div className="space-y-4">
+        {/* معلومات المستحق */}
+        <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">المبلغ الإجمالي</Label>
+            <p className="text-lg font-bold">{formatCurrency(payment.totalAmount)}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">المبلغ المدفوع</Label>
+            <p className="text-lg font-bold text-green-600">{formatCurrency(payment.paidAmount)}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">المبلغ المتبقي</Label>
+            <p className="text-lg font-bold text-orange-600">{formatCurrency(payment.remainingAmount)}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">الحالة</Label>
+            <div>{getStatusBadge(payment.status)}</div>
+          </div>
+          {payment.projectName && (
+            <div>
+              <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">المشروع</Label>
+              <p className="font-medium">{payment.projectName}</p>
+            </div>
+          )}
+          {payment.dueDate && (
+            <div>
+              <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">تاريخ الاستحقاق</Label>
+              <p className="font-medium">{format(new Date(payment.dueDate), 'yyyy/MM/dd', { locale: ar })}</p>
+            </div>
+          )}
+        </div>
+
+        {/* تفاصيل الدفعات */}
+        <div>
+          <h4 className="text-lg font-semibold mb-3">سجل الدفعات</h4>
+          {isLoadingDetails ? (
+            <div className="text-center py-4">جاري تحميل التفاصيل...</div>
+          ) : paymentDetails.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">لا توجد دفعات مسجلة بعد</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>التاريخ</TableHead>
+                  <TableHead>المبلغ</TableHead>
+                  <TableHead>الوصف</TableHead>
+                  <TableHead>رقم المعاملة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentDetails.map((detail: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      {detail.date ? format(new Date(detail.date), 'yyyy/MM/dd', { locale: ar }) : 'غير محدد'}
+                    </TableCell>
+                    <TableCell className="font-medium text-green-600">
+                      {formatCurrency(detail.amount || 0)}
+                    </TableCell>
+                    <TableCell>{detail.description || 'بدون وصف'}</TableCell>
+                    <TableCell>{detail.transactionId || 'غير مرتبط'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+
+        {payment.description && (
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">الوصف</Label>
+            <p className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{payment.description}</p>
+          </div>
+        )}
+
+        {payment.notes && (
+          <div>
+            <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">ملاحظات</Label>
+            <p className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">{payment.notes}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6" dir="rtl">
       {/* العنوان */}
@@ -434,13 +543,26 @@ export default function DeferredPayments() {
                       <TableCell>{payment.installments}</TableCell>
                       <TableCell>{getPaymentFrequencyText(payment.paymentFrequency)}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedPayment(payment)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPayment(payment)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>تفاصيل المستحق - {payment.beneficiaryName}</DialogTitle>
+                              <DialogDescription>
+                                معلومات تفصيلية عن المستحق والدفعات المسددة
+                              </DialogDescription>
+                            </DialogHeader>
+                            <PaymentDetailsDialog payment={payment} />
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}
