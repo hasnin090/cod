@@ -146,6 +146,11 @@ export function TransactionList({
         description: "تم حذف المعاملة المالية بنجاح.",
       });
       onTransactionUpdated();
+      // تحديث جميع الcaches المرتبطة
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setDeleteDialogOpen(false);
       setTransactionToDelete(null);
     },

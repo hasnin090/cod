@@ -270,6 +270,54 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete transaction
+  app.delete("/api/transactions/:id", authenticate, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف المعاملة غير صحيح" });
+      }
+
+      const transaction = await storage.getTransaction(id);
+      if (!transaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+      
+      // Check permissions - only admin or transaction creator can delete
+      const currentUserId = req.session.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      if (transaction.createdBy !== currentUserId && req.session.role !== "admin") {
+        return res.status(403).json({ message: "غير مصرح لك بحذف هذه المعاملة" });
+      }
+
+      const result = await storage.deleteTransaction(id);
+      
+      if (result) {
+        // Log the deletion activity
+        await storage.createActivityLog({
+          userId: currentUserId,
+          action: "delete_transaction",
+          entityType: "transaction",
+          entityId: id,
+          details: `حذف المعاملة: ${transaction.description || 'بدون وصف'} - المبلغ: ${transaction.amount}`
+        });
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: "تم حذف المعاملة بنجاح" 
+        });
+      } else {
+        return res.status(500).json({ message: "فشل في حذف المعاملة" });
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      return res.status(500).json({ message: "خطأ في حذف المعاملة" });
+    }
+  });
+
   // Expense types routes
   app.get("/api/expense-types", async (req: Request, res: Response) => {
     try {
