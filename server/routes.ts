@@ -596,17 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // إضافة نقطة نهاية جديدة للحصول على المشاريع المخصصة للمستخدم
-  app.get("/api/user-projects", authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = req.session.userId as number;
-      const projects = await storage.getUserProjects(userId);
-      return res.status(200).json(projects);
-    } catch (error) {
-      console.error("خطأ في استرجاع مشاريع المستخدم:", error);
-      return res.status(500).json({ message: "خطأ في استرجاع مشاريع المستخدم" });
-    }
-  });
+
 
   app.post("/api/projects", authenticate, async (req: Request, res: Response) => {
     try {

@@ -124,6 +124,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// User projects endpoint - MUST be before registerRoutes to avoid Vite conflicts
+app.get("/api/user-projects", async (req: any, res: any) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
+
+    const userId = req.session.userId;
+    console.log(`جلب مشاريع المستخدم الحالي، معرف المستخدم: ${userId}`);
+    
+    const projects = await storage.getUserProjects(userId);
+    console.log(`تم العثور على ${projects.length} مشروع للمستخدم رقم ${userId}`);
+    
+    return res.status(200).json(projects);
+  } catch (error) {
+    console.error("خطأ في جلب مشاريع المستخدم الحالي:", error);
+    return res.status(200).json([]);
+  }
+});
+
 // Pay deferred payment installment endpoint - MUST be before registerRoutes to avoid Vite conflicts
 app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
   try {
@@ -166,17 +186,10 @@ app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
 });
 
 (async () => {
+  // Register API routes FIRST, before any middleware that might interfere
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // Configure session for production
+  // Configure for production vs development 
   if (app.get("env") === "production") {
     app.set("trust proxy", 1);
     const PostgresStore = pgSession(session);
@@ -210,8 +223,18 @@ app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
       res.sendFile(path.resolve(__dirname, "public", "index.html"));
     });
   } else {
+    // Setup Vite AFTER routes are registered
     await setupVite(app, server);
   }
+
+  // Error handler at the end
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(status).json({ message });
+    throw err;
+  });
 
   // Use PORT from environment for deployment platforms like Railway
   // Fallback to 5000 for local development
