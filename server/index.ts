@@ -124,69 +124,134 @@ app.use((req, res, next) => {
   next();
 });
 
-// User projects endpoint - MUST be before registerRoutes to avoid Vite conflicts
-app.get("/api/user-projects", async (req: any, res: any) => {
-  try {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: "غير مصرح" });
-    }
 
-    const userId = req.session.userId;
-    console.log(`جلب مشاريع المستخدم الحالي، معرف المستخدم: ${userId}`);
-    
-    const projects = await storage.getUserProjects(userId);
-    console.log(`تم العثور على ${projects.length} مشروع للمستخدم رقم ${userId}`);
-    
-    return res.status(200).json(projects);
-  } catch (error) {
-    console.error("خطأ في جلب مشاريع المستخدم الحالي:", error);
-    return res.status(200).json([]);
-  }
-});
-
-// Pay deferred payment installment endpoint - MUST be before registerRoutes to avoid Vite conflicts
-app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
-  try {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: "غير مصرح" });
-    }
-
-    const id = parseInt(req.params.id);
-    const { amount } = req.body;
-    
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "معرف المستحق غير صحيح" });
-    }
-    
-    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    
-    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
-      return res.status(400).json({ message: "مبلغ الدفعة مطلوب ويجب أن يكون أكبر من الصفر" });
-    }
-    
-    console.log(`Processing payment for deferred payment ${id}, amount: ${numericAmount}, user: ${req.session.userId}`);
-    
-    const result = await storage.payDeferredPaymentInstallment(id, numericAmount, req.session.userId);
-    
-    await storage.createActivityLog({
-      userId: req.session.userId,
-      action: "pay_deferred_payment",
-      entityType: "deferred_payment",
-      entityId: id,
-      details: `دفع قسط بمبلغ ${numericAmount} للمستحق رقم ${id}`
-    });
-    
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("خطأ في تسجيل الدفعة:", error);
-    return res.status(500).json({ 
-      message: error instanceof Error ? error.message : "خطأ في تسجيل الدفعة" 
-    });
-  }
-});
 
 (async () => {
-  // Register API routes FIRST, before any middleware that might interfere
+  // Custom endpoints that override defaults - MUST be BEFORE registerRoutes
+  
+  // User projects endpoint - Override version in routes-simple.ts
+  app.get("/api/user-projects", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const userId = req.session.userId;
+      console.log(`جلب مشاريع المستخدم الحالي، معرف المستخدم: ${userId}`);
+      
+      const projects = await storage.getUserProjects(userId);
+      console.log(`تم العثور على ${projects.length} مشروع للمستخدم رقم ${userId}`);
+      
+      return res.status(200).json(projects);
+    } catch (error) {
+      console.error("خطأ في جلب مشاريع المستخدم الحالي:", error);
+      return res.status(200).json([]);
+    }
+  });
+
+  // Create deferred payment endpoint - Allow users to add receivables for their projects
+  app.post("/api/deferred-payments", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const userId = req.session.userId;
+      const userRole = req.session.role;
+      
+      // التحقق من البيانات المطلوبة
+      const { beneficiaryName, totalAmount, projectId } = req.body;
+      
+      if (!beneficiaryName || !totalAmount || totalAmount <= 0) {
+        return res.status(400).json({ message: "اسم المستفيد والمبلغ مطلوبان" });
+      }
+
+      // إذا كان المستخدم عادي وحدد مشروع، تحقق من صلاحية الوصول للمشروع
+      if (userRole !== "admin" && projectId) {
+        const hasAccess = await storage.checkUserProjectAccess(userId, projectId);
+        if (!hasAccess) {
+          return res.status(403).json({ message: "غير مصرح لك بإضافة مستحقات لهذا المشروع" });
+        }
+      }
+
+      // إنشاء بيانات المستحق
+      const paymentData = {
+        beneficiaryName,
+        totalAmount: Number(totalAmount),
+        remainingAmount: Number(totalAmount),
+        paidAmount: 0,
+        projectId: projectId ? Number(projectId) : null,
+        description: req.body.description || "",
+        dueDate: req.body.dueDate || null,
+        status: "pending",
+        userId: userId,
+        installments: req.body.installments || 1,
+        paymentFrequency: req.body.paymentFrequency || "monthly"
+      };
+
+      console.log(`Creating deferred payment by user ${userId}:`, paymentData);
+      
+      const payment = await storage.createDeferredPayment(paymentData);
+      
+      await storage.createActivityLog({
+        userId: userId,
+        action: "create_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: payment.id,
+        details: `إنشاء مستحق جديد: ${beneficiaryName} - المبلغ: ${totalAmount}`
+      });
+
+      return res.status(201).json(payment);
+    } catch (error) {
+      console.error("خطأ في إنشاء المستحق:", error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في إنشاء المستحق" 
+      });
+    }
+  });
+
+  // Pay deferred payment installment endpoint
+  app.post("/api/deferred-payments/:id/pay", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { amount } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف المستحق غير صحيح" });
+      }
+      
+      const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      
+      if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({ message: "مبلغ الدفعة مطلوب ويجب أن يكون أكبر من الصفر" });
+      }
+      
+      console.log(`Processing payment for deferred payment ${id}, amount: ${numericAmount}, user: ${req.session.userId}`);
+      
+      const result = await storage.payDeferredPaymentInstallment(id, numericAmount, req.session.userId);
+      
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "pay_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: id,
+        details: `دفع قسط بمبلغ ${numericAmount} للمستحق رقم ${id}`
+      });
+      
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error("خطأ في تسجيل الدفعة:", error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في تسجيل الدفعة" 
+      });
+    }
+  });
+
+  // Register API routes AFTER custom endpoints
   const server = await registerRoutes(app);
 
   // Configure for production vs development 

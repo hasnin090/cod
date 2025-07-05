@@ -544,30 +544,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Deferred payments routes
-  app.post("/api/deferred-payments", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
-    try {
-      const paymentData = {
-        ...req.body,
-        userId: req.session.userId as number
-      };
-      
-      const payment = await storage.createDeferredPayment(paymentData);
-
-      await storage.createActivityLog({
-        action: "create_deferred_payment",
-        entityType: "deferred_payment",
-        entityId: payment.id,
-        details: `تم إنشاء مدفوعة مؤجلة جديدة: ${payment.beneficiaryName}`,
-        userId: req.session.userId as number
-      });
-
-      res.status(201).json(payment);
-    } catch (error: any) {
-      console.error("Error creating deferred payment:", error);
-      res.status(500).json({ message: "خطأ في إنشاء المدفوعة المؤجلة" });
-    }
-  });
+  // Deferred payments routes - CREATE endpoint moved to index.ts for proper user permissions
 
   app.patch("/api/deferred-payments/:id", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {

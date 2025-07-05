@@ -161,6 +161,16 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * Resolved deferred payment processing - payments now register correctly with automatic transaction creation
   * **Status**: All reported functionality issues have been resolved successfully
 
+- July 05, 2025. **Fixed deferred payments permission issue for regular users**:
+  * Identified that POST /api/deferred-payments was restricted to admin/manager roles only
+  * Regular user "ضحئ" was getting 403 Forbidden when attempting to add receivables
+  * Created new endpoint in server/index.ts that allows users to add deferred payments for their assigned projects
+  * Moved custom endpoints before registerRoutes() to ensure proper priority over routes-simple.ts
+  * Added project access validation - users can only add receivables for projects they're assigned to
+  * Removed duplicate endpoint from routes-simple.ts to prevent conflicts
+  * **Result**: User "ضحئ" successfully created deferred payment ID 21 for 50,000 in project "فندق المصايف"
+  * **Status**: Deferred payments functionality now works correctly for all user roles with proper permissions
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
