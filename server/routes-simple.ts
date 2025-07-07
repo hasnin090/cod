@@ -269,20 +269,44 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Projects routes
+  // Projects routes - تحديث لإظهار المشاريع المخصصة للمستخدم
   app.get("/api/projects", authenticate, async (req: Request, res: Response) => {
     try {
-      const projects = await storage.listProjects();
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      // المشرفون يرون جميع المشاريع
+      if (user.role === 'admin') {
+        const projects = await storage.listProjects();
+        return res.status(200).json(projects);
+      }
+      
+      // المستخدمون العاديون يرون فقط المشاريع المخصصة لهم
+      const projects = await storage.getUserProjects(req.session.userId);
       return res.status(200).json(projects);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع المشاريع" });
     }
   });
 
-  // Transactions routes  
+  // Transactions routes - تحديث لاستخدام النظام المبني على المشاريع
   app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
-      const transactions = await storage.listTransactions();
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      // المشرفون يرون جميع المعاملات
+      if (user.role === 'admin') {
+        const transactions = await storage.listTransactions();
+        return res.status(200).json(transactions);
+      }
+      
+      // المستخدمون العاديون يرون فقط معاملات المشاريع المخصصة لهم
+      const transactions = await storage.getTransactionsForUserProjects(req.session.userId);
       return res.status(200).json(transactions);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع المعاملات" });
@@ -302,14 +326,24 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "المعاملة غير موجودة" });
       }
       
-      // Check permissions - only admin or transaction creator can delete
+      // Check permissions - المشرفون أو المستخدمون المخصصون للمشروع يمكنهم الحذف
       const currentUserId = req.session.userId;
       if (!currentUserId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
 
-      if (transaction.createdBy !== currentUserId && req.session.role !== "admin") {
-        return res.status(403).json({ message: "غير مصرح لك بحذف هذه المعاملة" });
+      const user = await storage.getUser(currentUserId);
+      if (!user) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      // المشرفون يمكنهم حذف أي معاملة
+      if (user.role !== 'admin') {
+        // المستخدمون العاديون يمكنهم حذف معاملات المشاريع المخصصة لهم فقط
+        const canAccess = await storage.canUserAccessTransaction(currentUserId, id);
+        if (!canAccess) {
+          return res.status(403).json({ message: "غير مصرح لك بحذف هذه المعاملة - ليست من مشاريعك المخصصة" });
+        }
       }
 
       const result = await storage.deleteTransaction(id);

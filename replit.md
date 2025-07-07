@@ -171,6 +171,18 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * **Result**: User "ضحئ" successfully created deferred payment ID 21 for 50,000 in project "فندق المصايف"
   * **Status**: Deferred payments functionality now works correctly for all user roles with proper permissions
 
+- July 07, 2025. **Implemented project-based access control system**:
+  * Fixed user-form project selection display issue (SelectItem empty value error)
+  * Fixed database schema conflicts in user_projects table (removed non-existent "role" column)
+  * **Major Architecture Change**: Redesigned system to be project-centric instead of user-centric
+  * Operations now belong to projects, not individual users - users are assigned to projects as "executors"
+  * Added new functions: getTransactionsForUserProjects(), canUserAccessTransaction()
+  * Updated /api/transactions endpoint: admins see all, users see only their assigned project transactions
+  * Updated /api/projects endpoint: admins see all, users see only assigned projects
+  * Enhanced permission system: users can modify/delete transactions for their assigned projects
+  * **Result**: System now supports proper multi-user project management where operations persist regardless of user changes
+  * **Status**: Project-based access control fully implemented and tested successfully
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

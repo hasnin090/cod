@@ -659,12 +659,60 @@ export class PgStorage implements IStorage {
   async getTransactionsByProject(projectId: number): Promise<Transaction[]> {
     try {
       const result = await this.sql`
-        SELECT * FROM transactions WHERE project_id = ${projectId} ORDER BY date DESC, id DESC
+        SELECT 
+          id, date, type, project_id as "projectId", description, created_by as "createdBy", 
+          amount, expense_type as "expenseType", employee_id as "employeeId", 
+          file_url as "fileUrl", file_type as "fileType", archived
+        FROM transactions 
+        WHERE project_id = ${projectId} 
+        ORDER BY date DESC, id DESC
       `;
       return result as Transaction[];
     } catch (error) {
       console.error('Error getting transactions by project:', error);
       return [];
+    }
+  }
+
+  /**
+   * جلب المعاملات للمشاريع المخصصة للمستخدم
+   * هذا يضمن أن المستخدم يرى فقط المعاملات للمشاريع التي يعمل عليها
+   */
+  async getTransactionsForUserProjects(userId: number): Promise<Transaction[]> {
+    try {
+      const result = await this.sql`
+        SELECT DISTINCT
+          t.id, t.date, t.type, t.project_id as "projectId", t.description, t.created_by as "createdBy", 
+          t.amount, t.expense_type as "expenseType", t.employee_id as "employeeId", 
+          t.file_url as "fileUrl", t.file_type as "fileType", t.archived
+        FROM transactions t
+        INNER JOIN user_projects up ON t.project_id = up.project_id
+        WHERE up.user_id = ${userId}
+        ORDER BY t.date DESC, t.id DESC
+      `;
+      return result as Transaction[];
+    } catch (error) {
+      console.error('Error getting transactions for user projects:', error);
+      return [];
+    }
+  }
+
+  /**
+   * تحقق من صلاحية المستخدم للوصول لمعاملة معينة
+   * بناءً على تخصيصه للمشروع وليس على إنشائه للمعاملة
+   */
+  async canUserAccessTransaction(userId: number, transactionId: number): Promise<boolean> {
+    try {
+      const result = await this.sql`
+        SELECT t.id
+        FROM transactions t
+        INNER JOIN user_projects up ON t.project_id = up.project_id
+        WHERE t.id = ${transactionId} AND up.user_id = ${userId}
+      `;
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error checking user transaction access:', error);
+      return false;
     }
   }
 
