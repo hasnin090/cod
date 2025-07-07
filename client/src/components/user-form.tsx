@@ -131,7 +131,6 @@ export function UserForm({ onSubmit }: UserFormProps) {
       password: "",
       role: "user",
       permissions: [],
-      projectId: undefined,
     },
   });
   
@@ -150,7 +149,7 @@ export function UserForm({ onSubmit }: UserFormProps) {
         password: "",
         role: "user",
         permissions: [],
-        projectId: undefined,
+
       });
       setShowPermissions(false);
       onSubmit();
@@ -175,14 +174,15 @@ export function UserForm({ onSubmit }: UserFormProps) {
     if (value === "admin") {
       setShowPermissions(false);
       form.setValue("permissions", []);
-      form.setValue("projectId", undefined);
+      // لا نحتاج لمسح projectId للمشرفين
     } else if (value === "viewer") {
       setShowPermissions(true);
       form.setValue("permissions", ["view_dashboard", "view_projects", "view_transactions", "view_documents"]);
-      form.setValue("projectId", undefined);
+      // المراقبون أيضاً يمكن ربطهم بمشاريع محددة
     } else if (value === "user") {
       setShowPermissions(true);
       form.setValue("permissions", ["view_dashboard", "view_projects", "manage_project_transactions", "view_project_transactions", "manage_transactions", "view_transactions", "manage_documents", "view_documents"]);
+      // المستخدمون العاديون يحتاجون لربط بمشاريع
     }
   };
 
@@ -378,7 +378,6 @@ export function UserForm({ onSubmit }: UserFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">بدون مشروع محدد</SelectItem>
                           {projects.map((project) => (
                             <SelectItem key={project.id} value={project.id.toString()}>
                               <div className="flex items-center">
