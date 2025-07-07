@@ -51,7 +51,8 @@ import {
   InfoIcon, 
   UserIcon, 
   ShieldIcon, 
-  LockIcon 
+  LockIcon,
+  TrashIcon
 } from 'lucide-react';
 import { 
   Tooltip, 
@@ -657,7 +658,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
                         disabled={currentUserId === user.id}
                         title={currentUserId === user.id ? "لا يمكن حذف المستخدم الحالي" : "حذف المستخدم"}
                       >
-                        <ShieldIcon className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -732,7 +733,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
                   className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 rounded-lg text-xs font-medium flex items-center shadow-sm transition-all duration-150 hover:shadow"
                   onClick={() => handleDeleteClick(user)}
                 >
-                  <ShieldIcon className="h-3.5 w-3.5 ml-1.5" />
+                  <TrashIcon className="h-3.5 w-3.5 ml-1.5" />
                   حذف
                 </button>
               )}
@@ -745,7 +746,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg text-red-600 dark:text-red-400 flex items-center">
-              <ShieldIcon className="h-5 w-5 ml-2 text-red-500 dark:text-red-400" />
+              <TrashIcon className="h-5 w-5 ml-2 text-red-500 dark:text-red-400" />
               تأكيد الحذف
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300 text-sm mt-1">
