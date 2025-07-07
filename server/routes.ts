@@ -468,7 +468,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       delete userData.projectId; // إزالة الحقل غير المستخدم في تحديث المستخدم
       
       if (userData.password) {
+        console.log("تشفير كلمة المرور الجديدة...");
         userData.password = await bcrypt.hash(userData.password, 10);
+        console.log("تم تشفير كلمة المرور بنجاح");
       }
       
       const updatedUser = await storage.updateUser(id, userData);
