@@ -269,37 +269,37 @@ function UserEditForm({ user, onSubmit, isLoading }: UserEditFormProps) {
                 disabled={isLoading}
               >
                 <FormControl>
-                  <SelectTrigger className="w-full h-10 rounded-lg bg-white border border-blue-100 hover:border-blue-300">
-                    <SelectValue placeholder="اختر الصلاحية" />
+                  <SelectTrigger className="w-full h-10 rounded-lg bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 focus:border-blue-600 dark:focus:border-blue-300 text-gray-900 dark:text-gray-100 shadow-sm">
+                    <SelectValue placeholder="اختر الصلاحية" className="text-gray-700 dark:text-gray-300" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="bg-white">
-                  <SelectItem value="admin" className="flex items-center">
+                <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <SelectItem value="admin" className="flex items-center hover:bg-red-50 dark:hover:bg-red-900/20 focus:bg-red-50 dark:focus:bg-red-900/20 text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
-                      <ShieldIcon className="h-4 w-4 ml-2 text-red-500" />
-                      مدير
+                      <ShieldIcon className="h-4 w-4 ml-2 text-red-600 dark:text-red-400" />
+                      <span className="font-medium">مدير</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="user" className="flex items-center">
+                  <SelectItem value="user" className="flex items-center hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
-                      <UserIcon className="h-4 w-4 ml-2 text-blue-500" />
-                      مستخدم
+                      <UserIcon className="h-4 w-4 ml-2 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium">مستخدم</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="viewer" className="flex items-center">
+                  <SelectItem value="viewer" className="flex items-center hover:bg-green-50 dark:hover:bg-green-900/20 focus:bg-green-50 dark:focus:bg-green-900/20 text-gray-900 dark:text-gray-100">
                     <div className="flex items-center">
-                      <EyeIcon className="h-4 w-4 ml-2 text-gray-500" />
-                      مشاهدة فقط
+                      <EyeIcon className="h-4 w-4 ml-2 text-green-600 dark:text-green-400" />
+                      <span className="font-medium">مشاهدة فقط</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <FormDescription className="text-gray-600 dark:text-gray-400">
+              <FormDescription className="text-gray-700 dark:text-gray-300 text-sm font-medium bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700">
                 {field.value === "admin" 
-                  ? "المدير لديه صلاحيات كاملة للنظام" 
+                  ? "⚡ المدير لديه صلاحيات كاملة للنظام" 
                   : field.value === "viewer"
-                  ? "مشاهدة فقط - إمكانية عرض البيانات بدون تعديل"
-                  : "المستخدم يحتاج لتحديد صلاحيات محددة"}
+                  ? "👁️ مشاهدة فقط - إمكانية عرض البيانات بدون تعديل"
+                  : "🔧 المستخدم يحتاج لتحديد صلاحيات محددة"}
               </FormDescription>
               <FormMessage />
             </FormItem>
