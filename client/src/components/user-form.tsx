@@ -348,7 +348,7 @@ export function UserForm({ onSubmit }: UserFormProps) {
                 )}
               />
 
-              {showPermissions && form.watch("role") === "user" && (
+              {(form.watch("role") === "user" || form.watch("role") === "viewer") && (
                 <FormField
                   control={form.control}
                   name="projectId"
