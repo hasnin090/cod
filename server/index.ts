@@ -129,6 +129,177 @@ app.use((req, res, next) => {
 (async () => {
   // Custom endpoints that override defaults - MUST be BEFORE registerRoutes
   
+  // Create user endpoint - Allow proper user creation with project assignment
+  app.post("/api/users", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const userRole = req.session.role;
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "غير مصرح - صلاحيات مدير مطلوبة" });
+      }
+
+      console.log("بدء إنشاء مستخدم جديد");
+      
+      // Validate input data
+      const userData = req.body;
+      if (!userData.username || !userData.name || !userData.password || !userData.role) {
+        return res.status(400).json({ message: "بيانات المستخدم غير مكتملة" });
+      }
+
+      // Hash password
+      const bcrypt = require('bcryptjs');
+      userData.password = await bcrypt.hash(userData.password, 10);
+      
+      // Extract projectId before creating user
+      const projectId = userData.projectId;
+      delete userData.projectId;
+      
+      // Ensure permissions array is defined
+      if (!userData.permissions) {
+        userData.permissions = [];
+      }
+      
+      console.log("بيانات المستخدم قبل الإدخال في قاعدة البيانات:", {
+        ...userData,
+        password: "***مخفية***"
+      });
+      
+      const user = await storage.createUser(userData);
+      console.log("تم إنشاء المستخدم بنجاح:", { id: user.id, username: user.username });
+      
+      // If project is specified, assign user to project
+      if (projectId) {
+        console.log(`ربط المستخدم ${user.id} بالمشروع ${projectId}`);
+        try {
+          await storage.assignUserToProject({
+            userId: user.id,
+            projectId: Number(projectId),
+            assignedBy: req.session.userId,
+          });
+          console.log(`تم ربط المستخدم ${user.id} بالمشروع ${projectId} بنجاح`);
+        } catch (assignError) {
+          console.error("خطأ في ربط المستخدم بالمشروع:", assignError);
+          // Don't fail user creation if project assignment fails
+        }
+      }
+      
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "create_user",
+        entityType: "user",
+        entityId: user.id,
+        details: `إنشاء مستخدم جديد: ${user.username}${projectId ? ` وربطه بالمشروع ${projectId}` : ''}`
+      });
+
+      // Return user without password
+      const { password, ...safeUser } = user;
+      return res.status(201).json(safeUser);
+    } catch (error) {
+      console.error("خطأ في إنشاء المستخدم:", error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في إنشاء المستخدم" 
+      });
+    }
+  });
+
+  // Assign user to project endpoint
+  app.post("/api/users/:userId/assign-project", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const userRole = req.session.role;
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "غير مصرح - صلاحيات مدير مطلوبة" });
+      }
+
+      const userId = parseInt(req.params.userId);
+      const { projectId } = req.body;
+
+      if (isNaN(userId) || !projectId) {
+        return res.status(400).json({ message: "معرف المستخدم ومعرف المشروع مطلوبان" });
+      }
+
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+
+      // Check if project exists
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "المشروع غير موجود" });
+      }
+
+      await storage.assignUserToProject({
+        userId: userId,
+        projectId: Number(projectId),
+        assignedBy: req.session.userId,
+      });
+
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "assign_user_to_project",
+        entityType: "user_project",
+        entityId: userId,
+        details: `ربط المستخدم ${user.username} بالمشروع ${project.name}`
+      });
+
+      return res.status(200).json({ message: "تم ربط المستخدم بالمشروع بنجاح" });
+    } catch (error) {
+      console.error("خطأ في ربط المستخدم بالمشروع:", error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في ربط المستخدم بالمشروع" 
+      });
+    }
+  });
+
+  // Remove user from project endpoint
+  app.delete("/api/users/:userId/remove-project/:projectId", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const userRole = req.session.role;
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "غير مصرح - صلاحيات مدير مطلوبة" });
+      }
+
+      const userId = parseInt(req.params.userId);
+      const projectId = parseInt(req.params.projectId);
+
+      if (isNaN(userId) || isNaN(projectId)) {
+        return res.status(400).json({ message: "معرف المستخدم ومعرف المشروع مطلوبان" });
+      }
+
+      const success = await storage.removeUserFromProject(userId, projectId);
+      if (!success) {
+        return res.status(404).json({ message: "الربط غير موجود" });
+      }
+
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "remove_user_from_project",
+        entityType: "user_project",
+        entityId: userId,
+        details: `إزالة ربط المستخدم ${userId} من المشروع ${projectId}`
+      });
+
+      return res.status(200).json({ message: "تم إزالة ربط المستخدم من المشروع بنجاح" });
+    } catch (error) {
+      console.error("خطأ في إزالة ربط المستخدم من المشروع:", error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في إزالة الربط" 
+      });
+    }
+  });
+
   // User projects endpoint - Override version in routes-simple.ts
   app.get("/api/user-projects", async (req: any, res: any) => {
     try {

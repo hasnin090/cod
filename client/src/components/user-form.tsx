@@ -178,11 +178,11 @@ export function UserForm({ onSubmit }: UserFormProps) {
       form.setValue("projectId", undefined);
     } else if (value === "viewer") {
       setShowPermissions(true);
-      form.setValue("permissions", ["viewOnly"]);
+      form.setValue("permissions", ["view_dashboard", "view_projects", "view_transactions", "view_documents"]);
       form.setValue("projectId", undefined);
     } else if (value === "user") {
       setShowPermissions(true);
-      form.setValue("permissions", []);
+      form.setValue("permissions", ["view_dashboard", "view_projects", "manage_project_transactions", "view_project_transactions", "manage_transactions", "view_transactions", "manage_documents", "view_documents"]);
     }
   };
 

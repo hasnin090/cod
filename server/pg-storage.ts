@@ -438,8 +438,8 @@ export class PgStorage implements IStorage {
   async assignUserToProject(userProject: InsertUserProject): Promise<UserProject> {
     try {
       const result = await this.sql`
-        INSERT INTO user_projects (user_id, project_id, role)
-        VALUES (${userProject.userId}, ${userProject.projectId}, ${userProject.role || 'member'})
+        INSERT INTO user_projects (user_id, project_id, assigned_by)
+        VALUES (${userProject.userId}, ${userProject.projectId}, ${userProject.assignedBy || 1})
         RETURNING *
       `;
       return result[0] as UserProject;
@@ -451,10 +451,20 @@ export class PgStorage implements IStorage {
 
   async removeUserFromProject(userId: number, projectId: number): Promise<boolean> {
     try {
-      const result = await this.sql`
+      // أولاً، تحقق من وجود الربط
+      const checkResult = await this.sql`
+        SELECT id FROM user_projects WHERE user_id = ${userId} AND project_id = ${projectId}
+      `;
+      
+      if (checkResult.length === 0) {
+        return false; // الربط غير موجود
+      }
+      
+      // إذا كان موجوداً، احذفه
+      await this.sql`
         DELETE FROM user_projects WHERE user_id = ${userId} AND project_id = ${projectId}
       `;
-      return result.length > 0;
+      return true;
     } catch (error) {
       console.error('Error removing user from project:', error);
       return false;

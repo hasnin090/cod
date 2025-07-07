@@ -25,6 +25,7 @@ import DeferredPayments from './pages/deferred-payments';
 import WhatsAppIntegration from './pages/whatsapp-integration';
 import SystemManagement from './pages/system-management';
 import CompletedWorks from './pages/completed-works';
+import UserProjectsPage from './pages/user-projects';
 
 import { useAuth } from "./hooks/use-auth";
 import { AuthProvider } from "./context/auth-context";
@@ -160,6 +161,9 @@ function AppRoutes() {
               </Route>
               <Route path="/completed-works">
                 {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
+              </Route>
+              <Route path="/user-projects">
+                {user?.role === 'admin' ? <UserProjectsPage /> : <NotFound />}
               </Route>
               <Route component={NotFound} />
             </Switch>
