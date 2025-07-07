@@ -518,13 +518,42 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
   };
   
   const getPermissionText = (permission: string) => {
-    switch (permission) {
-      case 'viewReports': return 'عرض التقارير';
-      case 'manageProjects': return 'إدارة المشاريع';
-      case 'manageTransactions': return 'إدارة المعاملات المالية';
-      case 'manageDocuments': return 'إدارة المستندات';
-      default: return permission;
-    }
+    // خريطة الصلاحيات الكاملة بالعربية
+    const permissionTranslations = {
+      // لوحة التحكم
+      'view_dashboard': 'عرض لوحة التحكم',
+      
+      // إدارة المستخدمين
+      'manage_users': 'إدارة المستخدمين',
+      'view_users': 'عرض المستخدمين',
+      
+      // إدارة المشاريع
+      'manage_projects': 'إدارة المشاريع',
+      'view_projects': 'عرض المشاريع',
+      'manage_project_transactions': 'إدارة معاملات المشاريع',
+      'view_project_transactions': 'عرض معاملات المشاريع',
+      
+      // إدارة المعاملات
+      'manage_transactions': 'إدارة المعاملات',
+      'view_transactions': 'عرض المعاملات',
+      
+      // إدارة المستندات
+      'manage_documents': 'إدارة المستندات',
+      'view_documents': 'عرض المستندات',
+      
+      // التقارير وإعدادات النظام
+      'view_reports': 'عرض التقارير',
+      'view_activity_logs': 'عرض سجل النشاطات',
+      'manage_settings': 'إدارة إعدادات النظام',
+      
+      // صلاحيات إضافية للتوافق مع النظام القديم
+      'viewReports': 'عرض التقارير',
+      'manageProjects': 'إدارة المشاريع',
+      'manageTransactions': 'إدارة المعاملات',
+      'manageDocuments': 'إدارة المستندات',
+    };
+    
+    return permissionTranslations[permission as keyof typeof permissionTranslations] || permission;
   };
   
   if (isLoading) {
