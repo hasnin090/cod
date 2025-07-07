@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { UserForm } from '@/components/user-form';
 import { UserList } from '@/components/user-list';
+import { UserProjectManager } from '@/components/user-project-manager';
 import { queryClient } from '@/lib/queryClient';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, UserIcon, ShieldIcon, EyeIcon } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Users() {
   const { user } = useAuth();
@@ -120,14 +122,23 @@ export default function Users() {
         </div>
       </div>
       
-      <div className="flex flex-col gap-5 sm:gap-6">
-        {/* User Form - في الأعلى */}
-        <div className="w-full fade-in">
-          <UserForm onSubmit={handleUserUpdated} />
-        </div>
-        
-        {/* User List - في الأسفل */}
-        <div className="w-full mt-4 sm:mt-6">
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            <span>إدارة المستخدمين</span>
+          </TabsTrigger>
+          <TabsTrigger value="add" className="flex items-center gap-2">
+            <i className="fas fa-plus h-4 w-4" />
+            <span>إضافة مستخدم</span>
+          </TabsTrigger>
+          <TabsTrigger value="projects" className="flex items-center gap-2">
+            <i className="fas fa-link h-4 w-4" />
+            <span>ربط المشاريع</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] sm:border-2 p-4 sm:p-6 rounded-xl shadow-md sm:shadow-lg fade-in">
             <div className="flex items-center justify-between mb-4 sm:mb-5">
               <h3 className="text-base sm:text-lg md:text-xl font-bold flex items-center space-x-2 space-x-reverse bg-[hsl(var(--primary))/10] dark:bg-[hsl(var(--primary))/20] p-2 sm:p-3 rounded-lg">
@@ -145,8 +156,32 @@ export default function Users() {
               currentUserId={user?.id}
             />
           </div>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="add">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] sm:border-2 p-4 sm:p-6 rounded-xl shadow-md sm:shadow-lg fade-in">
+            <div className="flex items-center mb-4 sm:mb-5">
+              <h3 className="text-base sm:text-lg md:text-xl font-bold flex items-center space-x-2 space-x-reverse bg-[hsl(var(--primary))/10] dark:bg-[hsl(var(--primary))/20] p-2 sm:p-3 rounded-lg">
+                <i className="fas fa-user-plus text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))/80] text-lg sm:text-xl"></i>
+                <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))/90]">إضافة مستخدم جديد</span>
+              </h3>
+            </div>
+            <UserForm onSubmit={handleUserUpdated} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="projects">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] sm:border-2 p-4 sm:p-6 rounded-xl shadow-md sm:shadow-lg fade-in">
+            <div className="flex items-center mb-4 sm:mb-5">
+              <h3 className="text-base sm:text-lg md:text-xl font-bold flex items-center space-x-2 space-x-reverse bg-[hsl(var(--primary))/10] dark:bg-[hsl(var(--primary))/20] p-2 sm:p-3 rounded-lg">
+                <i className="fas fa-link text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))/80] text-lg sm:text-xl"></i>
+                <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))/90]">ربط المستخدمين بالمشاريع</span>
+              </h3>
+            </div>
+            <UserProjectManager />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
