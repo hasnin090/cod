@@ -183,6 +183,15 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * **Result**: System now supports proper multi-user project management where operations persist regardless of user changes
   * **Status**: Project-based access control fully implemented and tested successfully
 
+- July 07, 2025. **Fixed password hashing issue and prepared Supabase migration**:
+  * Resolved password encryption bug where admin couldn't change user passwords properly
+  * Fixed bcrypt hashing in user update endpoint - passwords now properly encrypted when changed
+  * Created comprehensive Supabase migration files with all 559 transactions preserved
+  * Generated manual import guide due to network connectivity issues with automated migration
+  * **Files created**: supabase-import-simple.sql, manual-supabase-import-guide.md, full database backup
+  * **User credentials**: admin/admin123, user "ضحئ"/90909090 (properly hashed)
+  * **Status**: System ready for manual migration to Supabase with all data preserved
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
