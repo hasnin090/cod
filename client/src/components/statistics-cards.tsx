@@ -48,7 +48,6 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
   return (
     <div className="space-y-6">
       {/* تم إزالة بطاقة صندوق المدير بناءً على طلب المستخدم */}
-      
       {/* بطاقات الإحصائيات */}
       <div className={`grid grid-cols-1 ${canViewIncome ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-1 lg:grid-cols-2'} gap-3 sm:gap-4 lg:gap-4 xl:gap-5`}>
         {/* بطاقة الإيرادات - تظهر فقط للمستخدمين المصرح لهم */}
@@ -61,7 +60,7 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1 min-w-0 pr-2">
                 <h3 className="text-gray-800 dark:text-gray-200 text-lg font-bold mb-3">إجمالي الإيرادات</h3>
-                <p className={`${getTextSize(formatCurrency(income))} font-bold ${isShowingAdmin ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} id="totalIncome">
+                <p className="font-bold text-green-600 dark:text-green-400 text-[20px]" id="totalIncome">
                   {formatCurrency(income)}
                 </p>
               </div>
