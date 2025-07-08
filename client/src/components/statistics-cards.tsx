@@ -94,7 +94,7 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1 min-w-0 pr-2">
               <h3 className="text-gray-800 dark:text-gray-200 text-lg font-bold mb-3">إجمالي المصروفات</h3>
-              <p className={`${getTextSize(formatCurrency(expenses))} font-bold ${isShowingAdmin ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`} id="totalExpenses">
+              <p className="font-bold text-red-600 dark:text-red-400 text-[20px]" id="totalExpenses">
                 {formatCurrency(expenses)}
               </p>
             </div>
