@@ -716,7 +716,13 @@ async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId as number;
-      const userRole = req.session.userRole as string;
+      
+      // Get user role from database since session doesn't store it
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+      const userRole = user.role;
       
       let transactions, projects, deferredPayments;
       

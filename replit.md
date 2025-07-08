@@ -192,6 +192,15 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
   * **User credentials**: admin/admin123, user "ضحئ"/90909090 (properly hashed)
   * **Status**: System ready for manual migration to Supabase with all data preserved
 
+- July 08, 2025. **Fixed critical dashboard security and data isolation issues**:
+  * Resolved bcrypt import error in server/index.ts that prevented user creation
+  * Fixed dashboard endpoint to properly filter data by user's assigned projects
+  * **Security Fix**: Regular users now see only their project data, not all system transactions
+  * Admin users see comprehensive view of all projects and transactions (4.3B+ in total)
+  * Regular users see only their assigned project data (e.g., user "حسنين" sees only project "15 دونم")
+  * Dashboard now correctly calculates separate admin fund vs. project totals
+  * **Status**: Data isolation and dashboard functionality fully operational
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
