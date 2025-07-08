@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import path from "path";
 import pgSession from 'connect-pg-simple';
+import bcrypt from "bcryptjs";
 
 const app = express();
 
@@ -150,7 +151,6 @@ app.use((req, res, next) => {
       }
 
       // Hash password
-      const bcrypt = require('bcryptjs');
       userData.password = await bcrypt.hash(userData.password, 10);
       
       // Extract projectId before creating user
