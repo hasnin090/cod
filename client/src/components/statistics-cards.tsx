@@ -129,7 +129,7 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1 min-w-0 pr-2">
                 <h3 className="text-gray-800 dark:text-gray-200 text-lg font-bold mb-3">صافي الربح</h3>
-                <p className={`${getTextSize(formatCurrency(profit))} font-bold ${isShowingAdmin ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`} id="netProfit">
+                <p className="font-bold text-blue-600 dark:text-blue-400 text-[20px]" id="netProfit">
                   {formatCurrency(profit)}
                 </p>
               </div>
