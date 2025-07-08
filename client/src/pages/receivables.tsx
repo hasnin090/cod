@@ -98,7 +98,13 @@ export default function Receivables() {
         credentials: "include",
       });
       if (!response.ok) throw new Error("فشل في تحميل تفاصيل المستحق");
-      return response.json();
+      const payments = await response.json();
+      
+      // تحويل البيانات لتتضمن معلومات المستحق والدفعات
+      return {
+        ...selectedReceivable,
+        payments: payments || []
+      };
     },
     enabled: !!selectedReceivable?.id && showDetails,
     staleTime: 1000 * 60 * 2, // دقيقتان
