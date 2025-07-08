@@ -1547,7 +1547,29 @@ export class PgStorage implements IStorage {
   async getDeferredPayment(id: number): Promise<DeferredPayment | undefined> {
     try {
       const result = await this.sql`SELECT * FROM deferred_payments WHERE id = ${id}`;
-      return result[0] as DeferredPayment | undefined;
+      const row = result[0];
+      
+      if (!row) return undefined;
+      
+      // تحويل من snake_case إلى camelCase
+      return {
+        id: row.id,
+        beneficiaryName: row.beneficiary_name,
+        totalAmount: row.total_amount,
+        paidAmount: row.paid_amount,
+        remainingAmount: row.remaining_amount,
+        projectId: row.project_id,
+        userId: row.user_id,
+        status: row.status,
+        description: row.description,
+        dueDate: row.due_date,
+        installments: row.installments,
+        paymentFrequency: row.payment_frequency,
+        notes: row.notes,
+        completedAt: row.completed_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      } as DeferredPayment;
     } catch (error) {
       console.error('Error getting deferred payment:', error);
       return undefined;

@@ -897,11 +897,28 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       // البحث عن المعاملات المرتبطة بهذا المستحق
       const transactions = await storage.listTransactions();
-      const relatedTransactions = transactions.filter(t => 
-        t.description?.includes(payment.beneficiaryName) || 
-        t.description?.includes(`مستحق:${paymentId}`) ||
-        t.description?.includes(`مستحق ${paymentId}`)
-      );
+      
+      // استخدام beneficiaryName سواء كان في camelCase أو snake_case
+      const beneficiaryName = payment.beneficiaryName || (payment as any).beneficiary_name || 'غير محدد';
+      
+      const relatedTransactions = transactions.filter(t => {
+        const description = t.description || '';
+        
+        // البحث عن اسم المستحق في الوصف
+        const matchesBeneficiary = description.includes(beneficiaryName);
+        
+        // البحث عن معرف المستحق في الوصف
+        const matchesId = description.includes(`مستحق:${paymentId}`) || 
+                         description.includes(`مستحق ${paymentId}`) ||
+                         description.includes(`مستحق: ${paymentId}`);
+        
+        // البحث عن كلمات مفتاحية أخرى
+        const matchesKeywords = description.includes('دفع قسط') || 
+                               description.includes('دفعة') ||
+                               description.includes('قسط');
+        
+        return matchesBeneficiary || matchesId;
+      });
 
       // تنسيق البيانات للعرض
       const paymentHistory = relatedTransactions.map(transaction => ({
