@@ -715,10 +715,28 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get("/api/dashboard", authenticate, async (req: Request, res: Response) => {
     try {
-      // Calculate actual dashboard stats from database
-      const transactions = await storage.listTransactions();
-      const projects = await storage.listProjects();
-      const deferredPayments = await storage.listDeferredPayments();
+      const userId = req.session.userId as number;
+      const userRole = req.session.userRole as string;
+      
+      let transactions, projects, deferredPayments;
+      
+      // Admin sees all data, regular users see only their assigned project data
+      if (userRole === 'admin') {
+        transactions = await storage.listTransactions();
+        projects = await storage.listProjects();
+        deferredPayments = await storage.listDeferredPayments();
+      } else {
+        // Get transactions only for user's assigned projects
+        transactions = await storage.getTransactionsForUserProjects(userId);
+        projects = await storage.getUserProjects(userId);
+        deferredPayments = await storage.listDeferredPayments();
+        
+        // Filter deferred payments for user's projects only
+        const userProjectIds = projects.map(p => p.id);
+        deferredPayments = deferredPayments.filter(dp => 
+          userProjectIds.includes(dp.projectId || 0)
+        );
+      }
       
       // Split transactions between admin (no project) and project transactions
       const adminTransactions = transactions.filter(t => !t.projectId);
