@@ -722,11 +722,12 @@ async function registerRoutes(app: Express): Promise<Server> {
       
       // Admin sees all data, regular users see only their assigned project data
       if (userRole === 'admin') {
+        // Admin sees ALL transactions and projects
         transactions = await storage.listTransactions();
         projects = await storage.listProjects();
         deferredPayments = await storage.listDeferredPayments();
       } else {
-        // Get transactions only for user's assigned projects
+        // Regular users see ONLY their assigned project transactions
         transactions = await storage.getTransactionsForUserProjects(userId);
         projects = await storage.getUserProjects(userId);
         deferredPayments = await storage.listDeferredPayments();
@@ -738,36 +739,56 @@ async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // Split transactions between admin (no project) and project transactions
-      const adminTransactions = transactions.filter(t => !t.projectId);
-      const projectTransactions = transactions.filter(t => t.projectId);
+      let adminTotalIncome = 0, adminTotalExpenses = 0, adminNetProfit = 0;
+      let projectTotalIncome = 0, projectTotalExpenses = 0, projectNetProfit = 0;
+      let totalIncome = 0, totalExpenses = 0, netProfit = 0;
       
-      // Calculate admin fund totals
-      const adminTotalIncome = adminTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const adminTotalExpenses = adminTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const adminNetProfit = adminTotalIncome - adminTotalExpenses;
-      
-      // Calculate project totals
-      const projectTotalIncome = projectTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const projectTotalExpenses = projectTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const projectNetProfit = projectTotalIncome - projectTotalExpenses;
-      
-      // Overall totals
-      const totalIncome = adminTotalIncome + projectTotalIncome;
-      const totalExpenses = adminTotalExpenses + projectTotalExpenses;
-      const netProfit = totalIncome - totalExpenses;
+      if (userRole === 'admin') {
+        // Admin: calculate separate admin fund and project totals
+        const adminTransactions = transactions.filter(t => !t.projectId);
+        const projectTransactions = transactions.filter(t => t.projectId);
+        
+        adminTotalIncome = adminTransactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        adminTotalExpenses = adminTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        adminNetProfit = adminTotalIncome - adminTotalExpenses;
+        
+        projectTotalIncome = projectTransactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        projectTotalExpenses = projectTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        projectNetProfit = projectTotalIncome - projectTotalExpenses;
+        
+        // Overall totals for admin
+        totalIncome = adminTotalIncome + projectTotalIncome;
+        totalExpenses = adminTotalExpenses + projectTotalExpenses;
+        netProfit = totalIncome - totalExpenses;
+      } else {
+        // Regular user: show only their project data (no admin fund)
+        totalIncome = transactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        totalExpenses = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        netProfit = totalIncome - totalExpenses;
+        
+        // For regular users, project totals = total (since they only see project data)
+        projectTotalIncome = totalIncome;
+        projectTotalExpenses = totalExpenses;
+        projectNetProfit = netProfit;
+      }
       
       // Get recent transactions (last 10)
       const recentTransactions = transactions
