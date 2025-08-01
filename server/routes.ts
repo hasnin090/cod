@@ -4286,7 +4286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions/export/excel", authenticate, async (req: Request, res: Response) => {
     try {
       console.log('🔄 بدء تصدير CSV...');
-      const { simpleExcelExporter } = await import('./simple-excel-export');
+      const { simpleExcelExporter } = await import('./simple-excel-export.js');
       const userId = req.session?.userId;
       const userRole = req.session?.role;
       
