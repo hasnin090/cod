@@ -128,6 +128,14 @@ The system uses a comprehensive PostgreSQL schema with the following core tables
 
 ## Changelog
 
+- August 01, 2025. **Security dependency updates successfully completed**:
+  * Updated `multer` to v2.0.1 and `form-data` to latest versions per security scan requirements
+  * Fixed missing `/api/upload-document` endpoint in routes-simple.ts that was causing frontend routing issues
+  * Verified all file upload functionality working correctly with multer v2 (both documents and transaction attachments)
+  * Tested document uploads, transaction uploads, and file storage - all functioning properly
+  * No breaking changes detected - upload functionality fully operational after updates
+  * **Status**: Application secure and fully functional after dependency updates
+
 - July 03, 2025. Initial setup
 - July 03, 2025. Fixed application startup issues by removing problematic backup system imports and creating simplified routes. Application now running successfully with core functionality.
 - July 04, 2025. Implemented cloud-first storage architecture transition:
