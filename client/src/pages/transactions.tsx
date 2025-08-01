@@ -210,7 +210,7 @@ export default function Transactions() {
     });
   };
 
-  // تصدير Excel المحسّن
+  // تصدير Excel المحسّن مع التحميل المباشر
   const exportToExcelMutation = useMutation({
     mutationFn: async (exportFilters: any) => {
       const response = await fetch('/api/transactions/export/excel', {
@@ -225,23 +225,28 @@ export default function Transactions() {
         throw new Error('فشل في تصدير البيانات');
       }
 
+      // إذا كان النوع CSV، نحميل الملف مباشرة
+      if (response.headers.get('content-type')?.includes('text/csv')) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `transactions_export_${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        return { success: true, message: 'تم تحميل الملف' };
+      }
+
       return response.json();
     },
     onSuccess: (data) => {
       console.log('استجابة التصدير:', data);
       if (data.success) {
-        // تحميل الملف
-        const link = document.createElement('a');
-        link.href = data.filePath;
-        link.download = data.filePath.split('/').pop() || 'transactions_export.csv';
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
         toast({
           title: "نجح التصدير",
-          description: "تم تصدير البيانات إلى ملف CSV بنجاح",
+          description: "تم تصدير البيانات إلى ملف CSV بنجاح ويمكن فتحه في Excel",
         });
       } else {
         toast({

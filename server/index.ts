@@ -513,17 +513,16 @@ app.use((req, res, next) => {
       const fileName = `transactions_export_${timestamp}.csv`;
       const filePath = path.join(exportDir, fileName);
       
-      // كتابة الملف مع BOM للدعم العربي
+      console.log(`✅ تم إنشاء ملف CSV مع ${transactions.length} معاملة`);
+      
+      // إرسال الملف مباشرة للتحميل بدلاً من إرجاع رابط
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="transactions_export_${timestamp}.csv"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      // إرسال الملف مع BOM للدعم العربي في Excel
       const bom = '\uFEFF';
-      fs.writeFileSync(filePath, bom + csvContent, 'utf8');
-      
-      console.log(`✅ تم إنشاء ملف CSV: ${filePath}`);
-      
-      res.json({
-        success: true,
-        filePath: `/exports/${fileName}`,
-        message: 'تم تصدير البيانات بنجاح كملف CSV (يفتح في Excel)'
-      });
+      res.send(bom + csvContent);
       
     } catch (error) {
       console.error('❌ خطأ في تصدير CSV:', error);
