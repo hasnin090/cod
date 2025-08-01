@@ -23,10 +23,8 @@ import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
 import { eq, and } from "drizzle-orm";
-import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { 
@@ -48,31 +46,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// إعداد multer لمعالجة تحميل الملفات
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      // إنشاء مجلد التحميلات إذا لم يكن موجودًا
-      const uploadDir = './uploads';
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-      // إنشاء اسم فريد للملف
-      const uniqueName = `${Date.now()}_${uuidv4()}_${file.originalname.replace(/\s+/g, '_')}`;
-      cb(null, uniqueName);
-    }
-  }),
-  limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB
-  },
-  fileFilter: (req, file, cb) => {
-    // التحقق من نوع الملف (اختياري)
-    cb(null, true);
-  }
-});
+import { documentUpload } from './multer-config';
 
 async function registerRoutes(app: Express): Promise<Server> {
   const MemoryStoreSession = MemoryStore(session);
@@ -1197,7 +1171,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // رفع ملف جديد للسحابة مع نسخة احتياطية محلية
-  app.post("/api/upload-cloud", upload.single('file'), authenticate, async (req: Request, res: Response) => {
+  app.post("/api/upload-cloud", documentUpload.single('file'), authenticate, async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "لم يتم رفع أي ملف" });
@@ -1257,7 +1231,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // مسار تحميل المستندات مع FormData
-  app.post("/api/upload-document", authenticate, upload.single('file'), async (req: Request, res: Response) => {
+  app.post("/api/upload-document", authenticate, documentUpload.single('file'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "لم يتم تقديم ملف للتحميل" });

@@ -9,22 +9,8 @@ import bcrypt from "bcryptjs";
 const app = express();
 
 // Set up API routes BEFORE any other middleware to prevent Vite interference
-import multer from "multer";
 import { storage } from "./storage";
-
-// Set up multer for file uploads
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, 'uploads/transactions');
-    },
-    filename: (req, file, cb) => {
-      const uniqueName = `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
-      cb(null, uniqueName);
-    }
-  }),
-  limits: { fileSize: 20 * 1024 * 1024 }
-});
+import { transactionUpload } from "./multer-config";
 
 // Early API route registration to prevent Vite interference
 app.use(express.json());
@@ -52,7 +38,7 @@ app.use(session({
 }));
 
 // Simple transaction creation endpoint
-app.post("/api/transactions", upload.single('file'), async (req: any, res: any) => {
+app.post("/api/transactions", transactionUpload.single('file'), async (req: any, res: any) => {
   try {
     if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: "غير مصرح" });
