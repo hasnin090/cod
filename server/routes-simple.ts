@@ -736,13 +736,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         // Regular users see ONLY their assigned project transactions
         transactions = await storage.getTransactionsForUserProjects(userId);
         projects = await storage.getUserProjects(userId);
-        deferredPayments = await storage.listDeferredPayments();
-        
-        // Filter deferred payments for user's projects only
-        const userProjectIds = projects.map(p => p.id);
-        deferredPayments = deferredPayments.filter(dp => 
-          userProjectIds.includes(dp.projectId || 0)
-        );
+        deferredPayments = await storage.getDeferredPaymentsForUserProjects(userId);
       }
       
       let adminTotalIncome = 0, adminTotalExpenses = 0, adminNetProfit = 0;
@@ -870,10 +864,24 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Deferred payments route
+  // Deferred payments route - Project-based access control
   app.get("/api/deferred-payments", authenticate, async (req: Request, res: Response) => {
     try {
-      const deferredPayments = await storage.listDeferredPayments();
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      let deferredPayments;
+      
+      if (user?.role === 'admin') {
+        // Admin sees all deferred payments
+        deferredPayments = await storage.listDeferredPayments();
+        console.log(`Admin ${user.username} retrieved ${deferredPayments.length} total deferred payments`);
+      } else {
+        // Regular users see only deferred payments for their assigned projects
+        deferredPayments = await storage.getDeferredPaymentsForUserProjects(userId);
+        console.log(`User ${user?.username} retrieved ${deferredPayments.length} deferred payments for their projects`);
+      }
+      
       return res.status(200).json(deferredPayments);
     } catch (error) {
       console.error('Deferred payments error:', error);

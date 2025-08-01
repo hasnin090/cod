@@ -116,6 +116,7 @@ export interface IStorage {
   updateDeferredPayment(id: number, payment: Partial<DeferredPayment>): Promise<DeferredPayment | undefined>;
   listDeferredPayments(): Promise<DeferredPayment[]>;
   deleteDeferredPayment(id: number): Promise<boolean>;
+  getDeferredPaymentsForUserProjects(userId: number): Promise<DeferredPayment[]>;
   payDeferredPaymentInstallment(id: number, amount: number, userId: number): Promise<{ payment: DeferredPayment; transaction?: Transaction }>;
 
   // Employees
@@ -837,6 +838,10 @@ export class MemStorage implements IStorage {
   }
 
   async listDeferredPayments(): Promise<DeferredPayment[]> {
+    return [];
+  }
+  
+  async getDeferredPaymentsForUserProjects(userId: number): Promise<DeferredPayment[]> {
     return [];
   }
 

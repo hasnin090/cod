@@ -1718,6 +1718,53 @@ export class PgStorage implements IStorage {
     }
   }
 
+  /**
+   * استرجاع المستحقات للمشاريع المخصصة للمستخدم فقط
+   * كل مستخدم يرى فقط مستحقات المشاريع التي هو مخصص لها
+   */
+  async getDeferredPaymentsForUserProjects(userId: number): Promise<DeferredPayment[]> {
+    try {
+      console.log(`Getting deferred payments for user ${userId} projects...`);
+      
+      const result = await this.sql`
+        SELECT 
+          dp.*,
+          p.name as project_name
+        FROM deferred_payments dp
+        LEFT JOIN projects p ON dp.project_id = p.id
+        INNER JOIN user_projects up ON dp.project_id = up.project_id
+        WHERE up.user_id = ${userId}
+        ORDER BY dp.created_at DESC
+      `;
+      
+      const mappedResults = result.map(row => ({
+        id: row.id,
+        beneficiaryName: row.beneficiary_name,
+        totalAmount: row.total_amount,
+        paidAmount: row.paid_amount,
+        remainingAmount: row.remaining_amount,
+        projectId: row.project_id,
+        userId: row.user_id,
+        status: row.status,
+        description: row.description,
+        dueDate: row.due_date,
+        installments: row.installments,
+        paymentFrequency: row.payment_frequency,
+        notes: row.notes,
+        completedAt: row.completed_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        projectName: row.project_name
+      })) as any[];
+
+      console.log(`Found ${mappedResults.length} deferred payments for user ${userId}`);
+      return mappedResults;
+    } catch (error) {
+      console.error('Error getting deferred payments for user projects:', error);
+      return [];
+    }
+  }
+
   async deleteDeferredPayment(id: number): Promise<boolean> {
     try {
       // Check if payment exists first
