@@ -422,6 +422,114 @@ app.use((req, res, next) => {
     }
   });
 
+  // Excel/CSV Export endpoint
+  app.post("/api/transactions/export/excel", async (req: any, res: any) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      console.log('🔄 بدء تصدير CSV...');
+      const userId = req.session.userId;
+      const userRole = req.session.role;
+      
+      const filters = {
+        projectId: req.body.projectId ? parseInt(req.body.projectId) : undefined,
+        type: req.body.type || undefined,
+        dateFrom: req.body.dateFrom || undefined,
+        dateTo: req.body.dateTo || undefined,
+        userId,
+        userRole
+      };
+      
+      console.log('📊 تصدير CSV مع الفلاتر:', filters);
+      
+      // استعلام قاعدة البيانات مباشرة
+      const transactions = await storage.getTransactions(userId, userRole);
+      
+      if (!transactions || transactions.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'لا توجد بيانات للتصدير'
+        });
+      }
+      
+      console.log(`📈 تم جلب ${transactions.length} معاملة للتصدير`);
+      
+      // تحضير بيانات CSV
+      const csvHeaders = userRole === 'viewer' 
+        ? ['التاريخ', 'الوصف', 'المشروع', 'نوع المصروف', 'المبلغ']
+        : ['التاريخ', 'الوصف', 'المشروع', 'النوع', 'نوع المصروف', 'المبلغ'];
+      
+      let csvContent = csvHeaders.join(',') + '\n';
+      
+      for (const transaction of transactions) {
+        const formattedDate = new Date(transaction.date).toLocaleDateString('ar-IQ');
+        const description = (transaction.description || '').replace(/,/g, ';').replace(/"/g, '""');
+        const projectName = (transaction.projectName || 'بدون مشروع').replace(/,/g, ';').replace(/"/g, '""');
+        const expenseType = (transaction.expenseType || '').replace(/,/g, ';').replace(/"/g, '""');
+        const amount = transaction.amount || 0;
+        
+        let csvRow;
+        if (userRole === 'viewer') {
+          csvRow = [
+            `"${formattedDate}"`,
+            `"${description}"`,
+            `"${projectName}"`,
+            `"${expenseType}"`,
+            amount
+          ].join(',');
+        } else {
+          const typeText = transaction.type === 'income' ? 'إيراد' : 'مصروف';
+          csvRow = [
+            `"${formattedDate}"`,
+            `"${description}"`,
+            `"${projectName}"`,
+            `"${typeText}"`,
+            `"${expenseType}"`,
+            amount
+          ].join(',');
+        }
+        
+        csvContent += csvRow + '\n';
+      }
+      
+      // إنشاء مجلد التصدير
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const exportDir = './exports';
+      if (!fs.existsSync(exportDir)) {
+        fs.mkdirSync(exportDir, { recursive: true });
+      }
+      
+      // إنشاء اسم الملف
+      const timestamp = Date.now();
+      const fileName = `transactions_export_${timestamp}.csv`;
+      const filePath = path.join(exportDir, fileName);
+      
+      // كتابة الملف مع BOM للدعم العربي
+      const bom = '\uFEFF';
+      fs.writeFileSync(filePath, bom + csvContent, 'utf8');
+      
+      console.log(`✅ تم إنشاء ملف CSV: ${filePath}`);
+      
+      res.json({
+        success: true,
+        filePath: `/exports/${fileName}`,
+        message: 'تم تصدير البيانات بنجاح كملف CSV (يفتح في Excel)'
+      });
+      
+    } catch (error) {
+      console.error('❌ خطأ في تصدير CSV:', error);
+      res.status(500).json({
+        success: false,
+        message: `فشل في تصدير البيانات: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`,
+        error: error instanceof Error ? error.stack : String(error)
+      });
+    }
+  });
+
   // Register API routes AFTER custom endpoints
   const server = await registerRoutes(app);
 
