@@ -4286,7 +4286,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions/export/excel", authenticate, async (req: Request, res: Response) => {
     try {
       console.log('🔄 بدء تصدير CSV...');
-      const { simpleExcelExporter } = await import('./simple-excel-export.js');
       const userId = req.session?.userId;
       const userRole = req.session?.role;
       
@@ -4301,15 +4300,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('📊 تصدير CSV مع الفلاتر:', filters);
       
-      const filePath = await simpleExcelExporter.exportTransactionsAsCSV(filters);
+      // استعلام قاعدة البيانات
+      const sql = neon(process.env.DATABASE_URL!);
       
-      console.log('✅ تم إنشاء ملف التصدير:', filePath);
+      let query = `
+        SELECT 
+          t.id,
+          t.date,
+          t.amount,
+          t.type,
+          t.description,
+          t.expense_type,
+          p.name as project_name,
+          t.created_at
+        FROM transactions t
+        LEFT JOIN projects p ON t.project_id = p.id
+        WHERE 1=1
+      `;
+      
+      const queryParams: any[] = [];
+      let paramCount = 1;
+      
+      if (filters.projectId) {
+        query += ` AND t.project_id = $${paramCount}`;
+        queryParams.push(filters.projectId);
+        paramCount++;
+      }
+      
+      if (filters.type) {
+        query += ` AND t.type = $${paramCount}`;
+        queryParams.push(filters.type);
+        paramCount++;
+      }
+      
+      if (filters.dateFrom) {
+        query += ` AND t.date >= $${paramCount}`;
+        queryParams.push(filters.dateFrom);
+        paramCount++;
+      }
+      
+      if (filters.dateTo) {
+        query += ` AND t.date <= $${paramCount}`;
+        queryParams.push(filters.dateTo);
+        paramCount++;
+      }
+      
+      if (filters.userRole === 'viewer') {
+        query += ` AND t.type != 'income'`;
+      }
+      
+      query += ` ORDER BY t.date DESC`;
+      
+      console.log('🔍 تنفيذ استعلام:', query);
+      const transactions = await sql(query, queryParams);
+      
+      if (!transactions || transactions.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'لا توجد بيانات للتصدير'
+        });
+      }
+      
+      console.log(`📈 تم جلب ${transactions.length} معاملة للتصدير`);
+      
+      // تحضير بيانات CSV
+      const csvHeaders = filters.userRole === 'viewer' 
+        ? ['التاريخ', 'الوصف', 'المشروع', 'نوع المصروف', 'المبلغ']
+        : ['التاريخ', 'الوصف', 'المشروع', 'النوع', 'نوع المصروف', 'المبلغ'];
+      
+      let csvContent = csvHeaders.join(',') + '\n';
+      
+      for (const transaction of transactions) {
+        const formattedDate = new Date(transaction.date).toLocaleDateString('ar-IQ');
+        const description = (transaction.description || '').replace(/,/g, ';').replace(/"/g, '""');
+        const projectName = (transaction.project_name || 'بدون مشروع').replace(/,/g, ';').replace(/"/g, '""');
+        const expenseType = (transaction.expense_type || '').replace(/,/g, ';').replace(/"/g, '""');
+        const amount = transaction.amount || 0;
+        
+        let csvRow;
+        if (filters.userRole === 'viewer') {
+          csvRow = [
+            `"${formattedDate}"`,
+            `"${description}"`,
+            `"${projectName}"`,
+            `"${expenseType}"`,
+            amount
+          ].join(',');
+        } else {
+          const typeText = transaction.type === 'income' ? 'إيراد' : 'مصروف';
+          csvRow = [
+            `"${formattedDate}"`,
+            `"${description}"`,
+            `"${projectName}"`,
+            `"${typeText}"`,
+            `"${expenseType}"`,
+            amount
+          ].join(',');
+        }
+        
+        csvContent += csvRow + '\n';
+      }
+      
+      // إنشاء مجلد التصدير
+      const exportDir = './exports';
+      if (!fs.existsSync(exportDir)) {
+        fs.mkdirSync(exportDir, { recursive: true });
+      }
+      
+      // إنشاء اسم الملف
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] + '-' + 
+                       new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+      const fileName = `transactions_export_${timestamp}.csv`;
+      const filePath = path.join(exportDir, fileName);
+      
+      // كتابة الملف مع BOM للدعم العربي
+      const bom = '\uFEFF';
+      fs.writeFileSync(filePath, bom + csvContent, 'utf8');
+      
+      console.log(`✅ تم إنشاء ملف CSV: ${filePath}`);
       
       res.json({
         success: true,
-        filePath,
+        filePath: `/exports/${fileName}`,
         message: 'تم تصدير البيانات بنجاح كملف CSV (يفتح في Excel)'
       });
+      
     } catch (error) {
       console.error('❌ خطأ في تصدير CSV:', error);
       res.status(500).json({
