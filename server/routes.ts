@@ -5155,5 +5155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // تقديم ملفات التصدير
+  const express = require('express');
+  app.use('/exports', express.static(path.join(__dirname, '..', 'exports')));
+
   return httpServer;
 }
