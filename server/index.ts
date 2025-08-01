@@ -444,8 +444,13 @@ app.use((req, res, next) => {
       
       console.log('📊 تصدير CSV مع الفلاتر:', filters);
       
-      // استعلام قاعدة البيانات مباشرة
-      const transactions = await storage.getTransactions(userId, userRole);
+      // جلب المعاملات حسب دور المستخدم
+      let transactions;
+      if (userRole === 'admin' || userRole === 'manager') {
+        transactions = await storage.listTransactions();
+      } else {
+        transactions = await storage.getTransactionsForUserProjects(userId);
+      }
       
       if (!transactions || transactions.length === 0) {
         return res.status(400).json({
