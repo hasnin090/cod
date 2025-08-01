@@ -16,6 +16,7 @@ interface ExportFilters {
 export const simpleExcelExporter = {
   async exportTransactionsAsCSV(filters: ExportFilters): Promise<string> {
     try {
+      console.log('📋 بدء تصدير المعاملات مع الفلاتر:', filters);
       const sql = neon(process.env.DATABASE_URL!);
       
       // بناء استعلام SQL مع الفلاتر

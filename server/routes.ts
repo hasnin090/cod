@@ -4285,6 +4285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // تصدير المعاملات إلى Excel/CSV
   app.post("/api/transactions/export/excel", authenticate, async (req: Request, res: Response) => {
     try {
+      console.log('🔄 بدء تصدير CSV...');
       const { simpleExcelExporter } = await import('./simple-excel-export');
       const userId = req.session?.userId;
       const userRole = req.session?.role;
@@ -4298,11 +4299,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userRole
       };
       
-      console.log('تصدير CSV مع الفلاتر:', filters);
+      console.log('📊 تصدير CSV مع الفلاتر:', filters);
       
       const filePath = await simpleExcelExporter.exportTransactionsAsCSV(filters);
       
-      console.log('تم إنشاء ملف التصدير:', filePath);
+      console.log('✅ تم إنشاء ملف التصدير:', filePath);
       
       res.json({
         success: true,
@@ -4310,10 +4311,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'تم تصدير البيانات بنجاح كملف CSV (يفتح في Excel)'
       });
     } catch (error) {
-      console.error('خطأ في تصدير CSV:', error);
+      console.error('❌ خطأ في تصدير CSV:', error);
       res.status(500).json({
         success: false,
-        message: 'فشل في تصدير البيانات'
+        message: `فشل في تصدير البيانات: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`,
+        error: error instanceof Error ? error.stack : String(error)
       });
     }
   });
@@ -5158,13 +5160,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // تقديم ملفات التصدير
-  app.use('/exports', (req, res, next) => {
-    // إضافة headers للتحميل
-    res.setHeader('Content-Disposition', 'attachment');
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    next();
-  });
-  app.use('/exports', require('express').static(path.join(__dirname, '..', 'exports')));
+  app.use('/exports', require('express').static(path.join(__dirname, '..', 'exports'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.csv')) {
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename=' + path.basename(filePath));
+      }
+    }
+  }));
 
   return httpServer;
 }
