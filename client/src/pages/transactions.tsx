@@ -228,18 +228,26 @@ export default function Transactions() {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('استجابة التصدير:', data);
       if (data.success) {
         // تحميل الملف
         const link = document.createElement('a');
         link.href = data.filePath;
-        link.download = data.filePath.split('/').pop() || 'transactions_export.xlsx';
+        link.download = data.filePath.split('/').pop() || 'transactions_export.csv';
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         toast({
           title: "نجح التصدير",
-          description: "تم تصدير البيانات إلى ملف Excel بنجاح",
+          description: "تم تصدير البيانات إلى ملف CSV بنجاح",
+        });
+      } else {
+        toast({
+          title: "خطأ في التصدير",
+          description: data.message || "فشل في تصدير البيانات",
+          variant: "destructive",
         });
       }
     },

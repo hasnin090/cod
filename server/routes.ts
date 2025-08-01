@@ -4302,6 +4302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const filePath = await simpleExcelExporter.exportTransactionsAsCSV(filters);
       
+      console.log('تم إنشاء ملف التصدير:', filePath);
+      
       res.json({
         success: true,
         filePath,
@@ -5156,8 +5158,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // تقديم ملفات التصدير
-  const express = require('express');
-  app.use('/exports', express.static(path.join(__dirname, '..', 'exports')));
+  app.use('/exports', (req, res, next) => {
+    // إضافة headers للتحميل
+    res.setHeader('Content-Disposition', 'attachment');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    next();
+  });
+  app.use('/exports', require('express').static(path.join(__dirname, '..', 'exports')));
 
   return httpServer;
 }
