@@ -359,7 +359,7 @@ export class PgStorage implements IStorage {
           ${project.description || null}, 
           ${project.startDate || new Date()}, 
           ${project.status || 'active'},
-          ${project.progress || 0},
+          ${0},
           ${project.budget || 0}, 
           ${project.spent || 0}, 
           ${project.createdBy}
@@ -722,11 +722,11 @@ export class PgStorage implements IStorage {
       
       // أولاً: حذف جميع القيود المرتبطة من جدول ledger_entries
       const ledgerResult = await this.sql`DELETE FROM ledger_entries WHERE transaction_id = ${id}`;
-      console.log(`Deleted ${ledgerResult.count || 0} ledger entries for transaction ${id}`);
+      console.log(`Deleted ${ledgerResult.length || 0} ledger entries for transaction ${id}`);
       
       // ثانياً: حذف جميع الروابط من جدول document_transaction_links
       const linksResult = await this.sql`DELETE FROM document_transaction_links WHERE transaction_id = ${id}`;
-      console.log(`Deleted ${linksResult.count || 0} document links for transaction ${id}`);
+      console.log(`Deleted ${linksResult.length || 0} document links for transaction ${id}`);
       
       // ثالثاً: حذف المعاملة نفسها
       const result = await this.sql`DELETE FROM transactions WHERE id = ${id} RETURNING id`;
@@ -1483,7 +1483,7 @@ export class PgStorage implements IStorage {
     try {
       const result = await this.sql`
         INSERT INTO account_categories (name, description, category_type)
-        VALUES (${category.name}, ${category.description || null}, ${category.categoryType})
+        VALUES (${category.name}, ${category.description || null}, 'expense')
         RETURNING *
       `;
       return result[0] as AccountCategory;
@@ -1506,10 +1506,7 @@ export class PgStorage implements IStorage {
         setParts.push(`description = $${setParts.length + 1}`);
         values.push(category.description);
       }
-      if (category.categoryType !== undefined) {
-        setParts.push(`category_type = $${setParts.length + 1}`);
-        values.push(category.categoryType);
-      }
+      // categoryType is not used in current schema
 
       if (setParts.length === 0) return this.getAccountCategory(id);
 
@@ -1836,7 +1833,7 @@ export class PgStorage implements IStorage {
           if (matchingExpenseType && transaction) {
             try {
               const ledgerEntry = {
-                date: new Date().toISOString(),
+                date: new Date(),
                 description: transactionDescription,
                 amount: paymentAmount,
                 debitAmount: paymentAmount,
@@ -2000,7 +1997,7 @@ export class PgStorage implements IStorage {
     try {
       const result = await this.sql`
         INSERT INTO completed_works (title, description, amount, date, category, file_url, file_type, created_by)
-        VALUES (${work.title}, ${work.description || null}, ${work.amount || null}, ${work.date}, ${work.category || null}, ${work.fileUrl || null}, ${work.fileType || null}, ${work.createdBy})
+        VALUES (${work.title}, ${work.description || null}, ${work.amount || null}, ${work.date}, ${work.category || null}, ${work.fileUrl || null}, ${work.fileType || null}, ${1})
         RETURNING *
       `;
       return result[0] as CompletedWork;
@@ -2054,12 +2051,8 @@ export class PgStorage implements IStorage {
 
       if (setParts.length === 0) return undefined;
 
-      const result = await this.sql`
-        UPDATE completed_works 
-        SET ${this.sql.unsafe(setParts.join(', '))}, updated_at = NOW()
-        WHERE id = ${id}
-        RETURNING *
-      `;
+      const updateQuery = `UPDATE completed_works SET ${setParts.join(', ')}, updated_at = NOW() WHERE id = $${setParts.length + 1} RETURNING *`;
+      const result = await this.sql(updateQuery, [...setParts.map(() => null), id]);
       
       return result[0] as CompletedWork | undefined;
     } catch (error) {
@@ -2099,7 +2092,7 @@ export class PgStorage implements IStorage {
         SET status = 'archived', updated_at = NOW()
         WHERE id = ${id}
       `;
-      return result.count > 0;
+      return result.length > 0;
     } catch (error) {
       console.error('Error archiving completed work:', error);
       return false;
@@ -2111,7 +2104,7 @@ export class PgStorage implements IStorage {
     try {
       const result = await this.sql`
         INSERT INTO completed_works_documents (title, description, file_url, file_type, file_size, category, tags, created_by)
-        VALUES (${document.title}, ${document.description || null}, ${document.fileUrl}, ${document.fileType}, ${document.fileSize || null}, ${document.category || null}, ${document.tags || null}, ${document.createdBy})
+        VALUES (${document.title}, ${document.description || null}, ${document.fileUrl}, ${document.fileType}, ${document.fileSize || null}, ${document.category || null}, ${document.tags || null}, ${1})
         RETURNING *
       `;
       return result[0] as CompletedWorksDocument;
@@ -2161,12 +2154,8 @@ export class PgStorage implements IStorage {
 
       if (setParts.length === 0) return undefined;
 
-      const result = await this.sql`
-        UPDATE completed_works_documents 
-        SET ${this.sql.unsafe(setParts.join(', '))}, updated_at = NOW()
-        WHERE id = ${id}
-        RETURNING *
-      `;
+      const updateQuery = `UPDATE completed_works_documents SET ${setParts.join(', ')}, updated_at = NOW() WHERE id = $${setParts.length + 1} RETURNING *`;
+      const result = await this.sql(updateQuery, [...setParts.map(() => null), id]);
       
       return result[0] as CompletedWorksDocument | undefined;
     } catch (error) {
@@ -2178,7 +2167,7 @@ export class PgStorage implements IStorage {
   async deleteCompletedWorksDocument(id: number): Promise<boolean> {
     try {
       const result = await this.sql`DELETE FROM completed_works_documents WHERE id = ${id}`;
-      return result.count > 0;
+      return result.length > 0;
     } catch (error) {
       console.error('Error deleting completed works document:', error);
       return false;
