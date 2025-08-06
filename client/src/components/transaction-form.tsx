@@ -58,6 +58,8 @@ interface Employee {
   salary: number;
   totalWithdrawn?: number;
   remainingSalary?: number;
+  currentBalance?: number;
+  totalPaid?: number;
   assignedProjectId?: number;
   assignedProject?: { id: number; name: string };
 }
@@ -573,6 +575,59 @@ export function TransactionForm({ projects, onSubmit, isLoading }: TransactionFo
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                    
+                    {/* عرض معلومات رصيد الموظف المختار */}
+                    {field.value && (
+                      <div className="mt-2">
+                        {(() => {
+                          const selectedEmployee = availableEmployees.find(emp => emp.id.toString() === field.value);
+                          if (!selectedEmployee) return null;
+                          
+                          const currentBalance = selectedEmployee.currentBalance || 0;
+                          const totalPaid = selectedEmployee.totalPaid || 0;
+                          const currentAmount = form.watch('amount') || 0;
+                          const remainingAfterPayment = currentBalance - currentAmount;
+                          
+                          return (
+                            <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">الراتب الأساسي:</span>
+                                  <span className="font-medium">{selectedEmployee.salary.toLocaleString()} د.ع</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">المدفوع هذا الشهر:</span>
+                                  <span className="text-orange-600">{totalPaid.toLocaleString()} د.ع</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">الرصيد المتبقي:</span>
+                                  <span className={`font-medium ${currentBalance > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {currentBalance.toLocaleString()} د.ع
+                                  </span>
+                                </div>
+                                {currentAmount > 0 && (
+                                  <div className="border-t pt-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">الرصيد بعد الدفع:</span>
+                                      <span className={`font-medium ${remainingAfterPayment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {remainingAfterPayment.toLocaleString()} د.ع
+                                      </span>
+                                    </div>
+                                    {remainingAfterPayment < 0 && (
+                                      <div className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+                                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                                        <span className="text-red-600 text-xs">المبلغ المطلوب أكبر من الرصيد المتبقي</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    
                     {availableEmployees.length === 0 && currentProjectId && (
                       <p className="text-sm text-muted-foreground">
                         {user?.role === 'admin' 

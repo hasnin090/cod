@@ -64,17 +64,62 @@ app.post("/api/transactions", transactionUpload.single('file'), async (req: any,
       archived: false
     };
 
-    const transaction = await storage.createTransaction(transactionData);
-    
-    await storage.createActivityLog({
-      userId: req.session.userId,
-      action: "create_transaction",
-      entityType: "transaction", 
-      entityId: transaction.id,
-      details: `إنشاء معاملة: ${transaction.description} - المبلغ: ${transaction.amount}`
-    });
+    // إذا كان نوع المصروف راتب، نحتاج للتعامل مع رصيد الموظف
+    if (transactionData.type === 'expense' && 
+        transactionData.expenseType === 'راتب' && 
+        transactionData.employeeId) {
+      
+      // التحقق من رصيد الموظف قبل إنشاء المعاملة
+      const employee = await storage.getEmployee(transactionData.employeeId);
+      if (!employee) {
+        return res.status(400).json({ message: "الموظف غير موجود" });
+      }
+      
+      if (!employee.active) {
+        return res.status(400).json({ message: "الموظف غير نشط" });
+      }
+      
+      if ((employee.currentBalance || 0) < transactionData.amount) {
+        return res.status(400).json({ 
+          message: `رصيد الموظف غير كافي. الرصيد المتبقي: ${employee.currentBalance || 0} دينار، المطلوب: ${transactionData.amount} دينار`
+        });
+      }
+      
+      // خصم المبلغ من رصيد الموظف وإنشاء المعاملة
+      const result = await storage.paySalaryToEmployee(
+        transactionData.employeeId,
+        transactionData.amount,
+        req.session.userId,
+        transactionData.description
+      );
+      
+      if (!result) {
+        return res.status(500).json({ message: "خطأ في دفع الراتب" });
+      }
+      
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "create_salary_transaction",
+        entityType: "transaction", 
+        entityId: result.transaction.id,
+        details: `دفع راتب للموظف ${employee.name}: ${transactionData.description} - المبلغ: ${transactionData.amount}`
+      });
 
-    return res.status(201).json(transaction);
+      return res.status(201).json(result.transaction);
+    } else {
+      // إنشاء معاملة عادية
+      const transaction = await storage.createTransaction(transactionData);
+      
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "create_transaction",
+        entityType: "transaction", 
+        entityId: transaction.id,
+        details: `إنشاء معاملة: ${transaction.description} - المبلغ: ${transaction.amount}`
+      });
+
+      return res.status(201).json(transaction);
+    }
   } catch (error) {
     console.error("Transaction creation error:", error);
     return res.status(500).json({ message: "خطأ في إنشاء المعاملة" });
