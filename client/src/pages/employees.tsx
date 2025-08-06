@@ -15,14 +15,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit2, UserPlus, Users, DollarSign } from 'lucide-react';
+import { Trash2, Edit2, UserPlus, Users, DollarSign, Wallet, RefreshCw } from 'lucide-react';
 
 interface Employee {
   id: number;
   name: string;
   salary: number;
-  totalWithdrawn?: number;
-  remainingSalary?: number;
+  currentBalance?: number;
+  totalPaid?: number;
+  lastSalaryReset?: string;
   assignedProjectId?: number;
   assignedProject?: {
     id: number;
@@ -56,13 +57,20 @@ const editEmployeeFormSchema = z.object({
   notes: z.string().optional(),
 });
 
+const salaryPaymentSchema = z.object({
+  amount: z.coerce.number().min(1, "مبلغ الراتب يجب أن يكون أكبر من صفر"),
+  description: z.string().optional(),
+});
+
 type EmployeeFormData = z.infer<typeof employeeFormSchema>;
 type EditEmployeeFormData = z.infer<typeof editEmployeeFormSchema>;
+type SalaryPaymentData = z.infer<typeof salaryPaymentSchema>;
 
 export default function Employees() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSalaryPaymentDialogOpen, setIsSalaryPaymentDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
 
@@ -164,6 +172,53 @@ export default function Employees() {
     },
   });
 
+  // دفع راتب للموظف
+  const salaryForm = useForm<SalaryPaymentData>({
+    resolver: zodResolver(salaryPaymentSchema),
+    defaultValues: {
+      amount: 0,
+      description: '',
+    },
+  });
+
+  const paySalaryMutation = useMutation({
+    mutationFn: ({ employeeId, data }: { employeeId: number; data: SalaryPaymentData }) => 
+      apiRequest(`/api/employees/${employeeId}/pay-salary`, 'POST', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      setIsSalaryPaymentDialogOpen(false);
+      setSelectedEmployee(null);
+      salaryForm.reset();
+      toast({ title: 'تم دفع الراتب بنجاح' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: 'destructive',
+        title: 'خطأ في دفع الراتب',
+        description: error.message || 'حدث خطأ غير متوقع'
+      });
+    }
+  });
+
+  // إعادة تعيين جميع الرواتب
+  const resetSalariesMutation = useMutation({
+    mutationFn: () => apiRequest('/api/employees/reset-salaries', 'POST'),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      toast({ 
+        title: 'تم إعادة تعيين الرواتب بنجاح',
+        description: `تم إعادة تعيين رواتب ${data.count} موظف`
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        variant: 'destructive',
+        title: 'خطأ في إعادة تعيين الرواتب',
+        description: error.message || 'حدث خطأ غير متوقع'
+      });
+    }
+  });
+
   const handleEdit = (employee: Employee) => {
     setSelectedEmployee(employee);
     editForm.reset({
@@ -181,6 +236,15 @@ export default function Employees() {
     setIsDeleteDialogOpen(true);
   };
 
+  const handlePaySalary = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    salaryForm.reset({
+      amount: 0,
+      description: `دفع راتب للموظف: ${employee.name}`,
+    });
+    setIsSalaryPaymentDialogOpen(true);
+  };
+
   const onCreateSubmit = (data: EmployeeFormData) => {
     createMutation.mutate(data);
   };
@@ -188,6 +252,11 @@ export default function Employees() {
   const onEditSubmit = (data: EditEmployeeFormData) => {
     if (!selectedEmployee) return;
     editMutation.mutate({ id: selectedEmployee.id, data });
+  };
+
+  const onSalaryPaymentSubmit = (data: SalaryPaymentData) => {
+    if (!selectedEmployee) return;
+    paySalaryMutation.mutate({ employeeId: selectedEmployee.id, data });
   };
 
   const formatCurrency = (amount: number) => {
@@ -260,7 +329,19 @@ export default function Employees() {
       {/* قائمة الموظفين */}
       <Card>
         <CardHeader>
-          <CardTitle>قائمة الموظفين</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>قائمة الموظفين</CardTitle>
+            <Button 
+              onClick={() => resetSalariesMutation.mutate()}
+              disabled={resetSalariesMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${resetSalariesMutation.isPending ? 'animate-spin' : ''}`} />
+              إعادة تعيين جميع الرواتب
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {employees.length === 0 ? (
@@ -293,12 +374,12 @@ export default function Employees() {
                     </div>
                     <div className="text-sm text-muted-foreground mt-2 space-y-1">
                       <div className="font-medium text-base">الراتب الأساسي: {formatCurrency(employee.salary)}</div>
-                      {typeof employee.totalWithdrawn === 'number' && (
-                        <div className="text-orange-600">المسحوب هذا الشهر: {formatCurrency(employee.totalWithdrawn)}</div>
+                      {typeof employee.totalPaid === 'number' && (
+                        <div className="text-orange-600">المدفوع هذا الشهر: {formatCurrency(employee.totalPaid)}</div>
                       )}
-                      {typeof employee.remainingSalary === 'number' && (
-                        <div className={`font-medium ${employee.remainingSalary > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          المتبقي: {formatCurrency(employee.remainingSalary)}
+                      {typeof employee.currentBalance === 'number' && (
+                        <div className={`font-medium ${employee.currentBalance > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          الرصيد المتبقي: {formatCurrency(employee.currentBalance)}
                         </div>
                       )}
                       {employee.assignedProject && (
@@ -310,6 +391,16 @@ export default function Employees() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse sm:flex-col sm:space-x-0 sm:space-y-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handlePaySalary(employee)}
+                      disabled={!employee.active || (employee.currentBalance || 0) <= 0}
+                      className="flex-1 sm:flex-none sm:w-full bg-green-600 hover:bg-green-700"
+                    >
+                      <Wallet className="h-4 w-4 sm:ml-2" />
+                      <span className="hidden sm:inline">دفع راتب</span>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -579,6 +670,83 @@ export default function Employees() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* حوار دفع الراتب */}
+      {selectedEmployee && (
+        <Dialog open={isSalaryPaymentDialogOpen} onOpenChange={setIsSalaryPaymentDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader>
+              <DialogTitle>دفع راتب - {selectedEmployee.name}</DialogTitle>
+            </DialogHeader>
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <div className="text-sm space-y-1">
+                <div>الراتب الأساسي: {formatCurrency(selectedEmployee.salary)}</div>
+                <div>الرصيد المتبقي: {formatCurrency(selectedEmployee.currentBalance || 0)}</div>
+                <div>المدفوع هذا الشهر: {formatCurrency(selectedEmployee.totalPaid || 0)}</div>
+              </div>
+            </div>
+            <Form {...salaryForm}>
+              <form onSubmit={salaryForm.handleSubmit(onSalaryPaymentSubmit)} className="space-y-4 px-1">
+                <FormField
+                  control={salaryForm.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>مبلغ الدفعة (دينار عراقي)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="أدخل مبلغ الدفعة"
+                          max={selectedEmployee.currentBalance || 0}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <div className="text-xs text-muted-foreground">
+                        الحد الأقصى: {formatCurrency(selectedEmployee.currentBalance || 0)}
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={salaryForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>وصف الدفعة (اختياري)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="ملاحظات حول الدفعة..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter className="gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsSalaryPaymentDialogOpen(false)}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={paySalaryMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {paySalaryMutation.isPending ? 'جاري الدفع...' : 'دفع الراتب'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

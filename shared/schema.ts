@@ -181,7 +181,10 @@ export const funds = pgTable("funds", {
 export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  salary: integer("salary").notNull().default(0), // الراتب الشهري
+  salary: integer("salary").notNull().default(0), // الراتب الشهري الأساسي
+  currentBalance: integer("current_balance").notNull().default(0), // الرصيد المتبقي من الراتب
+  totalPaid: integer("total_paid").notNull().default(0), // إجمالي المدفوع هذا الشهر
+  lastSalaryReset: timestamp("last_salary_reset").defaultNow(), // آخر إعادة تعيين للراتب
   assignedProjectId: integer("assigned_project_id").references(() => projects.id),
   active: boolean("active").notNull().default(true),
   hireDate: timestamp("hire_date").notNull().defaultNow(),

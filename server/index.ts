@@ -520,6 +520,89 @@ app.use((req, res, next) => {
     }
   });
 
+  // Employee salary management routes
+  app.post('/api/employees/:id/pay-salary', async (req, res) => {
+    try {
+      if (!req.session.user) {
+        return res.status(401).json({ message: 'غير مصرح' });
+      }
+
+      const employeeId = parseInt(req.params.id);
+      const { amount, description } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: 'مبلغ الراتب مطلوب ويجب أن يكون أكبر من صفر' });
+      }
+
+      const result = await storage.paySalaryToEmployee(employeeId, amount, req.session.user.id, description);
+      
+      if (!result) {
+        return res.status(400).json({ message: 'فشل في دفع الراتب' });
+      }
+
+      console.log(`دفع راتب للموظف ${employeeId} بمبلغ ${amount} من قبل المستخدم ${req.session.user.id}`);
+      res.json(result);
+    } catch (error) {
+      console.error('Error paying salary:', error);
+      res.status(500).json({ message: error.message || 'خطأ في دفع الراتب' });
+    }
+  });
+
+  // Reset all employee salaries (admin only)
+  app.post('/api/employees/reset-salaries', async (req, res) => {
+    try {
+      if (!req.session.user) {
+        return res.status(401).json({ message: 'غير مصرح' });
+      }
+
+      // Only admin or manager can reset all salaries
+      if (req.session.user.role !== 'admin' && req.session.user.role !== 'manager') {
+        return res.status(403).json({ message: 'صلاحية غير كافية' });
+      }
+
+      const result = await storage.resetAllEmployeeSalaries();
+      console.log(`إعادة تعيين رواتب ${result.count} موظف من قبل ${req.session.user.username}`);
+      res.json(result);
+    } catch (error) {
+      console.error('Error resetting salaries:', error);
+      res.status(500).json({ message: 'خطأ في إعادة تعيين الرواتب', error: error.message });
+    }
+  });
+
+  // Get employee salary details
+  app.get('/api/employees/:id/salary-details', async (req, res) => {
+    try {
+      if (!req.session.user) {
+        return res.status(401).json({ message: 'غير مصرح' });
+      }
+
+      const employeeId = parseInt(req.params.id);
+      const details = await storage.getEmployeeSalaryDetails(employeeId);
+      
+      if (!details) {
+        return res.status(404).json({ message: 'الموظف غير موجود' });
+      }
+
+      res.json(details);
+    } catch (error) {
+      console.error('Error getting employee salary details:', error);
+      res.status(500).json({ message: 'خطأ في جلب تفاصيل راتب الموظف', error: error.message });
+    }
+  });
+
+  // Auto-check for salary reset every hour
+  setInterval(async () => {
+    try {
+      const employeesToReset = await storage.checkEmployeesForSalaryReset();
+      if (employeesToReset.length > 0) {
+        console.log(`وجد ${employeesToReset.length} موظف يحتاج إعادة تعيين راتب`);
+        await storage.resetAllEmployeeSalaries();
+      }
+    } catch (error) {
+      console.error('خطأ في التحقق التلقائي من إعادة تعيين الرواتب:', error);
+    }
+  }, 60 * 60 * 1000); // كل ساعة
+
   // Register API routes AFTER custom endpoints
   const server = await registerRoutes(app);
 

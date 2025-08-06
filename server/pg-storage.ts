@@ -1990,6 +1990,9 @@ export class PgStorage implements IStorage {
         id: row.id,
         name: row.name,
         salary: row.salary,
+        currentBalance: row.current_balance,
+        totalPaid: row.total_paid,
+        lastSalaryReset: row.last_salary_reset,
         assignedProjectId: row.assigned_project_id,
         assignedProject: row.project_name ? { id: row.assigned_project_id, name: row.project_name } : null,
         active: row.active,
@@ -2012,6 +2015,131 @@ export class PgStorage implements IStorage {
     } catch (error) {
       console.error('Error deleting employee:', error);
       return false;
+    }
+  }
+
+  /**
+   * دفع راتب للموظف وخصمه من الرصيد المتبقي
+   */
+  async paySalaryToEmployee(employeeId: number, amount: number, userId: number, description?: string): Promise<{ employee: any; transaction: any } | null> {
+    try {
+      // التحقق من وجود الموظف والرصيد
+      const employee = await this.sql`
+        SELECT * FROM employees WHERE id = ${employeeId} AND active = true
+      `;
+      
+      if (employee.length === 0) {
+        throw new Error('الموظف غير موجود أو غير نشط');
+      }
+      
+      const emp = employee[0];
+      
+      if (emp.current_balance < amount) {
+        throw new Error(`الرصيد المتبقي غير كافي. الرصيد المتبقي: ${emp.current_balance}, المطلوب: ${amount}`);
+      }
+      
+      // تحديث رصيد الموظف
+      const updatedEmployee = await this.sql`
+        UPDATE employees 
+        SET current_balance = current_balance - ${amount},
+            total_paid = total_paid + ${amount},
+            updated_at = NOW()
+        WHERE id = ${employeeId}
+        RETURNING *
+      `;
+      
+      // إنشاء معاملة راتب
+      const transactionDescription = description || `دفع راتب للموظف: ${emp.name}`;
+      const transaction = await this.sql`
+        INSERT INTO transactions (
+          date, amount, type, expense_type, description, 
+          project_id, created_by, employee_id
+        ) VALUES (
+          NOW(), ${amount}, 'expense', 'راتب', ${transactionDescription},
+          ${emp.assigned_project_id}, ${userId}, ${employeeId}
+        ) RETURNING *
+      `;
+      
+      return {
+        employee: updatedEmployee[0],
+        transaction: transaction[0]
+      };
+      
+    } catch (error) {
+      console.error('خطأ في دفع الراتب:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * إعادة تعيين رواتب جميع الموظفين النشطين في بداية الشهر
+   */
+  async resetAllEmployeeSalaries(): Promise<{ count: number; employees: any[] }> {
+    try {
+      const updatedEmployees = await this.sql`
+        UPDATE employees 
+        SET current_balance = salary,
+            total_paid = 0,
+            last_salary_reset = NOW(),
+            updated_at = NOW()
+        WHERE active = true
+        RETURNING *
+      `;
+      
+      console.log(`تم إعادة تعيين رواتب ${updatedEmployees.length} موظف`);
+      
+      return {
+        count: updatedEmployees.length,
+        employees: updatedEmployees
+      };
+      
+    } catch (error) {
+      console.error('خطأ في إعادة تعيين الرواتب:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * التحقق من الموظفين الذين يحتاجون إعادة تعيين راتب
+   */
+  async checkEmployeesForSalaryReset(): Promise<any[]> {
+    try {
+      const currentDate = new Date();
+      const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      
+      const employees = await this.sql`
+        SELECT * FROM employees 
+        WHERE active = true 
+        AND (last_salary_reset IS NULL OR last_salary_reset < ${firstOfMonth.toISOString()})
+      `;
+      
+      return employees;
+    } catch (error) {
+      console.error('خطأ في التحقق من إعادة تعيين الرواتب:', error);
+      return [];
+    }
+  }
+
+  /**
+   * الحصول على تفاصيل راتب موظف معين
+   */
+  async getEmployeeSalaryDetails(employeeId: number): Promise<any | null> {
+    try {
+      const result = await this.sql`
+        SELECT 
+          e.*,
+          p.name as project_name,
+          (SELECT COUNT(*) FROM transactions WHERE employee_id = e.id AND expense_type = 'راتب' 
+           AND date >= DATE_TRUNC('month', CURRENT_DATE)) as payments_this_month
+        FROM employees e
+        LEFT JOIN projects p ON e.assigned_project_id = p.id
+        WHERE e.id = ${employeeId}
+      `;
+      
+      return result[0] || null;
+    } catch (error) {
+      console.error('خطأ في جلب تفاصيل راتب الموظف:', error);
+      return null;
     }
   }
 
