@@ -395,7 +395,7 @@ export default function Employees() {
                       variant="default"
                       size="sm"
                       onClick={() => handlePaySalary(employee)}
-                      disabled={!employee.active || (employee.currentBalance || 0) <= 0}
+                      disabled={!employee.active}
                       className="flex-1 sm:flex-none sm:w-full bg-green-600 hover:bg-green-700"
                     >
                       <Wallet className="h-4 w-4 sm:ml-2" />

@@ -2158,9 +2158,29 @@ export class PgStorage implements IStorage {
   async getActiveEmployees(): Promise<Employee[]> {
     try {
       const result = await this.sql`
-        SELECT * FROM employees WHERE active = true ORDER BY name
+        SELECT e.*, p.name as project_name 
+        FROM employees e 
+        LEFT JOIN projects p ON e.assigned_project_id = p.id 
+        WHERE e.active = true 
+        ORDER BY e.name
       `;
-      return result as Employee[];
+      
+      return result.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        salary: row.salary,
+        currentBalance: row.current_balance || 0,
+        totalPaid: row.total_paid || 0,
+        lastSalaryReset: row.last_salary_reset,
+        assignedProjectId: row.assigned_project_id,
+        assignedProject: row.project_name ? { id: row.assigned_project_id, name: row.project_name } : null,
+        active: row.active,
+        hireDate: row.hire_date,
+        notes: row.notes,
+        createdBy: row.created_by,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      })) as Employee[];
     } catch (error) {
       console.error('Error getting active employees:', error);
       return [];
