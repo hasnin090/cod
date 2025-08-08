@@ -65,9 +65,11 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
       }
     },
     onSuccess: () => {
+      const wasActive = hasActivePermission;
       toast({
-        title: "تم بنجاح",
-        description: hasActivePermission ? "تم إلغاء صلاحية تعديل المعاملات" : "تم تفعيل صلاحية تعديل المعاملات (تنتهي خلال 42 ساعة)",
+        title: "تم التحديث",
+        description: wasActive ? "تم إلغاء صلاحية تعديل المعاملات" : "تم تفعيل صلاحية تعديل المعاملات (تنتهي خلال 42 ساعة)",
+        className: "bg-green-50 border-green-200 text-green-800",
       });
       refetchUserPermissions();
     },
@@ -98,12 +100,15 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-800 dark:to-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700 space-y-3">
+    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-800 dark:to-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          <Label className="text-sm font-medium text-purple-800 dark:text-purple-200 cursor-pointer">
-            صلاحية تعديل المعاملات
+          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <Label 
+            htmlFor={`transaction-edit-${userId}`}
+            className="text-sm font-medium text-blue-800 dark:text-blue-200 cursor-pointer"
+          >
+            تعديل المعاملات (مؤقت)
           </Label>
         </div>
 
@@ -111,13 +116,18 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
           <Checkbox
             id={`transaction-edit-${userId}`}
             checked={hasActivePermission}
-            onCheckedChange={() => togglePermissionMutation.mutate()}
+            onCheckedChange={() => !togglePermissionMutation.isPending && togglePermissionMutation.mutate()}
             disabled={togglePermissionMutation.isPending}
-            className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+            className="h-4 w-4 border-2 border-blue-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 data-[state=checked]:text-white"
           />
           {hasActivePermission && activePermission && (
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300">
+            <Badge className="text-xs bg-green-100 text-green-800 border-green-200">
               نشط
+            </Badge>
+          )}
+          {togglePermissionMutation.isPending && (
+            <Badge variant="outline" className="text-xs">
+              جاري التحديث...
             </Badge>
           )}
         </div>
@@ -125,16 +135,16 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
 
       {/* عرض الوقت المتبقي إذا كانت الصلاحية نشطة */}
       {hasActivePermission && activePermission && (
-        <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
+        <div className="flex items-center gap-2 text-xs text-green-700 bg-green-100 dark:bg-green-900/30 p-2 rounded">
           <Timer className="h-3 w-3" />
-          <span>{getRemainingTime(activePermission.expiresAt)}</span>
+          <span className="font-medium">{getRemainingTime(activePermission.expiresAt)}</span>
         </div>
       )}
 
       {/* معلومة بسيطة */}
       {!hasActivePermission && (
-        <p className="text-xs text-purple-600 dark:text-purple-400">
-          الصلاحية تنتهي تلقائياً بعد 42 ساعة من التفعيل
+        <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 p-2 rounded">
+          تنتهي الصلاحية تلقائياً بعد 42 ساعة من التفعيل
         </p>
       )}
     </div>

@@ -1669,6 +1669,15 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "لا يمكن تحديد مستخدم ومشروع في نفس الوقت" });
       }
 
+      // التحقق من وجود صلاحية نشطة مسبقاً
+      if (userId) {
+        const existingPermissions = await storage.getUserTransactionEditPermissions(userId);
+        const activePermission = existingPermissions.find(p => p.isActive);
+        if (activePermission) {
+          return res.status(400).json({ message: "يوجد صلاحية نشطة مسبقاً لهذا المستخدم" });
+        }
+      }
+
       const permission = await storage.grantTransactionEditPermission({
         userId: userId || null,
         projectId: projectId || null,
