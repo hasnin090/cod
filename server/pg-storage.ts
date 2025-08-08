@@ -261,7 +261,7 @@ export class PgStorage implements IStorage {
 
   async listUsers(): Promise<User[]> {
     try {
-      const result = await this.sql`SELECT * FROM users ORDER BY id`;
+      const result = await this.sql`SELECT *, plain_password FROM users ORDER BY id`;
       return result as User[];
     } catch (error) {
       console.error('Error listing users:', error);

@@ -237,10 +237,13 @@ async function registerRoutes(app: Express): Promise<Server> {
       const currentUser = await storage.getUser(req.session.userId as number);
       if (currentUser?.role === 'admin') {
         // إرسال البيانات مع كلمة المرور الأصلية بدلاً من المشفرة
-        const usersWithPlainPassword = users.map(user => ({
-          ...user,
-          password: user.plainPassword || 'غير متاحة'
-        }));
+        const usersWithPlainPassword = users.map(user => {
+          const plainPassword = (user as any).plain_password;
+          return {
+            ...user,
+            password: plainPassword || 'غير متاحة'
+          };
+        });
         return res.status(200).json(usersWithPlainPassword);
       }
       
