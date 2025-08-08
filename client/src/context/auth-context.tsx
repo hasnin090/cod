@@ -59,22 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         setIsLoading(true);
         
-        // استخدام البيانات المحلية إذا متوفرة
-        const storedUser = localStorage.getItem('auth_user');
-        if (storedUser) {
-          try {
-            const foundUser = JSON.parse(storedUser);
-            if (isMounted) {
-              setUser(foundUser);
-              setIsLoading(false);
-            }
-            return;
-          } catch (err) {
-            localStorage.removeItem('auth_user');
-          }
-        }
-        
-        // محاولة واحدة فقط للاتصال بالخادم
+        // تحقق من صحة الجلسة مع الخادم دائماً
         try {
           const response = await fetch('/api/auth/session', {
             credentials: 'include',
@@ -88,13 +73,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(userData);
             localStorage.setItem('auth_user', JSON.stringify(userData));
           } else {
+            // الجلسة منتهية أو غير صحيحة
             setUser(null);
+            localStorage.removeItem('auth_user');
+            
+            // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم نكن بها بالفعل
+            if (response.status === 401 && window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
           }
         } catch (error) {
-          if (isMounted) setUser(null);
+          if (isMounted) {
+            setUser(null);
+            localStorage.removeItem('auth_user');
+          }
         }
       } catch (error) {
-        if (isMounted) setUser(null);
+        if (isMounted) {
+          setUser(null);
+          localStorage.removeItem('auth_user');
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -102,8 +100,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     checkSession();
     
+    // فحص دوري للجلسة كل 5 دقائق
+    const intervalId = setInterval(async () => {
+      if (!isMounted) return;
+      
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok && response.status === 401) {
+          // الجلسة انتهت
+          setUser(null);
+          localStorage.removeItem('auth_user');
+          
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+      }
+    }, 5 * 60 * 1000); // كل 5 دقائق
+    
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, []);
 

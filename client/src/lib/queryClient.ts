@@ -3,6 +3,16 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    
+    // إذا كانت الاستجابة 401 (غير مصرح)، قم بمسح localStorage وإعادة التوجيه
+    if (res.status === 401) {
+      localStorage.removeItem('auth_user');
+      // إعادة التوجيه إلى صفحة تسجيل الدخول
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -49,8 +59,18 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      // مسح بيانات المستخدم المحلية
+      localStorage.removeItem('auth_user');
+      
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      
+      // إعادة التوجيه إلى صفحة تسجيل الدخول
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
 
     await throwIfResNotOk(res);
