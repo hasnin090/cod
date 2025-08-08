@@ -60,7 +60,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
-import { TransactionEditPermissions } from '@/components/transaction-edit-permissions';
+import { TransactionEditPermissionToggle } from '@/components/transaction-edit-permissions';
 
 interface User {
   id: number;
@@ -384,9 +384,9 @@ function UserEditForm({ user, onSubmit, isLoading }: UserEditFormProps) {
           </div>
         )}
 
-        {/* قسم صلاحيات تعديل المعاملات - للمديرين فقط وللمستخدمين العاديين */}
+        {/* صلاحية تعديل المعاملات - للمستخدمين العاديين فقط */}
         {user && user.role === 'user' && (
-          <TransactionEditPermissions userId={user.id} userName={user.name} />
+          <TransactionEditPermissionToggle userId={user.id} />
         )}
 
         <div className="flex justify-end mt-6">
