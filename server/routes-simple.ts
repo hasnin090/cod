@@ -232,6 +232,14 @@ async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
       const users = await storage.listUsers();
+      
+      // المديرون يمكنهم رؤية كلمات المرور
+      const currentUser = await storage.getUser(req.session.userId as number);
+      if (currentUser?.role === 'admin') {
+        return res.status(200).json(users); // إرسال البيانات كاملة مع كلمات المرور
+      }
+      
+      // للأدوار الأخرى، إزالة كلمة المرور
       const safeUsers = users.map(user => {
         const { password, ...safeUser } = user;
         return safeUser;

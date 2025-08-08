@@ -70,6 +70,7 @@ interface User {
   role: string;
   permissions?: string[];
   active: boolean;
+  password?: string; // كلمة المرور متاحة للمديرين فقط
 }
 
 interface UserListProps {
@@ -418,6 +419,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [passwordVisibility, setPasswordVisibility] = useState<{[key: number]: boolean}>({});
   const { toast } = useToast();
 
   // ترتيب المستخدمين: المدير أولاً، ثم المستخدمين، ثم المشاهدين، ثم بالاسم
@@ -599,6 +601,9 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
                   الصلاحية
                 </th>
                 <th scope="col" className="px-3 sm:px-4 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b-2 border-primary/20">
+                  كلمة المرور
+                </th>
+                <th scope="col" className="px-3 sm:px-4 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b-2 border-primary/20">
                   الصلاحيات
                 </th>
                 <th scope="col" className="px-3 sm:px-4 py-3 sm:py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b-2 border-primary/20">
@@ -633,6 +638,29 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
                   </td>
                   <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
                     {getRoleBadge(user.role)}
+                  </td>
+                  <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-sm">
+                    {user.password ? (
+                      <div className="flex items-center">
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1">
+                          <span className="text-xs font-mono mr-2">
+                            {passwordVisibility[user.id] ? user.password : '••••••••'}
+                          </span>
+                          <button
+                            onClick={() => setPasswordVisibility(prev => ({
+                              ...prev,
+                              [user.id]: !prev[user.id]
+                            }))}
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                            title={passwordVisibility[user.id] ? "إخفاء كلمة المرور" : "عرض كلمة المرور"}
+                          >
+                            {passwordVisibility[user.id] ? <EyeOffIcon className="h-3 w-3" /> : <EyeIcon className="h-3 w-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">غير متاحة</span>
+                    )}
                   </td>
                   <td className="px-3 sm:px-4 py-2 sm:py-3 text-sm text-neutral-light">
                     {user.role === 'admin' ? (
@@ -700,6 +728,28 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
               {getRoleBadge(user.role)}
             </div>
             
+            {/* كلمة المرور */}
+            {user.password && (
+              <div className="mb-3">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">كلمة المرور:</span>
+                <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-2 py-1 w-fit">
+                  <span className="text-xs font-mono mr-2">
+                    {passwordVisibility[user.id] ? user.password : '••••••••'}
+                  </span>
+                  <button
+                    onClick={() => setPasswordVisibility(prev => ({
+                      ...prev,
+                      [user.id]: !prev[user.id]
+                    }))}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    title={passwordVisibility[user.id] ? "إخفاء كلمة المرور" : "عرض كلمة المرور"}
+                  >
+                    {passwordVisibility[user.id] ? <EyeOffIcon className="h-3 w-3" /> : <EyeIcon className="h-3 w-3" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* الصلاحيات */}
             <div className="mb-4">
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">الصلاحيات:</span>
