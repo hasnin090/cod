@@ -194,9 +194,12 @@ export class PgStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
+      const plainPassword = user.password;
+      const hashedPassword = await bcrypt.hash(user.password, 12);
+      
       const result = await this.sql`
-        INSERT INTO users (username, password, name, email, role, permissions, active)
-        VALUES (${user.username}, ${user.password}, ${user.name}, ${user.email || null}, ${user.role || 'user'}, ${JSON.stringify(user.permissions || [])}, ${true})
+        INSERT INTO users (username, password, plain_password, name, email, role, permissions, active)
+        VALUES (${user.username}, ${hashedPassword}, ${plainPassword}, ${user.name}, ${user.email || null}, ${user.role || 'user'}, ${JSON.stringify(user.permissions || [])}, ${true})
         RETURNING *
       `;
       return result[0] as User;
@@ -216,7 +219,10 @@ export class PgStorage implements IStorage {
         values.push(user.username);
       }
       if (user.password !== undefined) {
+        const hashedPassword = await bcrypt.hash(user.password, 12);
         setParts.push(`password = $${setParts.length + 1}`);
+        values.push(hashedPassword);
+        setParts.push(`plain_password = $${setParts.length + 1}`);
         values.push(user.password);
       }
       if (user.name !== undefined) {

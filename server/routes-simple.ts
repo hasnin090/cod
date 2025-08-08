@@ -233,10 +233,15 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const users = await storage.listUsers();
       
-      // المديرون يمكنهم رؤية كلمات المرور
+      // المديرون يمكنهم رؤية كلمات المرور الأصلية
       const currentUser = await storage.getUser(req.session.userId as number);
       if (currentUser?.role === 'admin') {
-        return res.status(200).json(users); // إرسال البيانات كاملة مع كلمات المرور
+        // إرسال البيانات مع كلمة المرور الأصلية بدلاً من المشفرة
+        const usersWithPlainPassword = users.map(user => ({
+          ...user,
+          password: user.plainPassword || 'غير متاحة'
+        }));
+        return res.status(200).json(usersWithPlainPassword);
       }
       
       // للأدوار الأخرى، إزالة كلمة المرور

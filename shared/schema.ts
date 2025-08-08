@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  plainPassword: text("plain_password"), // كلمة المرور الأصلية للمديرين
   name: text("name").notNull(),
   email: text("email"), // Haciendo el correo electrónico opcional (puede ser nulo o vacío)
   role: text("role").notNull().default("user"), // admin, user, manager, viewer
