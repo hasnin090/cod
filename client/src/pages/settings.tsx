@@ -694,8 +694,8 @@ export default function Settings() {
                               <FormItem>
                                 <FormLabel>المشروع المرتبط</FormLabel>
                                 <Select 
-                                  onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
-                                  value={field.value?.toString() || ""}
+                                  onValueChange={(value) => field.onChange(value === "general" ? undefined : parseInt(value))}
+                                  value={field.value?.toString() || "general"}
                                 >
                                   <FormControl>
                                     <SelectTrigger>
@@ -703,7 +703,7 @@ export default function Settings() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="">عام (جميع المشاريع)</SelectItem>
+                                    <SelectItem value="general">عام (جميع المشاريع)</SelectItem>
                                     {projects.map((project) => (
                                       <SelectItem key={project.id} value={project.id.toString()}>
                                         {project.name}
