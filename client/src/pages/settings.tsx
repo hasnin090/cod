@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Schema definitions
 const passwordChangeSchema = z.object({
@@ -30,6 +31,7 @@ const passwordChangeSchema = z.object({
 const expenseTypeSchema = z.object({
   name: z.string().min(1, 'اسم نوع المصروف مطلوب'),
   description: z.string().optional(),
+  projectId: z.number().optional(),
 });
 
 // Type definitions
@@ -44,9 +46,16 @@ interface ExpenseType {
   id: number;
   name: string;
   description?: string;
+  projectId?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
 }
 
 type PasswordChangeValues = z.infer<typeof passwordChangeSchema>;
@@ -92,6 +101,11 @@ export default function Settings() {
     enabled: !!user && user.role === 'admin'
   });
 
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ['/api/projects'],
+    enabled: !!user && user.role === 'admin'
+  });
+
   // Forms
   const passwordForm = useForm<PasswordChangeValues>({
     resolver: zodResolver(passwordChangeSchema),
@@ -107,6 +121,7 @@ export default function Settings() {
     defaultValues: {
       name: '',
       description: '',
+      projectId: undefined,
     },
   });
 
@@ -245,6 +260,7 @@ export default function Settings() {
     expenseTypeForm.reset({
       name: expenseType.name,
       description: expenseType.description || '',
+      projectId: expenseType.projectId || undefined,
     });
     setIsExpenseDialogOpen(true);
   };
@@ -620,7 +636,7 @@ export default function Settings() {
                       <Button 
                         onClick={() => {
                           setEditingExpenseType(null);
-                          expenseTypeForm.reset({ name: '', description: '' });
+                          expenseTypeForm.reset({ name: '', description: '', projectId: undefined });
                         }}
                         className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md"
                       >
@@ -671,6 +687,35 @@ export default function Settings() {
                             )}
                           />
                           
+                          <FormField
+                            control={expenseTypeForm.control}
+                            name="projectId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>المشروع المرتبط</FormLabel>
+                                <Select 
+                                  onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                                  value={field.value?.toString() || ""}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="اختر مشروع (اختياري - سيكون عام إذا لم تختر)" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="">عام (جميع المشاريع)</SelectItem>
+                                    {projects.map((project) => (
+                                      <SelectItem key={project.id} value={project.id.toString()}>
+                                        {project.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
                           <DialogFooter>
                             <Button 
                               type="submit" 
@@ -694,13 +739,14 @@ export default function Settings() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-right">اسم نوع المصروف</TableHead>
+                        <TableHead className="text-center">المشروع المرتبط</TableHead>
                         <TableHead className="text-center">الإجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {expenseTypes.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                             لا توجد أنواع مصاريف. أضف نوع مصروف جديد للبدء.
                           </TableCell>
                         </TableRow>
@@ -708,6 +754,17 @@ export default function Settings() {
                         expenseTypes.map((expenseType) => (
                           <TableRow key={expenseType.id}>
                             <TableCell className="font-medium">{expenseType.name}</TableCell>
+                            <TableCell className="text-center">
+                              {expenseType.projectId ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {projects.find(p => p.id === expenseType.projectId)?.name || `مشروع ${expenseType.projectId}`}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  عام (جميع المشاريع)
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-2">
                                 <Button
