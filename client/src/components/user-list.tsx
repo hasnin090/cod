@@ -385,8 +385,8 @@ function UserEditForm({ user, onSubmit, isLoading }: UserEditFormProps) {
         )}
 
         {/* قسم صلاحيات تعديل المعاملات - للمديرين فقط وللمستخدمين العاديين */}
-        {userToEdit && userToEdit.role === 'user' && (
-          <TransactionEditPermissions userId={userToEdit.id} userName={userToEdit.name} />
+        {user && user.role === 'user' && (
+          <TransactionEditPermissions userId={user.id} userName={user.name} />
         )}
 
         <div className="flex justify-end mt-6">
