@@ -1786,6 +1786,30 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint لاسترجاع صلاحيات مستخدم محدد
+  app.get("/api/transaction-edit-permissions/user/:userId", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "معرف المستخدم غير صحيح" });
+      }
+
+      // التحقق من أن المستخدم يطلب صلاحياته الخاصة أو هو مدير
+      const isAdmin = req.session.user?.role === 'admin' || req.session.user?.permissions?.includes('manage_users');
+      if (req.session.userId !== userId && !isAdmin) {
+        return res.status(403).json({ message: "ليس لديك صلاحية لعرض صلاحيات هذا المستخدم" });
+      }
+
+      const permissions = await storage.getTransactionEditPermissionsByUser(userId);
+      const hasActivePermission = permissions.some(p => p.isActive);
+      
+      return res.status(200).json(permissions);
+    } catch (error) {
+      console.error('Error retrieving user transaction edit permissions:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع الصلاحيات" });
+    }
+  });
+
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
   });

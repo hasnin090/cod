@@ -96,20 +96,21 @@ export function TransactionList({
   const { user } = useAuth();
 
   // التحقق من صلاحية تعديل المعاملات للمستخدم الحالي
-  const { data: userTransactionPermission } = useQuery<{hasPermission: boolean}>({
-    queryKey: [`/api/transaction-edit-permissions/user/${user?.id}`],
+  const { data: userTransactionPermission } = useQuery<any>({
+    queryKey: [`/api/transaction-edit-permissions/check`],
     enabled: !!user && user.role !== 'admin', // المديرين لديهم صلاحية مسبقة
-    select: (data: any) => {
-      // إذا كانت البيانات مصفوفة صلاحيات، تحقق من وجود صلاحية نشطة
-      if (Array.isArray(data)) {
-        return { hasPermission: data.some((perm: any) => perm.isActive) };
-      }
-      // إذا كانت البيانات كائن مع hasPermission
-      return data;
-    }
   });
 
-  const hasTransactionEditPermission = user?.role === 'admin' || userTransactionPermission?.hasPermission;
+  // تحديد الصلاحية بناءً على الدور أو الصلاحية الممنوحة
+  const hasTransactionEditPermission = user?.role === 'admin' || 
+    userTransactionPermission?.hasPermission === true;
+  
+  console.log('Permission Debug:', {
+    userRole: user?.role,
+    isAdmin: user?.role === 'admin',
+    permissionData: userTransactionPermission,
+    hasPermission: hasTransactionEditPermission
+  });
 
   // جلب أنواع المصاريف
   const { data: expenseTypes = [] } = useQuery<ExpenseType[]>({
