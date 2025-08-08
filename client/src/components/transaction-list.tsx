@@ -96,9 +96,17 @@ export function TransactionList({
   const { user } = useAuth();
 
   // التحقق من صلاحية تعديل المعاملات للمستخدم الحالي
-  const { data: userTransactionPermission } = useQuery({
-    queryKey: ['/api/transaction-edit-permissions/check'],
+  const { data: userTransactionPermission } = useQuery<{hasPermission: boolean}>({
+    queryKey: [`/api/transaction-edit-permissions/user/${user?.id}`],
     enabled: !!user && user.role !== 'admin', // المديرين لديهم صلاحية مسبقة
+    select: (data: any) => {
+      // إذا كانت البيانات مصفوفة صلاحيات، تحقق من وجود صلاحية نشطة
+      if (Array.isArray(data)) {
+        return { hasPermission: data.some((perm: any) => perm.isActive) };
+      }
+      // إذا كانت البيانات كائن مع hasPermission
+      return data;
+    }
   });
 
   const hasTransactionEditPermission = user?.role === 'admin' || userTransactionPermission?.hasPermission;
