@@ -46,10 +46,10 @@ interface ExpenseType {
   id: number;
   name: string;
   description?: string;
-  projectId?: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  project_id?: number; // تطابق مع قاعدة البيانات
+  is_active: boolean; // تطابق مع قاعدة البيانات
+  created_at: string; // تطابق مع قاعدة البيانات
+  updated_at: string; // تطابق مع قاعدة البيانات
 }
 
 interface Project {
@@ -260,7 +260,7 @@ export default function Settings() {
     expenseTypeForm.reset({
       name: expenseType.name,
       description: expenseType.description || '',
-      projectId: expenseType.projectId || undefined,
+      projectId: expenseType.project_id || undefined,
     });
     setIsExpenseDialogOpen(true);
   };
@@ -606,19 +606,19 @@ export default function Settings() {
                     </div>
                     <div className="space-y-1">
                       <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {expenseTypes?.filter(et => et.isActive).length || 0}
+                        {expenseTypes?.filter(et => et.is_active).length || 0}
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">الأنواع النشطة</div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {expenseTypes?.filter(et => !et.isActive).length || 0}
+                        {expenseTypes?.filter(et => !et.is_active).length || 0}
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">الأنواع المعطلة</div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {Math.round(((expenseTypes?.filter(et => et.isActive).length || 0) / Math.max(expenseTypes?.length || 1, 1)) * 100)}%
+                        {Math.round(((expenseTypes?.filter(et => et.is_active).length || 0) / Math.max(expenseTypes?.length || 1, 1)) * 100)}%
                       </div>
                       <div className="text-xs text-green-600 dark:text-green-400">معدل النشاط</div>
                     </div>
@@ -755,9 +755,9 @@ export default function Settings() {
                           <TableRow key={expenseType.id}>
                             <TableCell className="font-medium">{expenseType.name}</TableCell>
                             <TableCell className="text-center">
-                              {expenseType.projectId ? (
+                              {expenseType.project_id ? (
                                 <Badge variant="outline" className="text-xs">
-                                  {projects.find(p => p.id === expenseType.projectId)?.name || `مشروع ${expenseType.projectId}`}
+                                  {projects.find(p => p.id === expenseType.project_id)?.name || `مشروع ${expenseType.project_id}`}
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary" className="text-xs">
