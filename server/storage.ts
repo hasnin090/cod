@@ -13,7 +13,8 @@ import {
   deferredPayments, type DeferredPayment, type InsertDeferredPayment,
   employees, type Employee, type InsertEmployee,
   completedWorks, type CompletedWork, type InsertCompletedWork,
-  completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument
+  completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument,
+  transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
 } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import { pgStorage } from './pg-storage.js';
@@ -142,6 +143,24 @@ export interface IStorage {
   getCompletedWorksDocument(id: number): Promise<CompletedWorksDocument | undefined>;
   updateCompletedWorksDocument(id: number, updates: Partial<CompletedWorksDocument>): Promise<CompletedWorksDocument | undefined>;
   deleteCompletedWorksDocument(id: number): Promise<boolean>;
+
+  // Transaction Edit Permissions
+  grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission>;
+  revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean>;
+  checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined>;
+  listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]>;
+  expireTransactionEditPermissions(): Promise<number>;
+  getTransactionEditPermissionsByUser(userId: number): Promise<TransactionEditPermission[]>;
+  getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]>;
+  
+  // Transaction Edit Permissions - إدارة صلاحيات تعديل المعاملات
+  grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission>;
+  revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean>;
+  checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined>;
+  listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]>;
+  expireTransactionEditPermissions(): Promise<number>; // عدد الصلاحيات المنتهية
+  getTransactionEditPermissionsByUser(userId: number): Promise<TransactionEditPermission[]>;
+  getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -926,6 +945,35 @@ export class MemStorage implements IStorage {
 
   async deleteCompletedWorksDocument(id: number): Promise<boolean> {
     return false;
+  }
+
+  // Transaction Edit Permissions - للذاكرة المؤقتة فقط
+  async grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission> {
+    throw new Error("Transaction edit permissions not supported in memory storage");
+  }
+
+  async revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean> {
+    throw new Error("Transaction edit permissions not supported in memory storage");
+  }
+
+  async checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined> {
+    return undefined; // لا توجد صلاحيات في الذاكرة المؤقتة
+  }
+
+  async listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]> {
+    return []; // لا توجد صلاحيات في الذاكرة المؤقتة
+  }
+
+  async expireTransactionEditPermissions(): Promise<number> {
+    return 0; // لا توجد صلاحيات لإنهائها في الذاكرة المؤقتة
+  }
+
+  async getTransactionEditPermissionsByUser(userId: number): Promise<TransactionEditPermission[]> {
+    return []; // لا توجد صلاحيات في الذاكرة المؤقتة
+  }
+
+  async getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]> {
+    return []; // لا توجد صلاحيات في الذاكرة المؤقتة
   }
 }
 

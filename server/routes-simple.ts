@@ -1656,6 +1656,97 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Transaction Edit Permissions routes - صلاحيات تعديل المعاملات
+  app.post("/api/transaction-edit-permissions", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const { userId, projectId, reason, notes } = req.body;
+      
+      if (!userId && !projectId) {
+        return res.status(400).json({ message: "يجب تحديد مستخدم أو مشروع" });
+      }
+
+      if (userId && projectId) {
+        return res.status(400).json({ message: "لا يمكن تحديد مستخدم ومشروع في نفس الوقت" });
+      }
+
+      const permission = await storage.grantTransactionEditPermission({
+        userId: userId || null,
+        projectId: projectId || null,
+        grantedBy: req.session.userId,
+        reason,
+        notes
+      });
+
+      await storage.createActivityLog({
+        userId: req.session.userId,
+        action: "grant_transaction_edit_permission",
+        entityType: "permission",
+        entityId: permission.id,
+        details: `منح صلاحية تعديل المعاملات ${userId ? `للمستخدم ${userId}` : `للمشروع ${projectId}`}`
+      });
+
+      return res.status(201).json(permission);
+    } catch (error) {
+      console.error('Error granting transaction edit permission:', error);
+      return res.status(500).json({ message: "خطأ في منح الصلاحية" });
+    }
+  });
+
+  app.delete("/api/transaction-edit-permissions/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف الصلاحية غير صحيح" });
+      }
+
+      const success = await storage.revokeTransactionEditPermission(id, req.session.userId);
+      
+      if (success) {
+        await storage.createActivityLog({
+          userId: req.session.userId,
+          action: "revoke_transaction_edit_permission",
+          entityType: "permission",
+          entityId: id,
+          details: "إلغاء صلاحية تعديل المعاملات"
+        });
+
+        return res.status(200).json({ message: "تم إلغاء الصلاحية بنجاح" });
+      } else {
+        return res.status(404).json({ message: "الصلاحية غير موجودة أو غير نشطة" });
+      }
+    } catch (error) {
+      console.error('Error revoking transaction edit permission:', error);
+      return res.status(500).json({ message: "خطأ في إلغاء الصلاحية" });
+    }
+  });
+
+  app.get("/api/transaction-edit-permissions", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const permissions = await storage.listActiveTransactionEditPermissions();
+      return res.status(200).json(permissions);
+    } catch (error) {
+      console.error('Error listing transaction edit permissions:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع الصلاحيات" });
+    }
+  });
+
+  // Endpoint للتحقق من وجود صلاحية تعديل للمستخدم الحالي
+  app.get("/api/transaction-edit-permissions/check", authenticate, async (req: Request, res: Response) => {
+    try {
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      
+      const permission = await storage.checkTransactionEditPermission(req.session.userId, projectId);
+      
+      return res.status(200).json({
+        hasPermission: !!permission,
+        permission: permission || null
+      });
+    } catch (error) {
+      console.error('Error checking transaction edit permission:', error);
+      return res.status(500).json({ message: "خطأ في التحقق من الصلاحية" });
+    }
+  });
+
   app.get("/api/health", (req: Request, res: Response) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
   });

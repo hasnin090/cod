@@ -135,6 +135,27 @@ export const settings = pgTable("settings", {
   description: text("description"),
 });
 
+// Transaction Edit Permissions table - إدارة صلاحيات تعديل المعاملات المؤقتة
+export const transactionEditPermissions = pgTable("transaction_edit_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // للمستخدم المحدد
+  projectId: integer("project_id").references(() => projects.id), // أو للمشروع المحدد
+  grantedBy: integer("granted_by").notNull().references(() => users.id), // من منح الصلاحية
+  grantedAt: timestamp("granted_at").notNull().defaultNow(), // وقت منح الصلاحية
+  expiresAt: timestamp("expires_at").notNull(), // انتهاء الصلاحية (42 ساعة)
+  isActive: boolean("is_active").notNull().default(true), // نشط أم لا
+  revokedBy: integer("revoked_by").references(() => users.id), // من ألغى الصلاحية
+  revokedAt: timestamp("revoked_at"), // وقت إلغاء الصلاحية
+  reason: text("reason"), // سبب منح الصلاحية
+  notes: text("notes"), // ملاحظات إضافية
+}, (table) => {
+  return {
+    // التأكد من عدم تكرار الصلاحية للمستخدم أو المشروع النشط
+    userEditPermissionUnique: unique().on(table.userId, table.isActive),
+    projectEditPermissionUnique: unique().on(table.projectId, table.isActive),
+  };
+});
+
 // جدول أنواع المصروفات لدفتر الأستاذ
 export const expenseTypes = pgTable("expense_types", {
   id: serial("id").primaryKey(),
@@ -281,6 +302,14 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
+
+// Transaction Edit Permission types
+export const insertTransactionEditPermissionSchema = createInsertSchema(transactionEditPermissions).omit({
+  id: true,
+  grantedAt: true,
+});
+export type InsertTransactionEditPermission = z.infer<typeof insertTransactionEditPermissionSchema>;
+export type TransactionEditPermission = typeof transactionEditPermissions.$inferSelect;
 
 export type InsertUserProject = z.infer<typeof insertUserProjectSchema>;
 export type UserProject = typeof userProjects.$inferSelect;

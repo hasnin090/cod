@@ -2368,6 +2368,158 @@ export class PgStorage implements IStorage {
       return false;
     }
   }
+
+  // Transaction Edit Permissions - إدارة صلاحيات تعديل المعاملات
+  async grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission> {
+    try {
+      // حساب تاريخ انتهاء الصلاحية (42 ساعة من الآن)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 42);
+
+      // إلغاء أي صلاحيات نشطة سابقة للمستخدم أو المشروع
+      if (permission.userId) {
+        await this.sql`
+          UPDATE transaction_edit_permissions 
+          SET is_active = false, revoked_at = NOW(), revoked_by = ${permission.grantedBy}
+          WHERE user_id = ${permission.userId} AND is_active = true
+        `;
+      }
+
+      if (permission.projectId) {
+        await this.sql`
+          UPDATE transaction_edit_permissions 
+          SET is_active = false, revoked_at = NOW(), revoked_by = ${permission.grantedBy}
+          WHERE project_id = ${permission.projectId} AND is_active = true
+        `;
+      }
+
+      const result = await this.sql`
+        INSERT INTO transaction_edit_permissions 
+        (user_id, project_id, granted_by, expires_at, reason, notes)
+        VALUES (${permission.userId || null}, ${permission.projectId || null}, 
+                ${permission.grantedBy}, ${expiresAt}, ${permission.reason || null}, 
+                ${permission.notes || null})
+        RETURNING *
+      `;
+      
+      return result[0] as TransactionEditPermission;
+    } catch (error) {
+      console.error('Error granting transaction edit permission:', error);
+      throw error;
+    }
+  }
+
+  async revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean> {
+    try {
+      const result = await this.sql`
+        UPDATE transaction_edit_permissions 
+        SET is_active = false, revoked_at = NOW(), revoked_by = ${revokedBy}
+        WHERE id = ${id} AND is_active = true
+      `;
+      return result.count > 0;
+    } catch (error) {
+      console.error('Error revoking transaction edit permission:', error);
+      return false;
+    }
+  }
+
+  async checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined> {
+    try {
+      // التحقق من صلاحية المستخدم المباشرة
+      const userPermission = await this.sql`
+        SELECT * FROM transaction_edit_permissions 
+        WHERE user_id = ${userId} AND is_active = true AND expires_at > NOW()
+        LIMIT 1
+      `;
+
+      if (userPermission.length > 0) {
+        return userPermission[0] as TransactionEditPermission;
+      }
+
+      // التحقق من صلاحية المشروع إذا تم توفير معرف المشروع
+      if (projectId) {
+        const projectPermission = await this.sql`
+          SELECT * FROM transaction_edit_permissions 
+          WHERE project_id = ${projectId} AND is_active = true AND expires_at > NOW()
+          LIMIT 1
+        `;
+
+        if (projectPermission.length > 0) {
+          return projectPermission[0] as TransactionEditPermission;
+        }
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error('Error checking transaction edit permission:', error);
+      return undefined;
+    }
+  }
+
+  async listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]> {
+    try {
+      const result = await this.sql`
+        SELECT tep.*, u.name as granted_by_name, 
+               pu.name as user_name, p.name as project_name
+        FROM transaction_edit_permissions tep
+        LEFT JOIN users u ON tep.granted_by = u.id
+        LEFT JOIN users pu ON tep.user_id = pu.id
+        LEFT JOIN projects p ON tep.project_id = p.id
+        WHERE tep.is_active = true AND tep.expires_at > NOW()
+        ORDER BY tep.granted_at DESC
+      `;
+      return result as TransactionEditPermission[];
+    } catch (error) {
+      console.error('Error listing active transaction edit permissions:', error);
+      return [];
+    }
+  }
+
+  async expireTransactionEditPermissions(): Promise<number> {
+    try {
+      const result = await this.sql`
+        UPDATE transaction_edit_permissions 
+        SET is_active = false 
+        WHERE is_active = true AND expires_at <= NOW()
+      `;
+      return result.count;
+    } catch (error) {
+      console.error('Error expiring transaction edit permissions:', error);
+      return 0;
+    }
+  }
+
+  async getTransactionEditPermissionsByUser(userId: number): Promise<TransactionEditPermission[]> {
+    try {
+      const result = await this.sql`
+        SELECT tep.*, u.name as granted_by_name
+        FROM transaction_edit_permissions tep
+        LEFT JOIN users u ON tep.granted_by = u.id
+        WHERE tep.user_id = ${userId}
+        ORDER BY tep.granted_at DESC
+      `;
+      return result as TransactionEditPermission[];
+    } catch (error) {
+      console.error('Error getting transaction edit permissions by user:', error);
+      return [];
+    }
+  }
+
+  async getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]> {
+    try {
+      const result = await this.sql`
+        SELECT tep.*, u.name as granted_by_name
+        FROM transaction_edit_permissions tep
+        LEFT JOIN users u ON tep.granted_by = u.id
+        WHERE tep.project_id = ${projectId}
+        ORDER BY tep.granted_at DESC
+      `;
+      return result as TransactionEditPermission[];
+    } catch (error) {
+      console.error('Error getting transaction edit permissions by project:', error);
+      return [];
+    }
+  }
 }
 
 export const pgStorage = new PgStorage();
