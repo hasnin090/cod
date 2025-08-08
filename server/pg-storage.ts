@@ -2372,26 +2372,30 @@ export class PgStorage implements IStorage {
   // Transaction Edit Permissions - إدارة صلاحيات تعديل المعاملات
   async grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission> {
     try {
-      // حساب تاريخ انتهاء الصلاحية (42 ساعة من الآن)
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 42);
-
-      // إلغاء أي صلاحيات نشطة سابقة للمستخدم أو المشروع
+      // التحقق من وجود صلاحية نشطة مسبقاً
       if (permission.userId) {
-        await this.sql`
-          UPDATE transaction_edit_permissions 
-          SET is_active = false, revoked_at = NOW(), revoked_by = ${permission.grantedBy}
+        const existingPermissions = await this.sql`
+          SELECT * FROM transaction_edit_permissions 
           WHERE user_id = ${permission.userId} AND is_active = true
         `;
+        if (existingPermissions.length > 0) {
+          throw new Error('يوجد صلاحية نشطة مسبقاً لهذا المستخدم');
+        }
       }
 
       if (permission.projectId) {
-        await this.sql`
-          UPDATE transaction_edit_permissions 
-          SET is_active = false, revoked_at = NOW(), revoked_by = ${permission.grantedBy}
+        const existingPermissions = await this.sql`
+          SELECT * FROM transaction_edit_permissions 
           WHERE project_id = ${permission.projectId} AND is_active = true
         `;
+        if (existingPermissions.length > 0) {
+          throw new Error('يوجد صلاحية نشطة مسبقاً لهذا المشروع');
+        }
       }
+
+      // حساب تاريخ انتهاء الصلاحية (42 ساعة من الآن)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 42);
 
       const result = await this.sql`
         INSERT INTO transaction_edit_permissions 
@@ -2415,8 +2419,9 @@ export class PgStorage implements IStorage {
         UPDATE transaction_edit_permissions 
         SET is_active = false, revoked_at = NOW(), revoked_by = ${revokedBy}
         WHERE id = ${id} AND is_active = true
+        RETURNING *
       `;
-      return result.count > 0;
+      return result.length > 0;
     } catch (error) {
       console.error('Error revoking transaction edit permission:', error);
       return false;

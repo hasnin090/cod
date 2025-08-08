@@ -1669,28 +1669,65 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "لا يمكن تحديد مستخدم ومشروع في نفس الوقت" });
       }
 
-      // سيتم التحقق من الصلاحيات المكررة في قاعدة البيانات تلقائياً
+      // التحقق من وجود صلاحية نشطة للمستخدم
+      let existingPermission = null;
+      if (userId) {
+        const activePermissions = await storage.listActiveTransactionEditPermissions();
+        existingPermission = activePermissions.find(p => p.user_id === userId);
+      }
 
-      const permission = await storage.grantTransactionEditPermission({
-        userId: userId || null,
-        projectId: projectId || null,
-        grantedBy: req.session.userId,
-        reason,
-        notes
-      });
+      if (existingPermission) {
+        // إذا كان هناك صلاحية نشطة، قم بإلغائها (toggle off)
+        const success = await storage.revokeTransactionEditPermission(existingPermission.id, req.session.userId);
+        
+        if (success) {
+          await storage.createActivityLog({
+            userId: req.session.userId,
+            action: "revoke_transaction_edit_permission",
+            entityType: "permission",
+            entityId: existingPermission.id,
+            details: `إلغاء صلاحية تعديل المعاملات للمستخدم ${userId}`
+          });
 
-      await storage.createActivityLog({
-        userId: req.session.userId,
-        action: "grant_transaction_edit_permission",
-        entityType: "permission",
-        entityId: permission.id,
-        details: `منح صلاحية تعديل المعاملات ${userId ? `للمستخدم ${userId}` : `للمشروع ${projectId}`}`
-      });
+          return res.status(200).json({ 
+            message: "تم إلغاء صلاحية تعديل المعاملات", 
+            action: "revoked",
+            permissionId: existingPermission.id 
+          });
+        } else {
+          return res.status(500).json({ message: "فشل في إلغاء الصلاحية" });
+        }
+      } else {
+        // إذا لم تكن هناك صلاحية نشطة، قم بإنشاء واحدة جديدة (toggle on)
+        const permission = await storage.grantTransactionEditPermission({
+          userId: userId || null,
+          projectId: projectId || null,
+          grantedBy: req.session.userId,
+          reason: reason || "تفعيل صلاحية تعديل المعاملات",
+          notes
+        });
 
-      return res.status(201).json(permission);
+        await storage.createActivityLog({
+          userId: req.session.userId,
+          action: "grant_transaction_edit_permission",
+          entityType: "permission",
+          entityId: permission.id,
+          details: `منح صلاحية تعديل المعاملات ${userId ? `للمستخدم ${userId}` : `للمشروع ${projectId}`}`
+        });
+
+        return res.status(201).json({ 
+          ...permission,
+          message: "تم تفعيل صلاحية تعديل المعاملات لمدة 42 ساعة", 
+          action: "granted" 
+        });
+      }
     } catch (error) {
-      console.error('Error granting transaction edit permission:', error);
-      return res.status(500).json({ message: "خطأ في منح الصلاحية" });
+      console.error('Error managing transaction edit permission:', error);
+      if (error.message && error.message.includes('يوجد صلاحية نشطة مسبقاً')) {
+        return res.status(400).json({ message: error.message });
+      } else {
+        return res.status(500).json({ message: "خطأ في إدارة الصلاحية" });
+      }
     }
   });
 
