@@ -8,8 +8,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (Aug 2025)
 - **Project-Specific Expense Types**: Implemented project-based expense type categorization where each project can have its own expense categories
-- **Enhanced Expense Type Management**: Added ability to create, edit, and manage expense types with project associations
+- **Enhanced Expense Type Management**: Added ability to create, edit, and manage expense types with project associations in Settings > General Settings > Expense Types
 - **Role-Based Filtering**: Administrators see all expense types, regular users only see their project's expense types plus general ones
+- **Fixed Interface Mapping**: Resolved data structure inconsistencies between API (project_id) and frontend (projectId) for proper display
+- **Fixed SelectItem Bug**: Resolved React Select component error by using proper non-empty values for general expense types
 - **Password Display**: Enhanced admin functionality to view plain text passwords for user management
 
 ## System Architecture
