@@ -64,13 +64,25 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       const wasActive = hasActivePermission;
-      toast({
-        title: "تم التحديث",
-        description: wasActive ? "تم إلغاء صلاحية تعديل المعاملات" : "تم تفعيل صلاحية تعديل المعاملات (تنتهي خلال 42 ساعة)",
-        className: "bg-green-50 border-green-200 text-green-800",
-      });
+      
+      if (wasActive) {
+        // رسالة الإلغاء
+        toast({
+          title: "✅ تم إلغاء الصلاحية",
+          description: "تم إلغاء صلاحية تعديل المعاملات بنجاح",
+          className: "bg-blue-50 border-blue-200 text-blue-800",
+        });
+      } else {
+        // رسالة التفعيل
+        toast({
+          title: "🔓 تم تفعيل الصلاحية",
+          description: "تم تفعيل صلاحية تعديل المعاملات لمدة 42 ساعة",
+          className: "bg-green-50 border-green-200 text-green-800",
+        });
+      }
+      
       refetchUserPermissions();
     },
     onError: (error: any) => {
@@ -137,9 +149,23 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
       {hasActivePermission && activePermission && (
         <div className="flex items-center gap-2 text-xs text-green-700 bg-green-100 dark:bg-green-900/30 p-2 rounded">
           <Timer className="h-3 w-3" />
-          <span className="font-medium">{getRemainingTime(activePermission.expiresAt)}</span>
+          <span className="font-medium">نشط - {getRemainingTime(activePermission.expiresAt)}</span>
         </div>
       )}
+
+      {/* شرح وظيفة الصلاحية */}
+      <div className="text-xs text-gray-600 dark:text-gray-300 bg-amber-50 dark:bg-amber-900/20 p-3 rounded border-l-4 border-amber-400">
+        <div className="font-bold mb-2 text-amber-800 dark:text-amber-400">ماذا تفعل هذه الصلاحية؟</div>
+        <div className="space-y-1 text-gray-700 dark:text-gray-300">
+          <div>✓ تعديل جميع المعاملات المالية (المبلغ، التاريخ، الوصف، المشروع)</div>
+          <div>✓ حذف المعاملات نهائياً من النظام</div>
+          <div>✓ إضافة وتعديل المرفقات والملفات</div>
+          <div>✓ تغيير تفاصيل المعاملات المؤرشفة</div>
+          <div className="mt-2 font-medium text-red-600 dark:text-red-400">
+            ⚠️ صلاحية حساسة جداً - تنتهي تلقائياً خلال 42 ساعة للحماية
+          </div>
+        </div>
+      </div>
 
       {/* معلومة بسيطة */}
       {!hasActivePermission && (
