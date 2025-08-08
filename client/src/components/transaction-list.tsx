@@ -99,6 +99,7 @@ export function TransactionList({
   const { data: userTransactionPermission } = useQuery<any>({
     queryKey: [`/api/transaction-edit-permissions/check`],
     enabled: !!user && user.role !== 'admin', // المديرين لديهم صلاحية مسبقة
+    refetchInterval: 30000, // إعادة فحص كل 30 ثانية للتأكد من الصلاحيات
   });
 
   // تحديد الصلاحية بناءً على الدور أو الصلاحية الممنوحة
