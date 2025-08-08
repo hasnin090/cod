@@ -106,12 +106,7 @@ export function TransactionList({
   const hasTransactionEditPermission = user?.role === 'admin' || 
     userTransactionPermission?.hasPermission === true;
   
-  console.log('Permission Debug:', {
-    userRole: user?.role,
-    isAdmin: user?.role === 'admin',
-    permissionData: userTransactionPermission,
-    hasPermission: hasTransactionEditPermission
-  });
+
 
   // جلب أنواع المصاريف
   const { data: expenseTypes = [] } = useQuery<ExpenseType[]>({

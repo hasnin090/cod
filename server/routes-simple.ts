@@ -288,6 +288,76 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete transaction
+  app.put("/api/transactions/:id", authenticate, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف المعاملة غير صحيح" });
+      }
+
+      const existingTransaction = await storage.getTransaction(id);
+      if (!existingTransaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+
+      // Check permissions - المشرفون أو المستخدمون الذين لديهم صلاحية تعديل
+      const currentUserId = req.session.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      const user = await storage.getUser(currentUserId);
+      if (!user) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+
+      // التحقق من صلاحية التعديل
+      if (user.role !== 'admin') {
+        // التحقق من وجود صلاحية تعديل المعاملات
+        const hasEditPermission = await storage.checkTransactionEditPermission(currentUserId);
+        if (!hasEditPermission) {
+          return res.status(403).json({ message: "غير مصرح لك بتعديل المعاملات - تحتاج لصلاحية تعديل من المدير" });
+        }
+
+        // التحقق من أن المعاملة من المشاريع المخصصة للمستخدم
+        const canAccess = await storage.canUserAccessTransaction(currentUserId, id);
+        if (!canAccess) {
+          return res.status(403).json({ message: "غير مصرح لك بتعديل هذه المعاملة - ليست من مشاريعك المخصصة" });
+        }
+      }
+
+      // تحديث المعاملة
+      const updatedData = {
+        date: req.body.date,
+        type: req.body.type,
+        amount: req.body.amount,
+        description: req.body.description,
+        projectId: req.body.projectId,
+        expenseType: req.body.expenseType,
+      };
+
+      const updatedTransaction = await storage.updateTransaction(id, updatedData);
+      
+      if (updatedTransaction) {
+        // تسجيل نشاط التعديل
+        await storage.createActivityLog({
+          userId: currentUserId,
+          action: "update_transaction",
+          entityType: "transaction",
+          entityId: id,
+          details: `تعديل المعاملة: ${updatedTransaction.description || 'بدون وصف'} - المبلغ: ${updatedTransaction.amount}`
+        });
+        
+        return res.status(200).json(updatedTransaction);
+      } else {
+        return res.status(500).json({ message: "فشل في تحديث المعاملة" });
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      return res.status(500).json({ message: "خطأ في تحديث المعاملة" });
+    }
+  });
+
   app.delete("/api/transactions/:id", authenticate, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
@@ -313,6 +383,12 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       // المشرفون يمكنهم حذف أي معاملة
       if (user.role !== 'admin') {
+        // التحقق من وجود صلاحية تعديل المعاملات للحذف أيضاً
+        const hasEditPermission = await storage.checkTransactionEditPermission(currentUserId);
+        if (!hasEditPermission) {
+          return res.status(403).json({ message: "غير مصرح لك بحذف المعاملات - تحتاج لصلاحية تعديل من المدير" });
+        }
+
         // المستخدمون العاديون يمكنهم حذف معاملات المشاريع المخصصة لهم فقط
         const canAccess = await storage.canUserAccessTransaction(currentUserId, id);
         if (!canAccess) {
