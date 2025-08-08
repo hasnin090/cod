@@ -53,28 +53,22 @@ export function TransactionEditPermissionToggle({ userId }: TransactionEditPermi
   // تبديل الصلاحية (منح أو إلغاء)
   const togglePermissionMutation = useMutation({
     mutationFn: async () => {
-      if (hasActivePermission && activePermission) {
-        // إلغاء الصلاحية الحالية
-        return apiRequest(`/api/transaction-edit-permissions/${activePermission.id}`, 'DELETE');
-      } else {
-        // منح صلاحية جديدة
-        return apiRequest('/api/transaction-edit-permissions', 'POST', { 
-          userId,
-          reason: "تفعيل صلاحية تعديل المعاملات",
-        });
-      }
+      // استخدام النظام الجديد toggle - POST دائماً
+      return apiRequest('/api/transaction-edit-permissions', 'POST', { 
+        userId,
+        reason: "تفعيل صلاحية تعديل المعاملات",
+      });
     },
-    onSuccess: (data) => {
-      const wasActive = hasActivePermission;
-      
-      if (wasActive) {
+    onSuccess: (response: any) => {
+      // تحديد نوع العملية من استجابة الخادم
+      if (response.action === 'revoked') {
         // رسالة الإلغاء
         toast({
           title: "✅ تم إلغاء الصلاحية",
           description: "تم إلغاء صلاحية تعديل المعاملات بنجاح",
           className: "bg-blue-50 border-blue-200 text-blue-800",
         });
-      } else {
+      } else if (response.action === 'granted') {
         // رسالة التفعيل
         toast({
           title: "🔓 تم تفعيل الصلاحية",

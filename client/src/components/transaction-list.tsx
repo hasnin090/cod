@@ -95,6 +95,14 @@ export function TransactionList({
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // التحقق من صلاحية تعديل المعاملات للمستخدم الحالي
+  const { data: userTransactionPermission } = useQuery({
+    queryKey: ['/api/transaction-edit-permissions/check'],
+    enabled: !!user && user.role !== 'admin', // المديرين لديهم صلاحية مسبقة
+  });
+
+  const hasTransactionEditPermission = user?.role === 'admin' || userTransactionPermission?.hasPermission;
+
   // جلب أنواع المصاريف
   const { data: expenseTypes = [] } = useQuery<ExpenseType[]>({
     queryKey: ['/api/expense-types'],
@@ -337,13 +345,14 @@ export function TransactionList({
                         </Badge>
                       </div>
                       
-                      {user?.role === 'admin' && !isArchiveMode && (
+                      {hasTransactionEditPermission && !isArchiveMode && (
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditClick(transaction)}
                             className="h-7 w-7 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            title={user?.role !== 'admin' ? 'صلاحية تعديل مؤقتة - تنتهي تلقائياً' : ''}
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>
@@ -352,6 +361,7 @@ export function TransactionList({
                             size="sm"
                             onClick={() => handleDeleteClick(transaction)}
                             className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                            title={user?.role !== 'admin' ? 'صلاحية حذف مؤقتة - تنتهي تلقائياً' : ''}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -495,7 +505,7 @@ export function TransactionList({
                           {formatCurrency(transaction.amount)}
                         </span>
                       </td>
-                      {user?.role === 'admin' && !isArchiveMode && (
+                      {hasTransactionEditPermission && !isArchiveMode && (
                         <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex gap-1">
                             <Button
@@ -503,6 +513,7 @@ export function TransactionList({
                               size="sm"
                               onClick={() => handleEditClick(transaction)}
                               className="h-6 w-6 p-0"
+                              title={user?.role !== 'admin' ? 'صلاحية تعديل مؤقتة - تنتهي تلقائياً' : ''}
                             >
                               <Edit2 className="h-3 w-3" />
                             </Button>
@@ -511,6 +522,7 @@ export function TransactionList({
                               size="sm"
                               onClick={() => handleDeleteClick(transaction)}
                               className="h-6 w-6 p-0"
+                              title={user?.role !== 'admin' ? 'صلاحية حذف مؤقتة - تنتهي تلقائياً' : ''}
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
