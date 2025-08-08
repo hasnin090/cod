@@ -1160,18 +1160,21 @@ export class PgStorage implements IStorage {
 
   async createExpenseType(expenseType: InsertExpenseType): Promise<ExpenseType> {
     try {
-      // التحقق من عدم وجود الاسم مسبقاً
+      // التحقق من عدم وجود الاسم مسبقاً في نفس المشروع
       const existing = await this.sql`
-        SELECT id FROM expense_types WHERE name = ${expenseType.name}
+        SELECT id FROM expense_types 
+        WHERE name = ${expenseType.name} 
+        AND (project_id = ${expenseType.projectId || null} OR (project_id IS NULL AND ${expenseType.projectId || null} IS NULL))
       `;
       
       if (existing.length > 0) {
-        throw new Error(`نوع المصروف "${expenseType.name}" موجود مسبقاً`);
+        const projectText = expenseType.projectId ? "في هذا المشروع" : "العام";
+        throw new Error(`نوع المصروف "${expenseType.name}" موجود مسبقاً ${projectText}`);
       }
 
       const result = await this.sql`
-        INSERT INTO expense_types (name, description)
-        VALUES (${expenseType.name}, ${expenseType.description || null})
+        INSERT INTO expense_types (name, description, project_id)
+        VALUES (${expenseType.name}, ${expenseType.description || null}, ${expenseType.projectId || null})
         RETURNING *
       `;
       return result[0] as ExpenseType;
@@ -1179,7 +1182,7 @@ export class PgStorage implements IStorage {
       console.error('Error creating expense type:', error);
       // إذا كان الخطأ من قاعدة البيانات بسبب الاسم المكرر
       if (error instanceof Error && error.message.includes('duplicate key value')) {
-        throw new Error(`نوع المصروف "${expenseType.name}" موجود مسبقاً`);
+        throw new Error(`نوع المصروف "${expenseType.name}" موجود مسبقاً في هذا المشروع`);
       }
       throw error;
     }
@@ -1197,6 +1200,10 @@ export class PgStorage implements IStorage {
       if (expenseType.description !== undefined) {
         setParts.push(`description = $${setParts.length + 1}`);
         values.push(expenseType.description);
+      }
+      if (expenseType.projectId !== undefined) {
+        setParts.push(`project_id = $${setParts.length + 1}`);
+        values.push(expenseType.projectId);
       }
       if (expenseType.isActive !== undefined) {
         setParts.push(`is_active = $${setParts.length + 1}`);
@@ -1216,12 +1223,39 @@ export class PgStorage implements IStorage {
     }
   }
 
-  async listExpenseTypes(): Promise<ExpenseType[]> {
+  async listExpenseTypes(projectId?: number): Promise<ExpenseType[]> {
     try {
-      const result = await this.sql`SELECT * FROM expense_types ORDER BY name`;
-      return result as ExpenseType[];
+      if (projectId !== undefined) {
+        // إذا تم تحديد مشروع، إرجاع أنواع المصروفات الخاصة بالمشروع والعامة
+        const result = await this.sql`
+          SELECT * FROM expense_types 
+          WHERE (project_id = ${projectId} OR project_id IS NULL) AND is_active = true
+          ORDER BY name
+        `;
+        return result as ExpenseType[];
+      } else {
+        // إرجاع جميع أنواع المصروفات (للمدير)
+        const result = await this.sql`SELECT * FROM expense_types ORDER BY name`;
+        return result as ExpenseType[];
+      }
     } catch (error) {
       console.error('Error listing expense types:', error);
+      return [];
+    }
+  }
+
+  // دالة جديدة لإرجاع أنواع المصروفات للمستخدم حسب مشاريعه
+  async listExpenseTypesForUser(userId: number): Promise<ExpenseType[]> {
+    try {
+      const result = await this.sql`
+        SELECT DISTINCT et.* FROM expense_types et
+        LEFT JOIN user_projects up ON et.project_id = up.project_id
+        WHERE (up.user_id = ${userId} OR et.project_id IS NULL) AND et.is_active = true
+        ORDER BY et.name
+      `;
+      return result as ExpenseType[];
+    } catch (error) {
+      console.error('Error listing expense types for user:', error);
       return [];
     }
   }

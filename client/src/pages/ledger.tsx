@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, FileText, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
@@ -20,6 +21,7 @@ import { z } from "zod";
 const expenseTypeSchema = z.object({
   name: z.string().min(1, "اسم نوع المصروف مطلوب"),
   description: z.string().optional(),
+  projectId: z.number().optional(),
 });
 
 type ExpenseTypeForm = z.infer<typeof expenseTypeSchema>;
@@ -28,6 +30,7 @@ interface ExpenseType {
   id: number;
   name: string;
   description: string | null;
+  projectId: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -69,7 +72,13 @@ export default function LedgerPage() {
     defaultValues: {
       name: "",
       description: "",
+      projectId: undefined,
     },
+  });
+
+  // جلب المشاريع للمدير
+  const { data: projects = [] } = useQuery({
+    queryKey: ["/api/projects"],
   });
 
   // جلب أنواع المصروفات
@@ -268,6 +277,35 @@ export default function LedgerPage() {
                       <FormControl>
                         <Textarea placeholder="وصف نوع المصروف..." {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>المشروع</FormLabel>
+                      <Select 
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                        value={field.value?.toString() || ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر مشروع (اختياري - سيكون عام إذا لم تختر)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">عام (جميع المشاريع)</SelectItem>
+                          {(projects as any[])?.map((project: any) => (
+                            <SelectItem key={project.id} value={project.id.toString()}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -880,6 +918,7 @@ export default function LedgerPage() {
                   <TableRow>
                     <TableHead>الاسم</TableHead>
                     <TableHead>الوصف</TableHead>
+                    <TableHead>المشروع</TableHead>
                     <TableHead>الحالة</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
                   </TableRow>
@@ -889,6 +928,17 @@ export default function LedgerPage() {
                     <TableRow key={type.id}>
                       <TableCell className="font-medium">{type.name}</TableCell>
                       <TableCell>{type.description || "-"}</TableCell>
+                      <TableCell>
+                        {type.projectId ? (
+                          <Badge variant="outline" className="text-xs">
+                            {(projects as any[])?.find(p => p.id === type.projectId)?.name || `مشروع ${type.projectId}`}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            عام
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={type.isActive ? "default" : "secondary"}>
                           {type.isActive ? "نشط" : "غير نشط"}

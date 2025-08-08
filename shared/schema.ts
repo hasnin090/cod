@@ -160,11 +160,17 @@ export const transactionEditPermissions = pgTable("transaction_edit_permissions"
 // جدول أنواع المصروفات لدفتر الأستاذ
 export const expenseTypes = pgTable("expense_types", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   description: text("description"),
+  projectId: integer("project_id").references(() => projects.id), // ربط نوع المصروف بالمشروع
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    // التأكد من عدم تكرار اسم نوع المصروف في نفس المشروع
+    nameProjectUnique: unique().on(table.name, table.projectId),
+  };
 });
 
 // دفتر الأستاذ - المصروفات المصنفة حسب النوع
@@ -319,7 +325,10 @@ export type InsertFund = z.infer<typeof insertFundSchema>;
 export type Fund = typeof funds.$inferSelect;
 
 export const insertExpenseTypeSchema = createInsertSchema(expenseTypes)
-  .omit({ id: true, createdAt: true, updatedAt: true });
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    projectId: z.number().optional(), // معرف المشروع اختياري
+  });
 
 export const insertLedgerEntrySchema = createInsertSchema(ledgerEntries)
   .omit({ id: true, createdAt: true })

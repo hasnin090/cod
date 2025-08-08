@@ -438,9 +438,26 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Expense types routes
-  app.get("/api/expense-types", async (req: Request, res: Response) => {
+  app.get("/api/expense-types", authenticate, async (req: Request, res: Response) => {
     try {
-      const expenseTypes = await storage.listExpenseTypes();
+      const userId = req.session.userId as number;
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      
+      // Get user to check role
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+      
+      let expenseTypes;
+      if (user.role === 'admin') {
+        // المدير يرى جميع أنواع المصروفات أو حسب المشروع المحدد
+        expenseTypes = await storage.listExpenseTypes(projectId);
+      } else {
+        // المستخدمون العاديون يرون فقط أنواع مصروفات مشاريعهم
+        expenseTypes = await storage.listExpenseTypesForUser(userId);
+      }
+      
       return res.status(200).json(expenseTypes);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع أنواع المصروفات" });
@@ -450,21 +467,33 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Create expense type
   app.post("/api/expense-types", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
-      const { name, description } = req.body;
+      const { name, description, projectId } = req.body;
       
       if (!name || typeof name !== 'string') {
         return res.status(400).json({ message: "اسم نوع المصروف مطلوب" });
       }
 
+      // التحقق من وجود المشروع إذا تم تحديده
+      if (projectId) {
+        const project = await storage.getProject(projectId);
+        if (!project) {
+          return res.status(404).json({ message: "المشروع غير موجود" });
+        }
+      }
+
       const expenseType = await storage.createExpenseType({
         name: name.trim(),
         description: description?.trim() || null,
+        projectId: projectId || null,
         isActive: true
       });
 
       return res.status(201).json(expenseType);
     } catch (error) {
       console.error('Error creating expense type:', error);
+      if (error instanceof Error && error.message.includes("موجود مسبقاً")) {
+        return res.status(400).json({ message: error.message });
+      }
       return res.status(500).json({ message: "خطأ في إنشاء نوع المصروف" });
     }
   });
@@ -477,10 +506,20 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "معرف نوع المصروف غير صحيح" });
       }
 
-      const { name, description, isActive } = req.body;
+      const { name, description, projectId, isActive } = req.body;
+      
+      // التحقق من وجود المشروع إذا تم تحديده
+      if (projectId) {
+        const project = await storage.getProject(projectId);
+        if (!project) {
+          return res.status(404).json({ message: "المشروع غير موجود" });
+        }
+      }
+
       const updatedExpenseType = await storage.updateExpenseType(id, {
         name: name?.trim(),
         description: description?.trim(),
+        projectId: projectId || null,
         isActive
       });
 
