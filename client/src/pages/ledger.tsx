@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, FileText, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Plus, FileText, TrendingUp, TrendingDown, DollarSign, Edit2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -66,6 +66,8 @@ export default function LedgerPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingExpenseType, setEditingExpenseType] = useState<ExpenseType | null>(null);
 
   const form = useForm<ExpenseTypeForm>({
     resolver: zodResolver(expenseTypeSchema),
@@ -152,7 +154,49 @@ export default function LedgerPage() {
   });
 
   const onSubmit = (data: ExpenseTypeForm) => {
-    createExpenseTypeMutation.mutate(data);
+    if (editingExpenseType) {
+      updateExpenseTypeMutation.mutate({ id: editingExpenseType.id, ...data });
+    } else {
+      createExpenseTypeMutation.mutate(data);
+    }
+  };
+
+  // تحديث نوع مصروف
+  const updateExpenseTypeMutation = useMutation({
+    mutationFn: ({ id, ...data }: { id: number } & ExpenseTypeForm) => 
+      apiRequest(`/api/expense-types/${id}`, "PATCH", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/expense-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ledger/summary"] });
+      toast({ title: "نجح التحديث", description: "تم تحديث نوع المصروف بنجاح" });
+      setIsEditDialogOpen(false);
+      setEditingExpenseType(null);
+      form.reset();
+    },
+    onError: () => {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء تحديث نوع المصروف", variant: "destructive" });
+    },
+  });
+
+  const handleEdit = (expenseType: ExpenseType) => {
+    setEditingExpenseType(expenseType);
+    form.reset({
+      name: expenseType.name,
+      description: expenseType.description || "",
+      projectId: expenseType.projectId || undefined,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsAddDialogOpen(false);
+    setIsEditDialogOpen(false);
+    setEditingExpenseType(null);
+    form.reset({
+      name: "",
+      description: "",
+      projectId: undefined,
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -315,7 +359,7 @@ export default function LedgerPage() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setIsAddDialogOpen(false)}
+                    onClick={handleCloseDialog}
                   >
                     إلغاء
                   </Button>
@@ -324,6 +368,95 @@ export default function LedgerPage() {
                     disabled={createExpenseTypeMutation.isPending}
                   >
                     {createExpenseTypeMutation.isPending ? "جاري الحفظ..." : "حفظ"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* مربع حوار تحرير نوع المصروف */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>تحرير نوع المصروف</DialogTitle>
+              <DialogDescription>
+                تحرير نوع المصروف وربطه بمشروع محدد
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>اسم نوع المصروف *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="مثال: راتب، مصروف عام، وقود" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الوصف</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="وصف نوع المصروف..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>المشروع</FormLabel>
+                      <Select 
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                        value={field.value?.toString() || ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر مشروع (اختياري - سيكون عام إذا لم تختر)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">عام (جميع المشاريع)</SelectItem>
+                          {(projects as any[])?.map((project: any) => (
+                            <SelectItem key={project.id} value={project.id.toString()}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleCloseDialog}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateExpenseTypeMutation.isPending}
+                  >
+                    {updateExpenseTypeMutation.isPending ? "جاري التحديث..." : "تحديث"}
                   </Button>
                 </div>
               </form>
@@ -921,6 +1054,7 @@ export default function LedgerPage() {
                     <TableHead>المشروع</TableHead>
                     <TableHead>الحالة</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
+                    <TableHead>الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -945,6 +1079,17 @@ export default function LedgerPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{formatDate(type.createdAt)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(type)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

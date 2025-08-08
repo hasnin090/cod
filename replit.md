@@ -6,6 +6,12 @@ This is a comprehensive Arabic accounting system designed for businesses and org
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (Aug 2025)
+- **Project-Specific Expense Types**: Implemented project-based expense type categorization where each project can have its own expense categories
+- **Enhanced Expense Type Management**: Added ability to create, edit, and manage expense types with project associations
+- **Role-Based Filtering**: Administrators see all expense types, regular users only see their project's expense types plus general ones
+- **Password Display**: Enhanced admin functionality to view plain text passwords for user management
+
 ## System Architecture
 
 ### Frontend
@@ -28,9 +34,10 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful endpoints
 
 ### Key Components
-- **Database Schema**: Comprehensive PostgreSQL schema including Users, Projects, Transactions, Documents, Activity Logs, Settings, Expense Types, Employees, Ledger Entries, and Deferred Payments.
+- **Database Schema**: Comprehensive PostgreSQL schema including Users, Projects, Transactions, Documents, Activity Logs, Settings, Expense Types (with project linking), Employees, Ledger Entries, and Deferred Payments.
 - **Storage Management**: Hybrid approach utilizing local file system storage for primary files and cloud storage (Supabase) for backups and redundancy. Includes automated file organization and orphaned file cleanup.
 - **Security & Permissions**: Secure session-based authentication, granular role-based authorization (admin, manager, user, viewer), bcrypt password hashing, HTTP-only cookies with CSRF protection, and Zod schema-based data validation.
+- **Project-Based Expense Types**: System now supports linking expense types to specific projects. Administrators can view all expense types, while regular users only see expense types for their assigned projects plus general expense types.
 - **Data Flow**:
     - **Authentication**: Secure session creation with HTTP-only cookies.
     - **Transaction Processing**: User-initiated transactions with optional file attachments, database storage, activity logging, and real-time updates.
