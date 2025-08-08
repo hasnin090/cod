@@ -91,6 +91,17 @@ The core architecture is project-centric, meaning operations and data are primar
 
 ## Changelog
 
+- August 08, 2025. **Transaction edit permissions system successfully integrated into user management**:
+  * **System redesign**: Moved transaction edit permissions from standalone page to user management section
+  * **Intuitive workflow**: Permissions now managed directly from user profile edit dialog in Users section
+  * **Database integration**: Created `transaction_edit_permissions` table with full CRUD operations
+  * **Automatic expiration**: 42-hour auto-expiry system with manual revocation capabilities
+  * **Project-specific permissions**: Support for both user-wide and project-specific edit permissions
+  * **Admin-only control**: Only system administrators can grant/revoke transaction edit permissions
+  * **Real-time updates**: Immediate permission status updates with activity logging
+  * **User experience**: Clean integration with existing permission management interface
+  * **Status**: Fully operational - admins can now manage transaction editing permissions seamlessly through the Users section
+
 - August 01, 2025. **Complete project cleanup and optimization finished**:
   * **Major code cleanup**: Removed massive unused routes.ts file (5287 lines) + routes-backup.ts.old
   * **File structure optimization**: Created shared multer-config.ts for unified upload configuration
