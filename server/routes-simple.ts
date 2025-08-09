@@ -259,6 +259,50 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user endpoint
+  app.delete("/api/users/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "معرف المستخدم غير صحيح" });
+      }
+
+      // التحقق من عدم حذف المدير الرئيسي
+      if (id === 1) {
+        return res.status(400).json({ message: "لا يمكن حذف المدير الرئيسي" });
+      }
+
+      // التحقق من وجود المستخدم
+      const existingUser = await storage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+
+      // حذف المستخدم مع جميع البيانات المرتبطة
+      const success = await storage.deleteUser(id);
+      
+      if (!success) {
+        return res.status(500).json({ message: "فشل في حذف المستخدم" });
+      }
+
+      // تسجيل نشاط الحذف
+      await storage.createActivityLog({
+        userId: req.session.userId!,
+        action: "delete_user",
+        entityType: "user",
+        entityId: id,
+        details: `حذف المستخدم: ${existingUser.name} (${existingUser.username})`
+      });
+
+      return res.status(200).json({ message: "تم حذف المستخدم بنجاح" });
+    } catch (error) {
+      console.error('خطأ في حذف المستخدم:', error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : "خطأ في حذف المستخدم" 
+      });
+    }
+  });
+
   // Projects routes - تحديث لإظهار المشاريع المخصصة للمستخدم
   app.get("/api/projects", authenticate, async (req: Request, res: Response) => {
     try {
