@@ -117,10 +117,14 @@ export async function uploadToSupabase(
       .from(bucket)
       .getPublicUrl(uniqueFileName);
 
-    let localPath: string | undefined;
+  let localPath: string | undefined;
 
-    // إنشاء نسخة احتياطية محلية (اختياري)
-    if (keepLocalBackup) {
+  // On Netlify Functions, the filesystem is ephemeral and only /tmp is writable.
+  const isNetlify = !!process.env.NETLIFY || !!process.env.NETLIFY_LOCAL;
+  const allowLocalBackup = keepLocalBackup && !isNetlify;
+
+  // إنشاء نسخة احتياطية محلية (اختياري)
+  if (allowLocalBackup) {
       try {
         const backupDir = `./uploads/backups/${bucket}`;
         if (!fs.existsSync(backupDir)) {
@@ -131,7 +135,7 @@ export async function uploadToSupabase(
         fs.writeFileSync(localPath, fileBuffer);
         console.log(`📁 نسخة احتياطية محلية: ${localPath}`);
       } catch (backupError) {
-        console.warn('تحذير: فشل في إنشاء النسخة الاحتياطية المحلية:', backupError);
+  console.warn('تحذير: فشل في إنشاء النسخة الاحتياطية المحلية:', backupError);
         // لا نفشل العملية بسبب النسخة الاحتياطية
       }
     }
@@ -333,7 +337,7 @@ export async function checkSupabaseStorageHealth(): Promise<{
       
       if (!error && buckets) {
         result.storage = true;
-        result.buckets = buckets.map(b => b.name);
+  result.buckets = buckets.map((b: any) => b.name);
       }
     }
   } catch (error) {

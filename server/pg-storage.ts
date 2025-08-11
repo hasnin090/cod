@@ -16,7 +16,7 @@ import {
   employees, type Employee, type InsertEmployee,
   completedWorks, type CompletedWork, type InsertCompletedWork,
   completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument
-} from '@shared/schema';
+} from '../shared/schema';
 import { IStorage } from './storage';
 
 export class PgStorage implements IStorage {

@@ -5,7 +5,7 @@ import {
   PERMISSIONS,
   ROLES,
   User
-} from '@shared/schema';
+} from '../shared/schema';
 
 // تعريف أنواع الصلاحيات والأدوار لاستخدامها في الكود
 export type Permission = string;
