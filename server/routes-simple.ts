@@ -25,7 +25,6 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { 
   initializeSupabaseStorage, 
@@ -42,9 +41,9 @@ import {
   restoreFromBackup 
 } from './migration-helper';
 
-// إنشاء متغير يحل محل __dirname مع ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// عند تجميع الوظائف كـ CJS في Netlify، قد لا يتوفر import.meta
+// نستخدم process.cwd() كجذر للتعامل مع مسارات uploads الثابتة
+const __dirname = process.cwd();
 
 import { documentUpload } from './multer-config';
 

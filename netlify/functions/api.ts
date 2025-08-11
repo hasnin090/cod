@@ -2,22 +2,26 @@ import serverless from 'serverless-http';
 import express from 'express';
 import { registerRoutes } from '../../server/routes-simple';
 
-// Create an Express app and wire existing routes for Netlify Functions
-const app = express();
+let serverlessHandler: any | null = null;
 
-// Basic parsers before routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+async function buildHandler() {
+  const app = express();
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
 
-// Register all app routes/middleware (includes session)
-// Note: registerRoutes returns an http.Server, but we only need it for middleware side-effects
-await registerRoutes(app);
+  // Register all routes/middleware
+  await registerRoutes(app);
 
-// Health at function root as well
-app.get('/.netlify/functions/api/health', (_req, res) => {
-  res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
-});
+  // Health under function prefix
+  app.get('/.netlify/functions/api/health', (_req, res) => {
+    res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
+  });
 
-export const handler = serverless(app, {
-  requestId: false,
-});
+  serverlessHandler = serverless(app, { requestId: false });
+  return serverlessHandler;
+}
+
+export const handler = async (event: any, context: any) => {
+  const h = serverlessHandler ?? await buildHandler();
+  return h(event, context);
+};
