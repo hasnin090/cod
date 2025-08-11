@@ -50,17 +50,40 @@ import { documentUpload } from './multer-config';
 async function registerRoutes(app: Express): Promise<Server> {
   const MemoryStoreSession = MemoryStore(session);
   
-  // إعداد محسن للجلسات مع Memory Store
-  let sessionStore = new MemoryStoreSession({
-    checkPeriod: 86400000, // فحص كل 24 ساعة
-    max: 5000, // حد أقصى أعلى للجلسات
-    ttl: 24 * 60 * 60 * 1000, // 24 ساعة
-    dispose: (key: string, value: any) => {
-      console.log(`تم حذف الجلسة: ${key}`);
-    },
-    stale: false // عدم إرجاع جلسات منتهية الصلاحية
-  });
-  console.log("استخدام Memory Store المحسن للجلسات");
+  // تهيئة الجلسات: استخدم Postgres Store في Netlify/Production، وMemoryStore في التطوير
+  const isNetlify = !!process.env.NETLIFY || !!process.env.NETLIFY_LOCAL;
+  const isProduction = process.env.NODE_ENV === 'production' || isNetlify;
+
+  let sessionStore: any;
+  if (isProduction && process.env.DATABASE_URL) {
+    try {
+      const PgSession = connectPgSimple(session);
+      sessionStore = new PgSession({
+        conObject: {
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false }
+        },
+        tableName: 'session',
+        createTableIfMissing: true,
+        pruneSessionInterval: 60 * 60 // تنظيف كل ساعة
+      });
+      console.log('استخدام PostgresStore للجلسات');
+    } catch (e) {
+      console.warn('تعذر استخدام PostgresStore، الرجوع إلى MemoryStore:', e);
+      sessionStore = new MemoryStoreSession({
+        checkPeriod: 86400000,
+        max: 5000,
+        ttl: 24 * 60 * 60 * 1000,
+      });
+    }
+  } else {
+    sessionStore = new MemoryStoreSession({
+      checkPeriod: 86400000, // فحص كل 24 ساعة
+      max: 5000, // حد أقصى أعلى للجلسات
+      ttl: 24 * 60 * 60 * 1000, // 24 ساعة
+    });
+    console.log("استخدام Memory Store للجلسات (وضع التطوير)");
+  }
 
   app.use(session({
     secret: process.env.SESSION_SECRET || "accounting-app-secret-key-2025",
@@ -70,7 +93,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: isProduction, // آمن في الإنتاج/Netlify
       path: '/'
     },
     store: sessionStore,
@@ -98,6 +121,26 @@ async function registerRoutes(app: Express): Promise<Server> {
     
     next();
   };
+
+  // Admin endpoint: setup/migrate database and seed admin if needed
+  app.post('/api/admin/db/setup', async (req: Request, res: Response) => {
+    try {
+      // Require admin session in production; allow in dev without
+      const isProd = process.env.NODE_ENV === 'production' || !!process.env.NETLIFY;
+      if (isProd) {
+        if (!req.session || !req.session.userId || req.session.role !== 'admin') {
+          return res.status(403).json({ message: 'غير مصرح' });
+        }
+      }
+      const { setupDatabase } = await import('./db-setup');
+      const ok = await setupDatabase();
+      if (ok) return res.json({ success: true });
+      return res.status(500).json({ success: false, message: 'فشل إعداد قاعدة البيانات' });
+    } catch (err: any) {
+      console.error('DB setup error:', err);
+      return res.status(500).json({ success: false, message: err?.message || 'DB setup error' });
+    }
+  });
 
   // مسار لعرض الملفات المحفوظة محلياً
   app.get("/uploads/*", (req: Request, res: Response) => {
