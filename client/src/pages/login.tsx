@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 const loginSchema = z.object({
-  username: z.string().min(1, "اسم المستخدم مطلوب"),
+  email: z.string().email("بريد إلكتروني غير صالح").min(1, "البريد الإلكتروني مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
@@ -22,10 +22,7 @@ export default function Login() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+  defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -34,58 +31,13 @@ export default function Login() {
       console.log('Login form submitted with:', values);
       
       // تنظيف البيانات
-      const formData = {
-        username: values.username.trim(),
-        password: values.password
-      };
-      
-      console.log('Calling auth context login function with:', formData);
-      
-      // استخدام fetch مباشرة بدلاً من دالة السياق
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(formData),
-        credentials: 'include',
-      });
-      
-      console.log('Login API response:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Login error:', errorText);
-        throw new Error(errorText || 'فشل تسجيل الدخول');
+      const ok = await login(values.email.trim(), values.password);
+      if (ok === null) {
+        // will be handled by onAuthStateChange; just redirect soon
+        setTimeout(() => {
+          window.location.assign('/?auth=' + new Date().getTime());
+        }, 800);
       }
-      
-      const userData = await response.json();
-      console.log('Login successful, user data:', userData);
-      
-      // تخزين بيانات المستخدم في localStorage
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-      
-      // إضافة فحص الجلسة قبل التوجيه
-      try {
-        console.log('Checking session before redirect...');
-        const sessionCheckResponse = await fetch('/api/auth/session', {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-      } catch (sessionError) {
-        // تجاهل أخطاء فحص الجلسة
-      }
-      
-      // إعادة تحميل الصفحة للانتقال إلى الصفحة الرئيسية (لوحة التحكم)
-      setTimeout(() => {
-        window.location.assign('/?auth=' + new Date().getTime());
-      }, 1000);
       
     } catch (error) {
       setShakeAnimation(true);
@@ -116,14 +68,14 @@ export default function Login() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
                       <Input
                         {...field}
                         className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:border-primary dark:focus:border-blue-400 text-gray-800 dark:text-gray-100 font-medium outline-none transition-all placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                        placeholder="اسم المستخدم"
+                        placeholder="البريد الإلكتروني"
                         disabled={isLoading}
                       />
                     </FormControl>

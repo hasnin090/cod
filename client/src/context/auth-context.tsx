@@ -7,13 +7,7 @@ import React, {
 } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
-import {
-  onAuthStateChanged,
-  signOut as firebaseSignOut,
-  User as FirebaseUser,
-  Auth
-} from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: number;
@@ -27,7 +21,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<User | null>;
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }
@@ -130,119 +124,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  // استمع لتغييرات المصادقة من Firebase (إذا كان متاحًا)
+  // استمع لتغييرات مصادقة Supabase
   useEffect(() => {
-    // تحقق من وجود كائن auth
-    if (!auth) {
-      console.log('Firebase auth not available');
-      return () => {}; // إرجاع دالة تنظيف فارغة
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         setIsLoading(true);
-        
-        if (firebaseUser) {
-          // المستخدم قد قام بتسجيل الدخول عبر Firebase
-          try {
-            const idToken = await firebaseUser.getIdToken();
-            // إرسال معلومات المستخدم إلى الخادم للتحقق
-            const response = await apiRequest('/api/auth/firebase-login', 'POST', { 
-              token: idToken,
-              email: firebaseUser.email,
-              name: firebaseUser.displayName,
-              photoURL: firebaseUser.photoURL
-            });
-            
+        if (session?.access_token) {
+          // أبلغ الخادم بالتوكن لتثبيت الجلسة السيرفرية
+          const response = await fetch('/api/auth/supabase-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ token: session.access_token }),
+          });
+          if (response.ok) {
             const userData = await response.json();
             setUser(userData);
-            
-            toast({
-              title: "تم تسجيل الدخول بنجاح",
-              description: `مرحباً بك ${userData.name}`,
-            });
-          } catch (apiError) {
-            console.error('Server authentication error:', apiError);
-            // في حالة فشل التسجيل في الخادم، قم بتسجيل الخروج من Firebase أيضًا
-            if (auth) {
-              await firebaseSignOut(auth);
-            }
+            localStorage.setItem('auth_user', JSON.stringify(userData));
+          } else {
             setUser(null);
+            localStorage.removeItem('auth_user');
           }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          localStorage.removeItem('auth_user');
         }
-      } catch (error) {
-        console.error('Authentication check error:', error);
-        setUser(null);
       } finally {
         setIsLoading(false);
       }
     });
-    
-    // تنظيف الاستماع عند إلغاء تحميل المكون
-    return () => unsubscribe();
-  }, [toast]);
 
-  const login = async (username: string, password: string): Promise<User | null> => {
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setIsLoading(true);
-      
-      console.log('Sending login request to server:', { username, password });
-      
-      // استخدام fetch API مع خيار credentials
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: 'include', // هذا مهم لإرسال واستقبال ملفات تعريف الارتباط
-      });
-      
-      console.log('Login response status:', response.status);
-      
-      // إذا كان هناك خطأ، نقرأ النص ونرمي خطأً
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Login error from server:', errorText);
-        throw new Error(errorText || 'فشل تسجيل الدخول');
-      }
-      
-      // قراءة البيانات من الاستجابة
-      const userData = await response.json();
-      console.log('Login successful, user data:', userData);
-      
-      // تخزين بيانات المستخدم في localStorage للاستخدام المؤقت
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-      
-      // تحديث حالة المستخدم
-      setUser(userData);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // سيتم إطلاق onAuthStateChange ومعه سننشئ جلسة على الخادم ونحدد user
       
       // إظهار رسالة النجاح
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً بك ${userData.name}`,
+        description: `مرحباً بك`,
       });
-      
-      // التحقق من الجلسة بعد تسجيل الدخول
-      setTimeout(async () => {
-        try {
-          const sessionCheckResponse = await fetch('/api/auth/session', {
-            credentials: 'include'
-          });
-          console.log('Session check after login:', sessionCheckResponse.status);
-          
-          if (sessionCheckResponse.ok) {
-            const sessionData = await sessionCheckResponse.json();
-            console.log('Session data:', sessionData);
-          } else {
-            console.warn('Session check failed:', await sessionCheckResponse.text());
-          }
-        } catch (err) {
-          console.error('Failed to check session after login:', err);
-        }
-      }, 1000);
-      
-      return userData;
+      return null;
     } catch (error: any) {
       console.error('Login error:', error);
       const message = error.message || 'خطأ في تسجيل الدخول';
@@ -262,9 +191,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithGoogle = async () => {
     try {
       setIsLoading(true);
-      // استخدام دالة تسجيل الدخول من ملف firebase
-      const { signInWithGoogle } = await import('@/lib/firebase');
-      await signInWithGoogle();
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+  if (error) throw error;
       
       toast({
         title: "جاري تسجيل الدخول بواسطة Google",
@@ -288,10 +216,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       
-      // تسجيل الخروج من Firebase إذا كان متاحًا
-      if (auth) {
-        await firebaseSignOut(auth);
-      }
+  await supabase.auth.signOut();
       
       // إزالة بيانات المستخدم من التخزين المحلي
       localStorage.removeItem('auth_user');

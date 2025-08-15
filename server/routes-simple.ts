@@ -270,6 +270,69 @@ async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Supabase Auth login handshake: verify access token and establish session
+  app.post('/api/auth/supabase-login', async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body as { token?: string };
+      if (!token) return res.status(400).json({ message: 'token required' });
+
+      // Verify the JWT by calling Supabase Auth admin endpoint using service role key
+      const SUPABASE_URL = process.env.SUPABASE_URL;
+      const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({ message: 'supabase not configured' });
+      }
+
+      // Minimal verification by introspection endpoint
+      const verifyUrl = `${SUPABASE_URL}/auth/v1/user`;
+      const verifyResp = await fetch(verifyUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+        },
+      } as any);
+
+      if (!verifyResp.ok) {
+        const txt = await verifyResp.text();
+        return res.status(401).json({ message: 'invalid token', details: txt });
+      }
+
+      const supaUser = await verifyResp.json();
+
+      // Find or provision local user
+      let user = await storage.getUserByEmail(supaUser.email);
+      if (!user) {
+        user = await storage.createUser({
+          username: supaUser.email,
+          password: 'supabase-oauth',
+          name: supaUser.user_metadata?.full_name || supaUser.email,
+          email: supaUser.email,
+          role: 'user',
+          permissions: [],
+        } as any);
+      }
+
+      // Establish session
+      (req.session as any).userId = user.id;
+      (req.session as any).role = user.role;
+      (req.session as any).permissions = user.permissions || [];
+
+      await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve(null)));
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || [],
+      });
+    } catch (err) {
+      console.error('supabase-login failed', err);
+      res.status(500).json({ message: 'supabase-login failed' });
+    }
+  });
+
   // Users routes
   app.get("/api/users", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
