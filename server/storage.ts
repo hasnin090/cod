@@ -15,7 +15,7 @@ import {
   completedWorks, type CompletedWork, type InsertCompletedWork,
   completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument,
   transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
-} from "@shared/schema";
+} from "../shared/schema";
 import bcrypt from "bcryptjs";
 import { pgStorage } from './pg-storage.js';
 
