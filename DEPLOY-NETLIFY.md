@@ -2,10 +2,16 @@
 
 Required environment variables (set in Netlify Site settings > Environment):
 
-- DATABASE_URL
-- SESSION_SECRET
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
+- DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>
+- SESSION_SECRET=<a-very-long-random-secret>
+- SUPABASE_URL=https://<project>.supabase.co
+- SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+
+Security note:
+- Do NOT commit real secrets into the repository. If any secrets were committed previously, rotate them immediately:
+	- Supabase: Project Settings > API > regenerate Service Role and (optionally) anon keys, then update Netlify env vars.
+	- Database password: rotate/reset in your DB provider (e.g., Supabase/Neon) and update DATABASE_URL.
+	- SESSION_SECRET: generate a new random value and update it in Netlify and your local .env.
 
 Build settings:
 - Build command: npm run build
