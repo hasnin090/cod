@@ -1,17 +1,23 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let client: SupabaseClient | null = null;
 
-if (!url || !anon) {
-  // Keep console warning only; avoid throwing to not break build
-  console.warn('Supabase env vars missing: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY');
+export function getSupabase(): SupabaseClient {
+  if (client) return client;
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    // Throw a clear, user-facing error so it's easy to fix envs
+    throw new Error(
+      'Supabase env missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in client/.env.local (and Netlify env) then restart dev/build.'
+    );
+  }
+  client = createClient(url, anon, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+  return client;
 }
-
-export const supabase = createClient(url, anon, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});

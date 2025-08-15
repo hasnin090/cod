@@ -1,4 +1,4 @@
-لاى لاimport { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -212,10 +212,11 @@ export default function LedgerPage() {
   };
 
   // تجميع العمليات حسب نوع المصروف
-  const groupedEntries = useMemo(() => {
+  type GroupedEntries = Record<string, { expenseType: ExpenseType; entries: LedgerEntry[] }>;
+  const groupedEntries = useMemo<GroupedEntries>(() => {
     if (!ledgerEntries || !expenseTypes) return {};
     
-    const grouped: { [key: string]: { expenseType: ExpenseType; entries: LedgerEntry[] } } = {};
+    const grouped: GroupedEntries = {};
     
     (ledgerEntries as LedgerEntry[]).forEach((entry: LedgerEntry) => {
       if (entry.expenseTypeId) {
@@ -238,7 +239,7 @@ export default function LedgerPage() {
     
     // ترتيب المجموعات حسب اسم نوع المصروف
     const sortedKeys = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'ar'));
-    const sortedGrouped: { [key: string]: { expenseType: ExpenseType; entries: LedgerEntry[] } } = {};
+  const sortedGrouped: GroupedEntries = {};
     sortedKeys.forEach(key => {
       sortedGrouped[key] = grouped[key];
       // ترتيب المعاملات داخل كل مجموعة حسب التاريخ (الأحدث أولاً)
@@ -463,6 +464,7 @@ export default function LedgerPage() {
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* ملخص التصنيف */}
@@ -673,7 +675,7 @@ export default function LedgerPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {entries.reduce((sum, entry) => sum + entry.amount, 0).toLocaleString()} د.ع
+                    {entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0).toLocaleString()} د.ع
                   </div>
                 </CardContent>
               </Card>
@@ -697,7 +699,7 @@ export default function LedgerPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-600">
-                    {Math.round(entries.reduce((sum, entry) => sum + entry.amount, 0) / entries.length).toLocaleString()} د.ع
+                    {Math.round(entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0) / entries.length).toLocaleString()} د.ع
                   </div>
                 </CardContent>
               </Card>
@@ -730,7 +732,7 @@ export default function LedgerPage() {
                     <TableBody>
                       {(() => {
                         let runningBalance = 0;
-                        return entries.map((entry, index) => {
+                        return entries.map((entry: LedgerEntry, index: number) => {
                           runningBalance += entry.amount;
                           return (
                             <TableRow key={entry.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
@@ -784,7 +786,7 @@ export default function LedgerPage() {
                   </div>
                   <div className="text-left">
                     <div className="text-2xl font-bold mb-1">
-                      {entries.reduce((sum, entry) => sum + entry.amount, 0).toLocaleString()} د.ع
+                      {entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0).toLocaleString()} د.ع
                     </div>
                     <div className="text-green-100">
                       إجمالي المبلغ | {entries.length} معاملة
@@ -822,13 +824,13 @@ export default function LedgerPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">إجمالي المبلغ</span>
                       <span className="font-bold text-blue-600">
-                        {entries.reduce((sum, entry) => sum + entry.amount, 0).toLocaleString()} د.ع
+                        {entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0).toLocaleString()} د.ع
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">متوسط المعاملة</span>
                       <span className="font-medium">
-                        {Math.round(entries.reduce((sum, entry) => sum + entry.amount, 0) / entries.length).toLocaleString()} د.ع
+                        {Math.round(entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0) / entries.length).toLocaleString()} د.ع
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -1216,7 +1218,7 @@ export default function LedgerPage() {
                     <CardTitle className="flex items-center gap-2">
                       <Badge variant="default">{expenseTypeName}</Badge>
                       <span className="text-sm text-muted-foreground">
-                        ({entries.length} عملية - {formatCurrency(entries.reduce((sum, entry) => sum + entry.amount, 0))})
+                        ({entries.length} عملية - {formatCurrency(entries.reduce((sum: number, entry: LedgerEntry) => sum + entry.amount, 0))})
                       </span>
                     </CardTitle>
                     <CardDescription>

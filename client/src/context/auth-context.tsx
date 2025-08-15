@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 interface User {
   id: number;
@@ -126,7 +126,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // استمع لتغييرات مصادقة Supabase
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+  const supabase = getSupabase();
+  const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         setIsLoading(true);
         if (session?.access_token) {
@@ -162,7 +163,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const supabase = getSupabase();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       // سيتم إطلاق onAuthStateChange ومعه سننشئ جلسة على الخادم ونحدد user
       
@@ -191,6 +193,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithGoogle = async () => {
     try {
       setIsLoading(true);
+  const supabase = getSupabase();
   const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
   if (error) throw error;
       
@@ -216,6 +219,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       
+  const supabase = getSupabase();
   await supabase.auth.signOut();
       
       // إزالة بيانات المستخدم من التخزين المحلي
