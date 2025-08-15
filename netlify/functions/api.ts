@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import serverless from 'serverless-http';
 import express from 'express';
 import { registerRoutes } from '../../server/routes-simple';
@@ -17,7 +18,7 @@ async function buildHandler() {
     res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
   });
 
-  serverlessHandler = serverless(app, { requestId: false });
+  serverlessHandler = serverless(app);
   return serverlessHandler;
 }
 
