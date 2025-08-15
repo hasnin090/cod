@@ -6,6 +6,8 @@ Required environment variables (set in Netlify Site settings > Environment):
 - SESSION_SECRET=<a-very-long-random-secret>
 - SUPABASE_URL=https://<project>.supabase.co
 - SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+ - VITE_SUPABASE_URL=https://<project>.supabase.co (frontend)
+ - VITE_SUPABASE_ANON_KEY=<anon-public-key> (frontend)
 
 Security note:
 - Do NOT commit real secrets into the repository. If any secrets were committed previously, rotate them immediately:
