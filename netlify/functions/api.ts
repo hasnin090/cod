@@ -12,12 +12,13 @@ async function buildHandler() {
   // Register all routes/middleware
   await registerRoutes(app)
 
-  // Health under function prefix
-  app.get('/.netlify/functions/api/health', (_req, res) => {
+  // Health (will be served under /.netlify/functions/api/health via basePath)
+  app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
   });
 
-  serverlessHandler = serverless(app);
+  // Ensure Express sees paths without the Netlify function prefix
+  serverlessHandler = serverless(app, { basePath: '/.netlify/functions/api' } as any);
   return serverlessHandler;
 }
 

@@ -15,16 +15,10 @@
   port = 8888                  # Netlify Dev proxy port
   autoLaunch = false
 
-## Allow internal Netlify paths (Functions/Identity)
-[[redirects]]
-  from = "/.netlify/*"
-  to = "/.netlify/:splat"
-  status = 200
-
 ## Proxy API requests to the `api` function
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/api/api/:splat"
   status = 200
 
 ## SPA fallback must be last
