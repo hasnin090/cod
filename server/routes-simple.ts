@@ -23,9 +23,6 @@ import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
 import { eq, and } from "drizzle-orm";
-// ensure fetch exists in Node environments for Netlify bundles
-// @ts-ignore
-import fetch from 'node-fetch';
 import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
