@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import serverless from 'serverless-http';
 import express from 'express';
 import { registerRoutes } from '../../server/routes-simple';
@@ -23,6 +22,23 @@ async function buildHandler() {
 }
 
 export const handler = async (event: any, context: any) => {
-  const h = serverlessHandler ?? await buildHandler();
-  return h(event, context);
+  try {
+    const h = serverlessHandler ?? await buildHandler();
+    return await h(event, context);
+  } catch (err: any) {
+    console.error('Netlify function init failed:', err);
+    // Fallback plain response to avoid 502 and expose diagnostics
+    return {
+      statusCode: 500,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ok: false,
+        reason: 'init_failed',
+        message: err?.message || 'unknown',
+        path: event?.path,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        hasSupabase: !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      }),
+    };
+  }
 };
