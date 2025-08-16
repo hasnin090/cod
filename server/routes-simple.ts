@@ -259,6 +259,22 @@ async function registerRoutes(app: Express): Promise<Server> {
       if (!isPasswordValid) {
         return res.status(401).json({ message: "معلومات تسجيل الدخول غير صحيحة" });
       }
+
+      // Promote to admin if configured by email (or if username is 'admin')
+      try {
+        const adminEmailsEnv = (process.env.ADMIN_EMAILS || 'admin@example.com,admin@admin.com')
+          .split(',')
+          .map(e => e.trim().toLowerCase())
+          .filter(Boolean);
+        const isAdminEmail = !!(user?.email && adminEmailsEnv.includes(String(user.email).toLowerCase()));
+        const shouldBeAdmin = user.username === 'admin' || isAdminEmail;
+        if (shouldBeAdmin && user.role !== 'admin') {
+          const updated = await storage.updateUser(user.id, { role: 'admin' } as any);
+          if (updated) user = updated;
+        }
+      } catch (promoteErr) {
+        console.warn('Failed to evaluate/promote admin role for local login:', promoteErr);
+      }
       
       req.session.userId = user.id;
       req.session.username = user.username;
