@@ -407,6 +407,23 @@ async function registerRoutes(app: Express): Promise<Server> {
         } as any);
       }
 
+      // Determine intended role: promote to admin if email is in ADMIN_EMAILS or metadata flags admin
+      try {
+        const adminEmailsEnv = (process.env.ADMIN_EMAILS || 'admin@example.com')
+          .split(',')
+          .map(e => e.trim().toLowerCase())
+          .filter(Boolean);
+        const isMetadataAdmin = !!(supaUser?.user_metadata?.is_admin || supaUser?.user_metadata?.role === 'admin');
+        const isAdminEmail = !!(user?.email && adminEmailsEnv.includes(String(user.email).toLowerCase()));
+        const shouldBeAdmin = isMetadataAdmin || isAdminEmail;
+        if (shouldBeAdmin && user.role !== 'admin') {
+          const updated = await storage.updateUser(user.id, { role: 'admin' } as any);
+          if (updated) user = updated;
+        }
+      } catch (promoteErr) {
+        console.warn('Failed to evaluate/promote admin role for supabase-login:', promoteErr);
+      }
+
       // Establish session
       (req.session as any).userId = user.id;
       (req.session as any).role = user.role;
