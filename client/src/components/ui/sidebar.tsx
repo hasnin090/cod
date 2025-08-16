@@ -55,7 +55,7 @@ function CompanyName() {
   
   const { data: settings, isLoading: isLoadingSettings } = useQuery<{ key: string; value: string }[]>({
     queryKey: ['/api/settings'],
-    enabled: !!user, // تفعيل الطلب فقط عند وجود مستخدم
+    enabled: !!user && user.role === 'admin', // اطلب الإعدادات فقط للمدير
     staleTime: 1000 * 60 * 5, // تخزين البيانات لمدة 5 دقائق قبل إعادة الطلب
     gcTime: 1000 * 60 * 10, // الاحتفاظ بالبيانات في الذاكرة لمدة 10 دقائق (gcTime يحل محل cacheTime)
   });

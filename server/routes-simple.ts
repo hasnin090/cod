@@ -26,6 +26,7 @@ import { eq, and } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
+import crypto from 'crypto';
 import { 
   initializeSupabaseStorage, 
   uploadToSupabase, 
@@ -55,6 +56,8 @@ async function registerRoutes(app: Express): Promise<Server> {
   const isNetlifyLocal = !!process.env.NETLIFY_LOCAL; // عند تشغيل netlify dev
   // بيئة إنتاج فعلية فقط (Netlify production أو NODE_ENV=production بدون netlify dev)
   const isProduction = (process.env.NODE_ENV === 'production' && !isNetlifyLocal) || (isNetlify && !isNetlifyLocal);
+  const useJwtSession = isProduction && !process.env.DATABASE_URL; // خادم عديم الحالة بدون قاعدة بيانات
+  const SESSION_SECRET = process.env.SESSION_SECRET || "accounting-app-secret-key-2025";
 
   let sessionStore: any;
   if (isProduction && process.env.DATABASE_URL) {
@@ -88,7 +91,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   }
 
   app.use(session({
-    secret: process.env.SESSION_SECRET || "accounting-app-secret-key-2025",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { 
@@ -103,8 +106,57 @@ async function registerRoutes(app: Express): Promise<Server> {
     name: 'accounting.sid'
   }));
   
-  // middleware للجلسة
+  // أدوات صغيرة لـ JWT (بدون تبعية خارجية)
+  function b64url(input: Buffer | string) {
+    const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
+    return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+  function signHmac(data: string, secret: string) {
+    return b64url(crypto.createHmac('sha256', secret).update(data).digest());
+  }
+  function signSessionJwt(payload: any) {
+    const header = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const body = b64url(JSON.stringify(payload));
+    const sig = signHmac(`${header}.${body}`, SESSION_SECRET);
+    return `${header}.${body}.${sig}`;
+  }
+  function verifySessionJwt(token?: string): any | null {
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [h, p, s] = parts;
+    const expected = signHmac(`${h}.${p}`, SESSION_SECRET);
+    if (s !== expected) return null;
+    try {
+      const json = JSON.parse(Buffer.from(p.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+      if (json.exp && Date.now() > json.exp) return null;
+      return json;
+    } catch {
+      return null;
+    }
+  }
+
+  // middleware للجلسة: استرجاع الجلسة من كوكي JWT عند الحاجة
   app.use((req, res, next) => {
+    if (!useJwtSession) return next();
+    // إذا لا توجد جلسة مخزنة لكن هناك كوكي JWT، قم بتحميلها
+    const rawCookie = req.headers.cookie || '';
+    const cookies = Object.fromEntries(rawCookie.split(';').map(v => v.trim()).filter(Boolean).map(v => {
+      const i = v.indexOf('=');
+      return i === -1 ? [v, ''] : [decodeURIComponent(v.slice(0, i)), decodeURIComponent(v.slice(1 + i))];
+    }));
+    const token = cookies['accounting.jwt'];
+    if (token && (!req.session || !req.session.userId)) {
+      const payload = verifySessionJwt(token);
+      if (payload && payload.userId) {
+        // تهيئة req.session بشكل متوافق مع باقي النظام
+        (req as any).session = (req as any).session || {};
+        (req.session as any).userId = payload.userId;
+        (req.session as any).username = payload.username;
+        (req.session as any).role = payload.role;
+        (req.session as any).permissions = payload.permissions || [];
+      }
+    }
     next();
   });
 
@@ -204,12 +256,31 @@ async function registerRoutes(app: Express): Promise<Server> {
       req.session.username = user.username;
       req.session.role = user.role;
       req.session.lastActivity = new Date().toISOString();
-      
-      req.session.save((err) => {
-        if (err) {
-          console.error('Error saving session:', err);
-        }
-      });
+
+      // إذا كنا في بيئة عديمة الحالة، أنشئ كوكي JWT بديل
+      if (useJwtSession) {
+        const token = signSessionJwt({
+          userId: user.id,
+          username: user.username,
+          role: user.role,
+          permissions: user.permissions || [],
+          iat: Date.now(),
+          exp: Date.now() + 24 * 60 * 60 * 1000,
+        });
+        res.cookie('accounting.jwt', token, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
+          path: '/',
+          maxAge: 24 * 60 * 60 * 1000,
+        } as any);
+      } else {
+        req.session.save((err) => {
+          if (err) {
+            console.error('Error saving session:', err);
+          }
+        });
+      }
       
       await storage.createActivityLog({
         action: "login",
@@ -238,6 +309,12 @@ async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", authenticate, async (req: Request, res: Response) => {
     const userId = req.session.userId;
+    // امسح كوكي JWT إن وجد
+    res.clearCookie('accounting.jwt', {
+      path: '/',
+      sameSite: 'lax',
+      secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
+    } as any);
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
@@ -258,16 +335,17 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/session", async (req: Request, res: Response) => {
+    // إذا لا توجد جلسة وكان لدينا JWT، ستكون middleware أعلاه قد ملأت req.session
     if (!req.session.userId) {
       return res.status(401).json({ message: "غير مصرح" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
-    
+
     if (!user) {
       return res.status(401).json({ message: "غير مصرح" });
     }
-    
+
     return res.status(200).json({
       id: user.id,
       username: user.username,
@@ -420,7 +498,8 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Projects routes - تحديث لإظهار المشاريع المخصصة للمستخدم
   app.get("/api/projects", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      const uid = req.session.userId as number;
+      const user = await storage.getUser(uid);
       if (!user) {
         return res.status(401).json({ message: "غير مصرح" });
       }
@@ -432,17 +511,33 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // المستخدمون العاديون يرون فقط المشاريع المخصصة لهم
-      const projects = await storage.getUserProjects(req.session.userId);
+  const projects = await storage.getUserProjects(uid);
       return res.status(200).json(projects);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع المشاريع" });
     }
   });
 
+  // Alias route for user-specific projects to support existing client calls
+  app.get("/api/user-projects", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId as number | undefined;
+      if (!userId) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+      const projects = await storage.getUserProjects(userId);
+      return res.status(200).json(projects);
+    } catch (error) {
+      console.error("خطأ في جلب مشاريع المستخدم الحالي:", error);
+      return res.status(500).json({ message: "خطأ في جلب مشاريع المستخدم" });
+    }
+  });
+
   // Transactions routes - تحديث لاستخدام النظام المبني على المشاريع
   app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      const uid = req.session.userId as number;
+      const user = await storage.getUser(uid);
       if (!user) {
         return res.status(401).json({ message: "غير مصرح" });
       }
@@ -454,7 +549,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // المستخدمون العاديون يرون فقط معاملات المشاريع المخصصة لهم
-      const transactions = await storage.getTransactionsForUserProjects(req.session.userId);
+  const transactions = await storage.getTransactionsForUserProjects(uid);
       return res.status(200).json(transactions);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع المعاملات" });
@@ -1962,16 +2057,16 @@ async function registerRoutes(app: Express): Promise<Server> {
       let existingPermission = null;
       if (userId) {
         const activePermissions = await storage.listActiveTransactionEditPermissions();
-        existingPermission = activePermissions.find(p => p.user_id === userId);
+        existingPermission = activePermissions.find(p => (p as any).userId === userId);
       }
 
       if (existingPermission) {
         // إذا كان هناك صلاحية نشطة، قم بإلغائها (toggle off)
-        const success = await storage.revokeTransactionEditPermission(existingPermission.id, req.session.userId);
+  const success = await storage.revokeTransactionEditPermission(existingPermission.id, req.session.userId as number);
         
         if (success) {
           await storage.createActivityLog({
-            userId: req.session.userId,
+            userId: req.session.userId as number,
             action: "revoke_transaction_edit_permission",
             entityType: "permission",
             entityId: existingPermission.id,
@@ -1991,13 +2086,13 @@ async function registerRoutes(app: Express): Promise<Server> {
         const permission = await storage.grantTransactionEditPermission({
           userId: userId || null,
           projectId: projectId || null,
-          grantedBy: req.session.userId,
+          grantedBy: req.session.userId as number,
           reason: reason || "تفعيل صلاحية تعديل المعاملات",
           notes
         });
 
         await storage.createActivityLog({
-          userId: req.session.userId,
+          userId: req.session.userId as number,
           action: "grant_transaction_edit_permission",
           entityType: "permission",
           entityId: permission.id,
@@ -2010,7 +2105,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           action: "granted" 
         });
       }
-    } catch (error) {
+  } catch (error: any) {
       console.error('Error managing transaction edit permission:', error);
       if (error.message && error.message.includes('يوجد صلاحية نشطة مسبقاً')) {
         return res.status(400).json({ message: error.message });
@@ -2027,11 +2122,11 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "معرف الصلاحية غير صحيح" });
       }
 
-      const success = await storage.revokeTransactionEditPermission(id, req.session.userId);
+  const success = await storage.revokeTransactionEditPermission(id, req.session.userId as number);
       
       if (success) {
         await storage.createActivityLog({
-          userId: req.session.userId,
+          userId: req.session.userId as number,
           action: "revoke_transaction_edit_permission",
           entityType: "permission",
           entityId: id,
@@ -2042,7 +2137,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(404).json({ message: "الصلاحية غير موجودة أو غير نشطة" });
       }
-    } catch (error) {
+  } catch (error: any) {
       console.error('Error revoking transaction edit permission:', error);
       return res.status(500).json({ message: "خطأ في إلغاء الصلاحية" });
     }
@@ -2063,7 +2158,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       
-      const permission = await storage.checkTransactionEditPermission(req.session.userId, projectId);
+  const permission = await storage.checkTransactionEditPermission(req.session.userId as number, projectId);
       
       return res.status(200).json({
         hasPermission: !!permission,
