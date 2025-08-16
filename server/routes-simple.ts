@@ -240,7 +240,15 @@ async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const credentials = loginSchema.parse(req.body);
-      const user = await storage.getUserByUsername(credentials.username);
+      // Allow login by username OR email
+      let user = await storage.getUserByUsername(credentials.username);
+      if (!user && credentials.username?.includes?.('@')) {
+        user = await storage.getUserByEmail(credentials.username);
+      }
+      if (!user) {
+        // Try email anyway even if no '@'
+        user = await storage.getUserByEmail(credentials.username);
+      }
       
       if (!user) {
         return res.status(401).json({ message: "معلومات تسجيل الدخول غير صحيحة" });
