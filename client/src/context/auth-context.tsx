@@ -170,24 +170,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setIsLoading(true);
-  const supabase = getSupabase();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      // ثبّت الجلسة على الخادم مباشرة بعد نجاح Supabase
-      if (data.session?.access_token) {
-        try {
-          const resp = await fetch('/api/auth/supabase-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ token: data.session.access_token }),
-          });
-          if (resp.ok) {
-            const userData = await resp.json();
-            setUser(userData);
-            localStorage.setItem('auth_user', JSON.stringify(userData));
-          }
-        } catch {}
+      // المحاولة أولاً عبر Supabase إن توفر
+      try {
+        const supabase = getSupabase();
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        if (data.session?.access_token) {
+          try {
+            const resp = await fetch('/api/auth/supabase-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ token: data.session.access_token }),
+            });
+            if (resp.ok) {
+              const userData = await resp.json();
+              setUser(userData);
+              localStorage.setItem('auth_user', JSON.stringify(userData));
+            }
+          } catch {}
+        }
+      } catch (supabaseErr) {
+        // في وضع التطوير أو عند غياب مفاتيح Supabase: استخدم مسار API المحلي
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username: email, password }),
+        });
+        if (!resp.ok) {
+          const t = await resp.text();
+          throw new Error(t || 'خطأ في تسجيل الدخول');
+        }
+        const userData = await resp.json();
+        setUser(userData);
+        localStorage.setItem('auth_user', JSON.stringify(userData));
       }
       
       // إظهار رسالة النجاح
