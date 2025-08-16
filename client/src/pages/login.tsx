@@ -37,11 +37,6 @@ export default function Login() {
       if (user) {
         // الانتقال مباشرة للوحة التحكم
         setLocation('/');
-      } else {
-        // fallback قد يتم عبر onAuthStateChange
-        setTimeout(() => {
-          window.location.assign('/?auth=' + new Date().getTime());
-        }, 500);
       }
       
     } catch (error) {

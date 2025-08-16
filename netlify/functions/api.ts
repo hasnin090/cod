@@ -10,7 +10,7 @@ async function buildHandler() {
   app.use(express.urlencoded({ extended: false }));
 
   // Register all routes/middleware
-  await registerRoutes(app);
+  await registerRoutes(app)
 
   // Health under function prefix
   app.get('/.netlify/functions/api/health', (_req, res) => {

@@ -15,7 +15,8 @@ import {
   deferredPayments, type DeferredPayment, type InsertDeferredPayment,
   employees, type Employee, type InsertEmployee,
   completedWorks, type CompletedWork, type InsertCompletedWork,
-  completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument
+  completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument,
+  transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
 } from '../shared/schema';
 import { IStorage } from './storage';
 
@@ -57,7 +58,8 @@ export class PgStorage implements IStorage {
 
   private async testConnection(): Promise<void> {
     if (this.disabled || !this.sql) throw new Error('PgStorage disabled or not initialized');
-    await this.sql`SELECT 1`;
+    const sql = this.sql!;
+    await sql`SELECT 1`;
   }
 
   private async retryConnection(): Promise<void> {
@@ -2413,7 +2415,8 @@ export class PgStorage implements IStorage {
 
   async deleteCompletedWorksDocument(id: number): Promise<boolean> {
     try {
-      const result = await this.sql`DELETE FROM completed_works_documents WHERE id = ${id}`;
+  const sql = this.sql!;
+  const result = await sql`DELETE FROM completed_works_documents WHERE id = ${id}`;
       return result.length > 0;
     } catch (error) {
       console.error('Error deleting completed works document:', error);
@@ -2426,7 +2429,8 @@ export class PgStorage implements IStorage {
     try {
       // التحقق من وجود صلاحية نشطة مسبقاً
       if (permission.userId) {
-        const existingPermissions = await this.sql`
+  const sql = this.sql!;
+  const existingPermissions = await sql`
           SELECT * FROM transaction_edit_permissions 
           WHERE user_id = ${permission.userId} AND is_active = true
         `;
@@ -2436,7 +2440,8 @@ export class PgStorage implements IStorage {
       }
 
       if (permission.projectId) {
-        const existingPermissions = await this.sql`
+  const sql2 = this.sql!;
+  const existingPermissions = await sql2`
           SELECT * FROM transaction_edit_permissions 
           WHERE project_id = ${permission.projectId} AND is_active = true
         `;
@@ -2449,7 +2454,8 @@ export class PgStorage implements IStorage {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 42);
 
-      const result = await this.sql`
+  const sql3 = this.sql!;
+  const result = await sql3`
         INSERT INTO transaction_edit_permissions 
         (user_id, project_id, granted_by, expires_at, reason, notes)
         VALUES (${permission.userId || null}, ${permission.projectId || null}, 
@@ -2467,7 +2473,8 @@ export class PgStorage implements IStorage {
 
   async revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean> {
     try {
-      const result = await this.sql`
+  const sql4 = this.sql!;
+  const result = await sql4`
         UPDATE transaction_edit_permissions 
         SET is_active = false, revoked_at = NOW(), revoked_by = ${revokedBy}
         WHERE id = ${id} AND is_active = true
@@ -2483,7 +2490,8 @@ export class PgStorage implements IStorage {
   async checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined> {
     try {
       // التحقق من صلاحية المستخدم المباشرة
-      const userPermission = await this.sql`
+  const sql5 = this.sql!;
+  const userPermission = await sql5`
         SELECT * FROM transaction_edit_permissions 
         WHERE user_id = ${userId} AND is_active = true AND expires_at > NOW()
         LIMIT 1
@@ -2495,7 +2503,8 @@ export class PgStorage implements IStorage {
 
       // التحقق من صلاحية المشروع إذا تم توفير معرف المشروع
       if (projectId) {
-        const projectPermission = await this.sql`
+  const sql6 = this.sql!;
+  const projectPermission = await sql6`
           SELECT * FROM transaction_edit_permissions 
           WHERE project_id = ${projectId} AND is_active = true AND expires_at > NOW()
           LIMIT 1
@@ -2515,7 +2524,8 @@ export class PgStorage implements IStorage {
 
   async listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]> {
     try {
-      const result = await this.sql`
+  const sql7 = this.sql!;
+  const result = await sql7`
         SELECT tep.*, u.name as granted_by_name, 
                pu.name as user_name, p.name as project_name
         FROM transaction_edit_permissions tep
@@ -2534,7 +2544,8 @@ export class PgStorage implements IStorage {
 
   async expireTransactionEditPermissions(): Promise<number> {
     try {
-      const result = await this.sql`
+  const sql8 = this.sql!;
+  const result = await sql8`
         UPDATE transaction_edit_permissions 
         SET is_active = false 
         WHERE is_active = true AND expires_at <= NOW()
@@ -2548,7 +2559,8 @@ export class PgStorage implements IStorage {
 
   async getTransactionEditPermissionsByUser(userId: number): Promise<TransactionEditPermission[]> {
     try {
-      const result = await this.sql`
+  const sql9 = this.sql!;
+  const result = await sql9`
         SELECT tep.*, u.name as granted_by_name
         FROM transaction_edit_permissions tep
         LEFT JOIN users u ON tep.granted_by = u.id
@@ -2564,7 +2576,8 @@ export class PgStorage implements IStorage {
 
   async getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]> {
     try {
-      const result = await this.sql`
+  const sql10 = this.sql!;
+  const result = await sql10`
         SELECT tep.*, u.name as granted_by_name
         FROM transaction_edit_permissions tep
         LEFT JOIN users u ON tep.granted_by = u.id

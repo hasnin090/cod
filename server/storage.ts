@@ -19,6 +19,15 @@ import {
 import bcrypt from "bcryptjs";
 import { pgStorage } from './pg-storage.js';
 
+// Flexible input for granting transaction edit permissions from routes (expiresAt computed in DB)
+export type GrantTransactionEditPermissionInput = {
+  userId?: number | null;
+  projectId?: number | null;
+  grantedBy: number;
+  reason?: string | null;
+  notes?: string | null;
+};
+
 export interface IStorage {
   // Database health check
   checkTableExists(tableName: string): Promise<boolean>;
@@ -53,6 +62,10 @@ export interface IStorage {
   updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction | undefined>;
   listTransactions(): Promise<Transaction[]>;
   getTransactionsByProject(projectId: number): Promise<Transaction[]>;
+  // Get all transactions visible to a user across assigned projects (and admin-only ones if admin)
+  getTransactionsForUserProjects(userId: number): Promise<Transaction[]>;
+  // Check if a user can access a specific transaction
+  canUserAccessTransaction(userId: number, transactionId: number): Promise<boolean>;
   deleteTransaction(id: number): Promise<boolean>;
 
   // Funds
@@ -90,7 +103,10 @@ export interface IStorage {
   getExpenseTypeByName(name: string): Promise<ExpenseType | undefined>;
   createExpenseType(expenseType: InsertExpenseType): Promise<ExpenseType>;
   updateExpenseType(id: number, expenseType: Partial<ExpenseType>): Promise<ExpenseType | undefined>;
-  listExpenseTypes(): Promise<ExpenseType[]>;
+  // Optional filter by project
+  listExpenseTypes(projectId?: number): Promise<ExpenseType[]>;
+  // List expense types available for a user (based on project assignments)
+  listExpenseTypesForUser(userId: number): Promise<ExpenseType[]>;
   deleteExpenseType(id: number): Promise<boolean>;
 
   // Ledger Entries
@@ -145,7 +161,7 @@ export interface IStorage {
   deleteCompletedWorksDocument(id: number): Promise<boolean>;
 
   // Transaction Edit Permissions
-  grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission>;
+  grantTransactionEditPermission(permission: GrantTransactionEditPermissionInput): Promise<TransactionEditPermission>;
   revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean>;
   checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined>;
   listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]>;
@@ -154,7 +170,7 @@ export interface IStorage {
   getTransactionEditPermissionsByProject(projectId: number): Promise<TransactionEditPermission[]>;
   
   // Transaction Edit Permissions - إدارة صلاحيات تعديل المعاملات
-  grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission>;
+  grantTransactionEditPermission(permission: GrantTransactionEditPermissionInput): Promise<TransactionEditPermission>;
   revokeTransactionEditPermission(id: number, revokedBy: number): Promise<boolean>;
   checkTransactionEditPermission(userId: number, projectId?: number): Promise<TransactionEditPermission | undefined>;
   listActiveTransactionEditPermissions(): Promise<TransactionEditPermission[]>;
@@ -256,12 +272,18 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const newUser: User = { 
-      ...user, 
+    const newUser: User = {
+      // Required shape of User from shared/schema
       id,
+      username: user.username,
+      // Store hashed password as provided (caller should hash for MemStorage as in constructor)
+      password: user.password,
+      plainPassword: null,
+      name: user.name,
+      email: user.email ?? null,
       role: user.role || "user",
-      permissions: [],
-      active: true
+      permissions: (user as any).permissions ?? [],
+      active: true,
     };
     this.usersData.set(id, newUser);
     return newUser;
@@ -328,26 +350,28 @@ export class MemStorage implements IStorage {
 
   async deleteProject(id: number): Promise<boolean> {
     try {
-      // التحقق من وجود صندوق مرتبط بالمشروع وحذفه
-      const projectFund = await this.getFundByProject(id);
-      if (projectFund) {
-        // حذف الصندوق إذا كان رصيده صفر
-        if (projectFund.balance === 0) {
-          await db.delete(funds).where(eq(funds.id, projectFund.id));
-        } else {
+      // حذف جميع البيانات المرتبطة في الذاكرة فقط
+      // حذف الصندوق المرتبط بالمشروع إن وجد بشرط أن يكون رصيده صفراً
+      const fund = await this.getFundByProject(id);
+      if (fund) {
+        if (fund.balance !== 0) {
           throw new Error("لا يمكن حذف المشروع لأن الصندوق المرتبط به يحتوي على رصيد");
         }
+        this.fundsData.delete(fund.id);
       }
 
-      // حذف كل المستندات المرتبطة بالمشروع
-      await db.delete(documents).where(eq(documents.projectId, id));
-      
+      // حذف المستندات المرتبطة بالمشروع
+      for (const [docId, doc] of Array.from(this.documentsData.entries())) {
+        if (doc.projectId === id) this.documentsData.delete(docId);
+      }
+
       // حذف علاقات المستخدمين بالمشروع
-      await db.delete(userProjects).where(eq(userProjects.projectId, id));
-      
+      for (const [linkId, link] of Array.from(this.userProjectsData.entries())) {
+        if (link.projectId === id) this.userProjectsData.delete(linkId);
+      }
+
       // حذف المشروع نفسه
-      await db.delete(projects).where(eq(projects.id, id));
-      
+      this.projectsData.delete(id);
       return true;
     } catch (error) {
       console.error("خطأ في حذف المشروع:", error);
@@ -415,11 +439,20 @@ export class MemStorage implements IStorage {
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
     const id = this.transactionIdCounter++;
-    const newTransaction: Transaction = { 
-      ...transaction, 
+    const newTransaction: Transaction = {
+      // Required Transaction shape from schema
       id,
-      projectId: transaction.projectId || null,
-      createdBy: 1 // Default to admin user if not provided
+      date: transaction.date,
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      projectId: transaction.projectId ?? null,
+      createdBy: (transaction as any).createdBy ?? 1,
+      expenseType: (transaction as any).expenseType ?? null,
+      employeeId: transaction.employeeId ?? null,
+      fileUrl: transaction.fileUrl ?? null,
+      fileType: transaction.fileType ?? null,
+      archived: transaction.archived ?? false,
     };
     this.transactionsData.set(id, newTransaction);
     return newTransaction;
@@ -444,6 +477,29 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getTransactionsForUserProjects(userId: number): Promise<Transaction[]> {
+    // Determine projects assigned to user
+    const assignedProjectIds = new Set(
+      Array.from(this.userProjectsData.values())
+        .filter(up => up.userId === userId)
+        .map(up => up.projectId)
+    );
+    // If user is admin, return all
+    const user = await this.getUser(userId);
+    const all = Array.from(this.transactionsData.values());
+    if (user?.role === 'admin') return all;
+    return all.filter(t => t.projectId != null && assignedProjectIds.has(t.projectId));
+  }
+
+  async canUserAccessTransaction(userId: number, transactionId: number): Promise<boolean> {
+    const tx = await this.getTransaction(transactionId);
+    if (!tx) return false;
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') return true;
+    if (tx.projectId == null) return false;
+    return this.checkUserProjectAccess(userId, tx.projectId);
+  }
+
   async deleteTransaction(id: number): Promise<boolean> {
     return this.transactionsData.delete(id);
   }
@@ -455,12 +511,19 @@ export class MemStorage implements IStorage {
 
   async createDocument(document: InsertDocument): Promise<Document> {
     const id = this.documentIdCounter++;
-    const newDocument: Document = { 
-      ...document, 
+    const newDocument: Document = {
       id,
+      projectId: document.projectId ?? null,
+      title: (document as any).title ?? (document as any).name ?? "",
       description: document.description || null,
-      projectId: document.projectId || null
-    };
+      fileUrl: (document as any).fileUrl ?? null,
+      fileType: (document as any).fileType ?? null,
+      uploadedBy: (document as any).uploadedBy ?? 1,
+      createdAt: (document as any).createdAt ?? new Date(),
+      updatedAt: (document as any).updatedAt ?? new Date(),
+      category: (document as any).category ?? null,
+      tags: (document as any).tags ?? [],
+    } as unknown as Document;
     this.documentsData.set(id, newDocument);
     return newDocument;
   }
@@ -559,11 +622,15 @@ export class MemStorage implements IStorage {
   async createFund(fund: InsertFund): Promise<Fund> {
     const id = this.fundIdCounter++;
     const now = new Date();
-    const newFund: Fund = { 
-      ...fund, 
+    const newFund: Fund = {
       id,
+      name: fund.name,
+      type: fund.type,
+      projectId: fund.projectId ?? null,
+      balance: (fund as any).balance ?? 0,
+      ownerId: (fund as any).ownerId ?? null,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
     this.fundsData.set(id, newFund);
     return newFund;
@@ -814,9 +881,8 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
-  async listExpenseTypes(): Promise<any[]> {
-    return [];
-  }
+  async listExpenseTypes(_projectId?: number): Promise<any[]> { return []; }
+  async listExpenseTypesForUser(_userId: number): Promise<any[]> { return []; }
 
   async deleteExpenseType(id: number): Promise<boolean> {
     return false;
@@ -948,7 +1014,7 @@ export class MemStorage implements IStorage {
   }
 
   // Transaction Edit Permissions - للذاكرة المؤقتة فقط
-  async grantTransactionEditPermission(permission: InsertTransactionEditPermission): Promise<TransactionEditPermission> {
+  async grantTransactionEditPermission(permission: GrantTransactionEditPermissionInput): Promise<TransactionEditPermission> {
     throw new Error("Transaction edit permissions not supported in memory storage");
   }
 

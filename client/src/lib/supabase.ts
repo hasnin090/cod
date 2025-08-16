@@ -7,10 +7,23 @@ export function getSupabase(): SupabaseClient {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !anon) {
-    // Throw a clear, user-facing error so it's easy to fix envs
-    throw new Error(
-      'Supabase env missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in client/.env.local (and Netlify env) then restart dev/build.'
-    );
+    // بيئة بدون Supabase: أعد عميلًا وهميًا بواجهات مطلوبة فقط حتى يعمل التطبيق محلياً
+    console.warn('Supabase env missing. Proceeding without Supabase (local dev).');
+    // @ts-expect-error - return a minimal facade typed as SupabaseClient
+    client = {
+      auth: {
+        // mimic API used in code; throw to fallback على API المحلي
+        signInWithPassword: async () => {
+          throw new Error('supabase-disabled');
+        },
+        signInWithOAuth: async () => {
+          throw new Error('supabase-disabled');
+        },
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } } as any),
+        signOut: async () => {},
+      },
+    } as SupabaseClient;
+    return client;
   }
   client = createClient(url, anon, {
     auth: {

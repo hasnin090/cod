@@ -102,3 +102,5 @@ REMAINING_*.md
 # Ready files
 READY_*.md
 *-UPLOAD-*.md
+# Local Netlify folder
+.netlify

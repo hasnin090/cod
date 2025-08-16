@@ -51,8 +51,10 @@ async function registerRoutes(app: Express): Promise<Server> {
   const MemoryStoreSession = MemoryStore(session);
   
   // تهيئة الجلسات: استخدم Postgres Store في Netlify/Production، وMemoryStore في التطوير
-  const isNetlify = !!process.env.NETLIFY || !!process.env.NETLIFY_LOCAL;
-  const isProduction = process.env.NODE_ENV === 'production' || isNetlify;
+  const isNetlify = !!process.env.NETLIFY;
+  const isNetlifyLocal = !!process.env.NETLIFY_LOCAL; // عند تشغيل netlify dev
+  // بيئة إنتاج فعلية فقط (Netlify production أو NODE_ENV=production بدون netlify dev)
+  const isProduction = (process.env.NODE_ENV === 'production' && !isNetlifyLocal) || (isNetlify && !isNetlifyLocal);
 
   let sessionStore: any;
   if (isProduction && process.env.DATABASE_URL) {
@@ -93,7 +95,8 @@ async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
       sameSite: 'lax',
-      secure: isProduction, // آمن في الإنتاج/Netlify
+      // عند التشغيل محلياً (بما في ذلك netlify dev) يجب أن تكون false حتى تُرسل الكوكيز عبر http
+      secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
       path: '/'
     },
     store: sessionStore,

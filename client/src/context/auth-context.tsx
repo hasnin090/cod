@@ -170,6 +170,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setIsLoading(true);
+  let resultUser: User | null = null;
       // المحاولة أولاً عبر Supabase إن توفر
       try {
         const supabase = getSupabase();
@@ -187,6 +188,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
               const userData = await resp.json();
               setUser(userData);
               localStorage.setItem('auth_user', JSON.stringify(userData));
+      resultUser = userData;
+            } else {
+              // فشل المصافحة مع الخادم (غالباً بسبب نقص مفاتيح Supabase على الخادم)
+              // الرجوع لتسجيل الدخول المحلي باستخدام اسم المستخدم/البريد وكلمة المرور
+              const fallback = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ username: email, password }),
+              });
+              if (fallback.ok) {
+                const userData = await fallback.json();
+                setUser(userData);
+                localStorage.setItem('auth_user', JSON.stringify(userData));
+                resultUser = userData;
+              } else {
+                const t = await fallback.text();
+                throw new Error(t || 'تعذر إنشاء جلسة على الخادم');
+              }
             }
           } catch {}
         }
@@ -205,14 +225,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const userData = await resp.json();
         setUser(userData);
         localStorage.setItem('auth_user', JSON.stringify(userData));
+    resultUser = userData;
       }
       
       // إظهار رسالة النجاح
-      toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: `مرحباً بك`,
-      });
-  return user;
+      if (resultUser) {
+        toast({
+          title: "تم تسجيل الدخول بنجاح",
+          description: `مرحباً بك`,
+        });
+      }
+      return resultUser;
     } catch (error: any) {
       console.error('Login error:', error);
       const message = error.message || 'خطأ في تسجيل الدخول';

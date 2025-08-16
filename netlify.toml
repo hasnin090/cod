@@ -1,3 +1,5 @@
+## Netlify configuration (valid TOML)
+
 [build]
   command = "npm run build"
   publish = "dist/public"
@@ -5,14 +7,27 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = []
 
+## Local dev server config
+[dev]
+  command = "vite"            # start Vite dev server (config has root=client)
+  targetPort = 5173            # Vite default
+  port = 8888                  # Netlify Dev proxy port
+  autoLaunch = false
+
+## Allow internal Netlify paths (Functions/Identity)
+[[redirects]]
+  from = "/.netlify/*"
+  to = "/.netlify/:splat"
+  status = 200
+
+## Proxy API requests to the `api` function
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
-  force = true
 
+## SPA fallback must be last
 [[redirects]]
   from = "/*"
   to = "/index.html"
