@@ -173,14 +173,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const supabase = getSupabase();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // سيتم إطلاق onAuthStateChange ومعه سننشئ جلسة على الخادم ونحدد user
+      // ثبّت الجلسة على الخادم مباشرة بعد نجاح Supabase
+      if (data.session?.access_token) {
+        try {
+          const resp = await fetch('/api/auth/supabase-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ token: data.session.access_token }),
+          });
+          if (resp.ok) {
+            const userData = await resp.json();
+            setUser(userData);
+            localStorage.setItem('auth_user', JSON.stringify(userData));
+          }
+        } catch {}
+      }
       
       // إظهار رسالة النجاح
       toast({
         title: "تم تسجيل الدخول بنجاح",
         description: `مرحباً بك`,
       });
-      return null;
+  return user;
     } catch (error: any) {
       console.error('Login error:', error);
       const message = error.message || 'خطأ في تسجيل الدخول';
