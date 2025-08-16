@@ -979,4 +979,5 @@ export class MemStorage implements IStorage {
 
 // تحديد فئة التخزين النشطة
 // يمكن تغيير هذا لاستخدام MemStorage للتطوير المحلي أو PgStorage للإنتاج
-export const storage: IStorage = pgStorage;
+// استخدم PgStorage إذا كانت قاعدة البيانات مهيأة، وإلا استخدم التخزين في الذاكرة للتشغيل الأساسي
+export const storage: IStorage = process.env.DATABASE_URL ? pgStorage : new MemStorage();

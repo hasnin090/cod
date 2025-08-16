@@ -20,13 +20,23 @@ import {
 import { IStorage } from './storage';
 
 export class PgStorage implements IStorage {
-  private sql = neon(process.env.DATABASE_URL!);
+  private sql: ReturnType<typeof neon> | null = null;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 1000; // 1 second
   private isConnected = false;
+  private disabled = false;
 
   constructor() {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      // In serverless without DB, gracefully disable PgStorage
+      this.disabled = true;
+      console.warn('PgStorage: DATABASE_URL missing; PgStorage is disabled. Falling back to memory storage if configured.');
+      return;
+    }
+
+    this.sql = neon(url);
     this.initializeConnection();
     // Start periodic connection health check
     this.startHealthCheck();
@@ -46,6 +56,7 @@ export class PgStorage implements IStorage {
   }
 
   private async testConnection(): Promise<void> {
+    if (this.disabled || !this.sql) throw new Error('PgStorage disabled or not initialized');
     await this.sql`SELECT 1`;
   }
 
@@ -134,6 +145,7 @@ export class PgStorage implements IStorage {
   private startHealthCheck(): void {
     // Check connection every 30 seconds
     setInterval(async () => {
+      if (this.disabled || !this.sql) return;
       try {
         await this.testConnection();
         if (!this.isConnected) {
