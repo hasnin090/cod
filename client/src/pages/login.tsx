@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -19,6 +20,7 @@ export default function Login() {
   const { login, loginWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [shakeAnimation, setShakeAnimation] = useState(false);
+  const [, setLocation] = useLocation();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -31,12 +33,15 @@ export default function Login() {
       console.log('Login form submitted with:', values);
       
       // تنظيف البيانات
-      const ok = await login(values.email.trim(), values.password);
-      if (ok === null) {
-        // will be handled by onAuthStateChange; just redirect soon
+      const user = await login(values.email.trim(), values.password);
+      if (user) {
+        // الانتقال مباشرة للوحة التحكم
+        setLocation('/');
+      } else {
+        // fallback قد يتم عبر onAuthStateChange
         setTimeout(() => {
           window.location.assign('/?auth=' + new Date().getTime());
-        }, 800);
+        }, 500);
       }
       
     } catch (error) {

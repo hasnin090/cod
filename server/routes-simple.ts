@@ -23,6 +23,9 @@ import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
 import { eq, and } from "drizzle-orm";
+// ensure fetch exists in Node environments for Netlify bundles
+// @ts-ignore
+import fetch from 'node-fetch';
 import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
@@ -103,6 +106,11 @@ async function registerRoutes(app: Express): Promise<Server> {
   // middleware للجلسة
   app.use((req, res, next) => {
     next();
+  });
+
+  // Health endpoint (outside auth) to confirm function is alive
+  app.get('/api/health', (_req: Request, res: Response) => {
+    res.status(200).json({ ok: true, ts: Date.now() });
   });
 
   // Authentication middleware
@@ -280,12 +288,13 @@ async function registerRoutes(app: Express): Promise<Server> {
       const SUPABASE_URL = process.env.SUPABASE_URL;
       const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-        return res.status(500).json({ message: 'supabase not configured' });
+  console.warn('Supabase env missing on server. Skipping supabase-login.');
+  return res.status(500).json({ message: 'supabase not configured' });
       }
 
       // Minimal verification by introspection endpoint
       const verifyUrl = `${SUPABASE_URL}/auth/v1/user`;
-      const verifyResp = await fetch(verifyUrl, {
+  const verifyResp = await fetch(verifyUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
           apikey: SUPABASE_SERVICE_ROLE_KEY,
