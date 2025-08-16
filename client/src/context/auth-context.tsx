@@ -126,8 +126,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // استمع لتغييرات مصادقة Supabase
   useEffect(() => {
-  const supabase = getSupabase();
-  const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let unsubscribe: (() => void) | null = null;
+    try {
+      const supabase = getSupabase();
+      const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         setIsLoading(true);
         if (session?.access_token) {
@@ -153,10 +155,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsLoading(false);
       }
-    });
+      });
+      unsubscribe = () => subscription.subscription.unsubscribe();
+    } catch (e) {
+      // Supabase env غير مهيأ: نتجاهل الاشتراك ونتابع بدون تعطيل التطبيق
+      console.warn('Supabase client not initialized (missing env). Skipping auth subscription.');
+    }
 
     return () => {
-      subscription.subscription.unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 
