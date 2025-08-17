@@ -1,7 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import session from "express-session";
 import { 
   loginSchema, 
   insertUserSchema, 
@@ -18,15 +17,13 @@ import {
 } from "../shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import MemoryStore from "memorystore";
-import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { neon } from '@neondatabase/serverless';
 import { eq, and } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { 
   initializeSupabaseStorage, 
   uploadToSupabase, 
@@ -51,159 +48,88 @@ import { documentUpload } from './multer-config';
 async function registerRoutes(app: Express): Promise<Server> {
   // Ensure Express is aware it's behind a proxy (Netlify) so secure cookies work
   app.set('trust proxy', 1);
-  const MemoryStoreSession = MemoryStore(session);
-  
-  // تهيئة الجلسات: استخدم Postgres Store في Netlify/Production، وMemoryStore في التطوير
+  // إعدادات البيئة و JWT
   const isNetlify = !!process.env.NETLIFY;
   const isNetlifyLocal = !!process.env.NETLIFY_LOCAL; // عند تشغيل netlify dev
-  // بيئة إنتاج فعلية فقط (Netlify production أو NODE_ENV=production بدون netlify dev)
   const isProduction = (process.env.NODE_ENV === 'production' && !isNetlifyLocal) || (isNetlify && !isNetlifyLocal);
-  // سنحدد لاحقاً إن كنا سنعتمد على JWT حسب توفر وتفعيل مخزن الجلسات في Postgres
-  let useJwtSession = false;
   const SESSION_SECRET = process.env.SESSION_SECRET || "accounting-app-secret-key-2025";
 
-  let sessionStore: any;
-  let pgSessionEnabled = false;
-  if (isProduction && process.env.DATABASE_URL) {
-    try {
-      const PgSession = connectPgSimple(session);
-      sessionStore = new PgSession({
-        conObject: {
-          connectionString: process.env.DATABASE_URL,
-          ssl: { rejectUnauthorized: false }
-        },
-        tableName: 'session',
-        createTableIfMissing: true,
-        pruneSessionInterval: 60 * 60 // تنظيف كل ساعة
-      });
-      pgSessionEnabled = true;
-      console.log('استخدام PostgresStore للجلسات');
-    } catch (e) {
-      console.warn('تعذر استخدام PostgresStore، الرجوع إلى MemoryStore:', e);
-      sessionStore = new MemoryStoreSession({
-        checkPeriod: 86400000,
-        max: 5000,
-        ttl: 24 * 60 * 60 * 1000,
-      });
-    }
-  } else {
-    sessionStore = new MemoryStoreSession({
-      checkPeriod: 86400000, // فحص كل 24 ساعة
-      max: 5000, // حد أقصى أعلى للجلسات
-      ttl: 24 * 60 * 60 * 1000, // 24 ساعة
-    });
-    console.log("استخدام Memory Store للجلسات (وضع التطوير)");
+  function signJwt(payload: object, opts?: jwt.SignOptions) {
+    return jwt.sign(payload as any, SESSION_SECRET, { expiresIn: '7d', ...(opts || {}) });
   }
-
-  // في بيئات السيرفرلس (Netlify) بدون PG Store فعّال، نعتمد JWT للحفاظ على الجلسة بين الاستدعاءات
-  // ملاحظة: حتى لو كانت DATABASE_URL مضبوطة ولكن PG Store فشل، سنمكّن JWT
-  if (isProduction && !pgSessionEnabled) {
-    useJwtSession = true;
-    console.log('تفعيل جلسات JWT (وضع عديم الحالة)');
+  function verifyJwt(token: string) {
+    return jwt.verify(token, SESSION_SECRET) as any;
   }
-
-  app.use(session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  function setAuthCookie(res: Response, token: string) {
+    res.cookie('token', token, {
       httpOnly: true,
       sameSite: 'lax',
-      // عند التشغيل محلياً (بما في ذلك netlify dev) يجب أن تكون false حتى تُرسل الكوكيز عبر http
       secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
-      path: '/'
-    },
-    store: sessionStore,
-    name: 'accounting.sid'
-  }));
-  
-  // أدوات صغيرة لـ JWT (بدون تبعية خارجية)
-  function b64url(input: Buffer | string) {
-    const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
-    return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    } as any);
   }
-  function signHmac(data: string, secret: string) {
-    return b64url(crypto.createHmac('sha256', secret).update(data).digest());
+  function clearAuthCookie(res: Response) {
+    res.clearCookie('token', {
+      path: '/',
+      sameSite: 'lax',
+      secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
+    } as any);
+    res.clearCookie('accounting.jwt', {
+      path: '/',
+      sameSite: 'lax',
+      secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
+    } as any);
   }
-  function signSessionJwt(payload: any) {
-    const header = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const body = b64url(JSON.stringify(payload));
-    const sig = signHmac(`${header}.${body}`, SESSION_SECRET);
-    return `${header}.${body}.${sig}`;
-  }
-  function verifySessionJwt(token?: string): any | null {
-    if (!token) return null;
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const [h, p, s] = parts;
-    const expected = signHmac(`${h}.${p}`, SESSION_SECRET);
-    if (s !== expected) return null;
-    try {
-      const json = JSON.parse(Buffer.from(p.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      if (json.exp && Date.now() > json.exp) return null;
-      return json;
-    } catch {
-      return null;
-    }
-  }
-
-  // middleware للجلسة: استرجاع الجلسة من كوكي JWT عند الحاجة
-  app.use((req, res, next) => {
-    if (!useJwtSession) return next();
-    // إذا لا توجد جلسة مخزنة لكن هناك كوكي JWT، قم بتحميلها
-    const rawCookie = req.headers.cookie || '';
-    const cookies = Object.fromEntries(rawCookie.split(';').map(v => v.trim()).filter(Boolean).map(v => {
+  function parseCookies(header?: string) {
+    const raw = header || '';
+    return Object.fromEntries(raw.split(';').map(v => v.trim()).filter(Boolean).map(v => {
       const i = v.indexOf('=');
       return i === -1 ? [v, ''] : [decodeURIComponent(v.slice(0, i)), decodeURIComponent(v.slice(1 + i))];
     }));
-    const token = cookies['accounting.jwt'];
-    if (token && (!req.session || !req.session.userId)) {
-      const payload = verifySessionJwt(token);
-      if (payload && payload.userId) {
-        // تهيئة req.session بشكل متوافق مع باقي النظام
-        (req as any).session = (req as any).session || {};
-        (req.session as any).userId = payload.userId;
-        (req.session as any).username = payload.username;
-        (req.session as any).role = payload.role;
-        (req.session as any).permissions = payload.permissions || [];
-      }
+  }
+  const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cookies = parseCookies(req.headers.cookie);
+      const cookieToken = cookies['token'] || cookies['accounting.jwt'];
+      const authHeader = (req.headers.authorization || (req.headers as any).Authorization) as string | undefined;
+      const bearer = authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.slice('Bearer '.length).trim()
+        : undefined;
+      const token = bearer || cookieToken;
+      if (!token) return res.status(401).json({ message: 'Unauthorized' });
+      const decoded = verifyJwt(token);
+      (req as any).user = decoded;
+      return next();
+    } catch (e) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-    next();
-  });
+  };
+  
+  // لا حاجة لأي middleware جلسات بعد اعتماد JWT
 
   // Health endpoint (outside auth) to confirm function is alive
   app.get('/api/health', (_req: Request, res: Response) => {
     res.status(200).json({ ok: true, ts: Date.now() });
   });
 
-  // Authentication middleware
-  const authenticate = (req: Request, res: Response, next: Function) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: "غير مصرح" });
-    }
+  // Authentication middleware (JWT)
+  const authenticate = authMiddleware;
 
-    req.session.lastActivity = new Date().toISOString();
-    
-    (req as any).user = {
-      id: req.session.userId,
-      username: req.session.username,
-      role: req.session.role
+  // Role-based authorization middleware
+  const authorize = (roles: string[]) => {
+    return (req: Request, res: Response, next: Function) => {
+      const user = (req as any).user;
+      if (!user || !roles.includes(user.role as string)) {
+        return res.status(403).json({ ok: false, message: "Forbidden" });
+      }
+      next();
     };
-    
-    next();
   };
 
   // Admin endpoint: setup/migrate database and seed admin if needed
-  app.post('/api/admin/db/setup', async (req: Request, res: Response) => {
+  app.post('/api/admin/db/setup', authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
-      // Require admin session in production; allow in dev without
-      const isProd = process.env.NODE_ENV === 'production' || !!process.env.NETLIFY;
-      if (isProd) {
-        if (!req.session || !req.session.userId || req.session.role !== 'admin') {
-          return res.status(403).json({ message: 'غير مصرح' });
-        }
-      }
       const { setupDatabase } = await import('./db-setup');
       const ok = await setupDatabase();
       if (ok) return res.json({ success: true });
@@ -233,15 +159,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Role-based authorization middleware
-  const authorize = (roles: string[]) => {
-    return (req: Request, res: Response, next: Function) => {
-      if (!req.session.userId || !roles.includes(req.session.role as string)) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-      next();
-    };
-  };
+  
 
   // Test POST route
   app.post("/api/test", (req: Request, res: Response) => {
@@ -292,35 +210,15 @@ async function registerRoutes(app: Express): Promise<Server> {
         console.warn('Failed to evaluate/promote admin role for local login:', promoteErr);
       }
       
-      req.session.userId = user.id;
-      req.session.username = user.username;
-      req.session.role = user.role;
-      req.session.lastActivity = new Date().toISOString();
-
-      // إذا كنا في بيئة عديمة الحالة، أنشئ كوكي JWT بديل
-      if (useJwtSession) {
-        const token = signSessionJwt({
-          userId: user.id,
-          username: user.username,
-          role: user.role,
-          permissions: user.permissions || [],
-          iat: Date.now(),
-          exp: Date.now() + 24 * 60 * 60 * 1000,
-        });
-        res.cookie('accounting.jwt', token, {
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
-          path: '/',
-          maxAge: 24 * 60 * 60 * 1000,
-        } as any);
-      } else {
-        req.session.save((err) => {
-          if (err) {
-            console.error('Error saving session:', err);
-          }
-        });
-      }
+      // Issue JWT (7d) cookie and return token
+      const token = signJwt({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || [],
+      });
+      setAuthCookie(res, token);
       
       await storage.createActivityLog({
         action: "login",
@@ -336,7 +234,8 @@ async function registerRoutes(app: Express): Promise<Server> {
         name: user.name,
         email: user.email,
         role: user.role,
-        permissions: user.permissions
+        permissions: user.permissions,
+        token,
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -347,68 +246,31 @@ async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Lightweight session probe
-  app.get('/api/auth/whoami', (req: Request, res: Response) => {
-    const rawCookie = req.headers.cookie || '';
-    const hasJwt = rawCookie.includes('accounting.jwt=');
-    res.status(200).json({
-      hasSession: !!(req.session && (req.session as any).userId),
-      userId: (req.session as any)?.userId ?? null,
-      role: (req.session as any)?.role ?? null,
-      cookies: Object.keys((req as any).cookies || {}),
-      diagnostics: {
-        isNetlify,
-        isNetlifyLocal,
-        isProduction,
-        pgSessionEnabled,
-        useJwtSession,
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
-        url: process.env.URL || null,
-        rawCookieLength: rawCookie.length,
-        hasJwtCookie: hasJwt,
-      }
-    });
+  // Lightweight session probe (JWT)
+  app.get('/api/auth/whoami', authenticate, (req: Request, res: Response) => {
+    res.status(200).json({ ok: true, user: (req as any).user });
   });
 
   app.post("/api/auth/logout", authenticate, async (req: Request, res: Response) => {
-    const userId = req.session.userId;
-    // امسح كوكي JWT إن وجد
-    res.clearCookie('accounting.jwt', {
-      path: '/',
-      sameSite: 'lax',
-      secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
-    } as any);
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
-      }
-      
-      if (userId) {
-        storage.createActivityLog({
-          action: "logout",
-          entityType: "user",
-          entityId: userId,
-          details: "تسجيل خروج",
-          userId: userId
-        });
-      }
-      
-      res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
-    });
+    const userId = (req as any).user?.id as number | undefined;
+    clearAuthCookie(res);
+    if (userId) {
+      storage.createActivityLog({
+        action: "logout",
+        entityType: "user",
+        entityId: userId,
+        details: "تسجيل خروج",
+        userId: userId
+      });
+    }
+    res.status(200).json({ message: "تم تسجيل الخروج بنجاح" });
   });
 
-  app.get("/api/auth/session", async (req: Request, res: Response) => {
-    // إذا لا توجد جلسة وكان لدينا JWT، ستكون middleware أعلاه قد ملأت req.session
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "غير مصرح" });
-    }
-
-    const user = await storage.getUser(req.session.userId);
-
-    if (!user) {
-      return res.status(401).json({ message: "غير مصرح" });
-    }
-
+  app.get("/api/auth/session", authenticate, async (req: Request, res: Response) => {
+    const uid = (req as any).user?.id as number | undefined;
+    if (!uid) return res.status(401).json({ message: "غير مصرح" });
+    const user = await storage.getUser(uid);
+    if (!user) return res.status(401).json({ message: "غير مصرح" });
     return res.status(200).json({
       id: user.id,
       username: user.username,
@@ -479,31 +341,15 @@ async function registerRoutes(app: Express): Promise<Server> {
         console.warn('Failed to evaluate/promote admin role for supabase-login:', promoteErr);
       }
 
-      // Establish session
-      (req.session as any).userId = user.id;
-      (req.session as any).role = user.role;
-      (req.session as any).permissions = user.permissions || [];
-
-      // إذا كنا في بيئة عديمة الحالة (Netlify بدون قاعدة بيانات للجلسات)، أنشئ كوكي JWT
-      if (useJwtSession) {
-        const token = signSessionJwt({
-          userId: user.id,
-          username: user.username,
-          role: user.role,
-          permissions: user.permissions || [],
-          iat: Date.now(),
-          exp: Date.now() + 24 * 60 * 60 * 1000,
-        });
-        res.cookie('accounting.jwt', token, {
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
-          path: '/',
-          maxAge: 24 * 60 * 60 * 1000,
-        } as any);
-      } else {
-        await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve(null)));
-      }
+      // Issue JWT cookie (7d)
+      const sessionToken = signJwt({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || [],
+      });
+      setAuthCookie(res, sessionToken);
 
       res.json({
         id: user.id,
@@ -512,6 +358,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         role: user.role,
         permissions: user.permissions || [],
+        token: sessionToken,
       });
     } catch (err) {
       console.error('supabase-login failed', err);
@@ -525,7 +372,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.listUsers();
       
       // المديرون يمكنهم رؤية كلمات المرور الأصلية
-      const currentUser = await storage.getUser(req.session.userId as number);
+  const currentUser = await storage.getUser((req as any).user.id as number);
       if (currentUser?.role === 'admin') {
         // إرسال البيانات مع كلمة المرور الأصلية بدلاً من المشفرة
         const usersWithPlainPassword = users.map(user => {
@@ -578,7 +425,7 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       // تسجيل نشاط الحذف
       await storage.createActivityLog({
-        userId: req.session.userId!,
+        userId: (req as any).user.id!,
         action: "delete_user",
         entityType: "user",
         entityId: id,
@@ -597,7 +444,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Projects routes - تحديث لإظهار المشاريع المخصصة للمستخدم
   app.get("/api/projects", authenticate, async (req: Request, res: Response) => {
     try {
-      const uid = req.session.userId as number;
+  const uid = (req as any).user.id as number;
       const user = await storage.getUser(uid);
       if (!user) {
         return res.status(401).json({ message: "غير مصرح" });
@@ -620,7 +467,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Alias route for user-specific projects to support existing client calls
   app.get("/api/user-projects", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId as number | undefined;
+  const userId = (req as any).user.id as number | undefined;
       if (!userId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
@@ -635,7 +482,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Transactions routes - تحديث لاستخدام النظام المبني على المشاريع
   app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
-      const uid = req.session.userId as number;
+  const uid = (req as any).user.id as number;
       const user = await storage.getUser(uid);
       if (!user) {
         return res.status(401).json({ message: "غير مصرح" });
@@ -669,7 +516,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check permissions - المشرفون أو المستخدمون الذين لديهم صلاحية تعديل
-      const currentUserId = req.session.userId;
+  const currentUserId = (req as any).user.id as number;
       if (!currentUserId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
@@ -739,7 +586,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check permissions - المشرفون أو المستخدمون المخصصون للمشروع يمكنهم الحذف
-      const currentUserId = req.session.userId;
+  const currentUserId = (req as any).user.id as number;
       if (!currentUserId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
@@ -792,7 +639,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Expense types routes
   app.get("/api/expense-types", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId as number;
+  const userId = (req as any).user.id as number;
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       
       // Get user to check role
@@ -911,7 +758,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.deleteExpenseType(id);
       if (result) {
         // Log the deletion activity
-        const currentUserId = req.session.userId;
+    const currentUserId = (req as any).user.id as number;
         if (currentUserId) {
           await storage.createActivityLog({
             userId: currentUserId,
@@ -940,7 +787,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectData = {
         ...req.body,
-        createdBy: req.session.userId as number,
+  createdBy: (req as any).user.id as number,
         startDate: req.body.startDate || new Date(),
         progress: req.body.progress || 0
       };
@@ -952,7 +799,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "project",
         entityId: project.id,
         details: `تم إنشاء مشروع جديد: ${project.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(201).json(project);
@@ -976,7 +823,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "project",
         entityId: id,
         details: `تم تحديث المشروع: ${project.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(project);
@@ -991,7 +838,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const documentData = {
         ...req.body,
-        createdBy: req.session.userId as number
+  createdBy: (req as any).user.id as number,
       };
       
       const document = await storage.createDocument(documentData);
@@ -1001,7 +848,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "document",
         entityId: document.id,
         details: `تم إنشاء مستند جديد: ${document.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(201).json(document);
@@ -1025,7 +872,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "document",
         entityId: id,
         details: `تم تحديث المستند: ${document.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(document);
@@ -1051,7 +898,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "deferred_payment",
         entityId: id,
         details: `تم تحديث المدفوعة المؤجلة: ${payment.beneficiaryName}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(payment);
@@ -1066,7 +913,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const workData = {
         ...req.body,
-        createdBy: req.session.userId as number
+  createdBy: (req as any).user.id as number
       };
       
       const work = await storage.createCompletedWork(workData);
@@ -1076,7 +923,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_work",
         entityId: work.id,
         details: `تم إنشاء عمل منجز جديد: ${work.title}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(201).json(work);
@@ -1100,7 +947,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_work",
         entityId: id,
         details: `تم تحديث العمل المنجز: ${work.title}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(work);
@@ -1115,7 +962,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const docData = {
         ...req.body,
-        createdBy: req.session.userId as number
+  createdBy: (req as any).user.id as number
       };
       
       const doc = await storage.createCompletedWorksDocument(docData);
@@ -1125,7 +972,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_works_document",
         entityId: doc.id,
         details: `تم إنشاء مستند عمل منجز جديد: ${doc.title}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(201).json(doc);
@@ -1149,7 +996,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_works_document",
         entityId: id,
         details: `تم تحديث مستند العمل المنجز: ${doc.title}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(doc);
@@ -1172,7 +1019,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get("/api/dashboard", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId as number;
+  const userId = (req as any).user.id as number;
       
       // Get user role from database since session doesn't store it
       const user = await storage.getUser(userId);
@@ -1324,7 +1171,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   // Deferred payments route - Project-based access control
   app.get("/api/deferred-payments", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId!;
+  const userId = (req as any).user.id as number;
       const user = await storage.getUser(userId);
       
       let deferredPayments;
@@ -1419,13 +1266,13 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "مبلغ الدفعة مطلوب ويجب أن يكون أكبر من الصفر" });
       }
       
-      console.log(`Processing payment for deferred payment ${id}, amount: ${numericAmount}, user: ${req.session.userId}`);
+  console.log(`Processing payment for deferred payment ${id}, amount: ${numericAmount}, user: ${(req as any).user.id}`);
       
-      const result = await storage.payDeferredPaymentInstallment(id, numericAmount, req.session.userId as number);
+  const result = await storage.payDeferredPaymentInstallment(id, numericAmount, (req as any).user.id as number);
       
       // Log activity
       await storage.createActivityLog({
-        userId: req.session.userId as number,
+        userId: (req as any).user.id as number,
         action: "pay_deferred_payment",
         entityType: "deferred_payment",
         entityId: id,
@@ -1570,7 +1417,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           entityType: "system",
           entityId: 1,
           details: "تم تهيئة Supabase Storage",
-          userId: req.session.userId as number
+          userId: (req as any).user.id as number
         });
         
         res.status(200).json({ 
@@ -1602,7 +1449,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "system",
         entityId: 1,
         details: `مزامنة الملفات: ${result.synced} نجحت، ${result.failed} فشلت`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
       
       res.status(200).json({
@@ -1639,7 +1486,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           entityType: "file",
           entityId: 1,
           details: `تم مزامنة الملف: ${filePath}`,
-          userId: req.session.userId as number
+          userId: (req as any).user.id as number
         });
       }
       
@@ -1673,7 +1520,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           entityType: "file",
           entityId: 1,
           details: `تم رفع الملف للسحابة: ${req.file.originalname}`,
-          userId: req.session.userId as number
+          userId: (req as any).user.id as number
         });
 
         // حذف الملف المؤقت
@@ -1694,7 +1541,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           entityType: "file",
           entityId: 1,
           details: `فشل الرفع للسحابة، تم الحفظ محلياً: ${req.file.originalname}`,
-          userId: req.session.userId as number
+          userId: (req as any).user.id as number
         });
 
         return res.status(200).json({
@@ -1722,10 +1569,10 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       const { name, description, projectId, isManagerDocument } = req.body;
       const file = req.file;
-      const userId = req.session.userId as number;
+  const userId = (req as any).user.id as number;
       
       // التحقق من صلاحية المستخدم للمستندات الإدارية
-      const userRole = req.session.role as string;
+  const userRole = (req as any).user.role as string;
       if (isManagerDocument === 'true' && userRole !== "admin" && userRole !== "manager") {
         // حذف الملف المؤقت
         fs.unlinkSync(file.path);
@@ -1757,7 +1604,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         fileUrl: `/uploads/${file.filename}`, // مسار الملف المحلي
         fileType: file.mimetype,
         uploadDate: new Date(),
-        uploadedBy: userId,
+  uploadedBy: userId,
         isManagerDocument: isManagerDocument === 'true'
       };
       
@@ -1802,7 +1649,7 @@ async function registerRoutes(app: Express): Promise<Server> {
           entityType: "system",
           entityId: 1,
           details: `تم إنشاء نسخة احتياطية قبل الانتقال: ${result.backupPath}`,
-          userId: req.session.userId as number
+          userId: (req as any).user.id as number
         });
       }
       
@@ -1843,7 +1690,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "system",
         entityId: 1,
         details: `انتقال للسحابة: ${result.migratedFiles} نجح، ${result.failedFiles} فشل من أصل ${result.totalFiles} ملف`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
       
       res.status(200).json(result);
@@ -1917,7 +1764,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "deferred_payment",
         entityId: id,
         details: `تم حذف المدفوعة المؤجلة: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف المدفوعة المؤجلة بنجاح" });
@@ -1942,7 +1789,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "employee",
         entityId: id,
         details: `تم حذف الموظف: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف الموظف بنجاح" });
@@ -1957,7 +1804,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const employeeData = {
         ...req.body,
-        createdBy: req.session.userId as number
+  createdBy: (req as any).user.id as number
       };
       
       const employee = await storage.createEmployee(employeeData);
@@ -1967,7 +1814,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "employee",
         entityId: employee.id,
         details: `تم إضافة موظف جديد: ${employee.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(201).json(employee);
@@ -1992,7 +1839,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "employee",
         entityId: id,
         details: `تم تحديث بيانات الموظف: ${employee.name}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(employee);
@@ -2017,7 +1864,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "document",
         entityId: id,
         details: `تم حذف المستند: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف المستند بنجاح" });
@@ -2042,7 +1889,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "project",
         entityId: id,
         details: `تم حذف المشروع: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف المشروع بنجاح" });
@@ -2067,7 +1914,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_work",
         entityId: id,
         details: `تم حذف العمل المنجز: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف العمل المنجز بنجاح" });
@@ -2092,7 +1939,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_works_document",
         entityId: id,
         details: `تم حذف مستند العمل المنجز: ${id}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json({ message: "تم حذف مستند العمل المنجز بنجاح" });
@@ -2129,7 +1976,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         entityType: "transaction",
         entityId: id,
         details: `تم أرشفة المعاملة: ${transaction.description}`,
-        userId: req.session.userId as number
+  userId: (req as any).user.id as number
       });
 
       res.status(200).json(transaction);
@@ -2161,11 +2008,11 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       if (existingPermission) {
         // إذا كان هناك صلاحية نشطة، قم بإلغائها (toggle off)
-  const success = await storage.revokeTransactionEditPermission(existingPermission.id, req.session.userId as number);
+  const success = await storage.revokeTransactionEditPermission(existingPermission.id, (req as any).user.id as number);
         
         if (success) {
           await storage.createActivityLog({
-            userId: req.session.userId as number,
+            userId: (req as any).user.id as number,
             action: "revoke_transaction_edit_permission",
             entityType: "permission",
             entityId: existingPermission.id,
@@ -2185,13 +2032,13 @@ async function registerRoutes(app: Express): Promise<Server> {
         const permission = await storage.grantTransactionEditPermission({
           userId: userId || null,
           projectId: projectId || null,
-          grantedBy: req.session.userId as number,
+          grantedBy: (req as any).user.id as number,
           reason: reason || "تفعيل صلاحية تعديل المعاملات",
           notes
         });
 
         await storage.createActivityLog({
-          userId: req.session.userId as number,
+          userId: (req as any).user.id as number,
           action: "grant_transaction_edit_permission",
           entityType: "permission",
           entityId: permission.id,
@@ -2221,11 +2068,11 @@ async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "معرف الصلاحية غير صحيح" });
       }
 
-  const success = await storage.revokeTransactionEditPermission(id, req.session.userId as number);
+  const success = await storage.revokeTransactionEditPermission(id, (req as any).user.id as number);
       
       if (success) {
         await storage.createActivityLog({
-          userId: req.session.userId as number,
+          userId: (req as any).user.id as number,
           action: "revoke_transaction_edit_permission",
           entityType: "permission",
           entityId: id,
@@ -2257,7 +2104,7 @@ async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       
-  const permission = await storage.checkTransactionEditPermission(req.session.userId as number, projectId);
+  const permission = await storage.checkTransactionEditPermission((req as any).user.id as number, projectId);
       
       return res.status(200).json({
         hasPermission: !!permission,
@@ -2278,8 +2125,8 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // التحقق من أن المستخدم يطلب صلاحياته الخاصة أو هو مدير
-      const isAdmin = req.session.user?.role === 'admin' || req.session.user?.permissions?.includes('manage_users');
-      if (req.session.userId !== userId && !isAdmin) {
+  const isAdmin = (req as any).user?.role === 'admin' || (req as any).user?.permissions?.includes('manage_users');
+  if ((req as any).user.id !== userId && !isAdmin) {
         return res.status(403).json({ message: "ليس لديك صلاحية لعرض صلاحيات هذا المستخدم" });
       }
 

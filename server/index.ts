@@ -43,12 +43,13 @@ app.post(
   async (
     req: Request & {
       file?: Express.Multer.File;
-      session: { userId?: number };
     },
     res: Response,
   ) => {
     try {
-      if (!req.session || !req.session.userId) {
+  // JWT user injected by auth in routes-simple
+  const currentUserId = (req as any).user?.id;
+  if (!currentUserId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
 
@@ -77,7 +78,7 @@ app.post(
         projectId: projectId ? Number(projectId) : null,
         expenseType: expenseType || null,
         employeeId: employeeId ? Number(employeeId) : null,
-        createdBy: req.session.userId!,
+  createdBy: currentUserId!,
         fileUrl: req.file ? `/uploads/transactions/${req.file.filename}` : null,
         fileType: req.file ? req.file.mimetype : null,
         archived: false,

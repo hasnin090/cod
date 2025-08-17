@@ -5,11 +5,11 @@ import { getUserPermissions, hasUserPermission } from "./permissions";
 export const checkPermission = (requiredPermission: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.session?.userId) {
+  const userId = (req as any).user?.id as number | undefined;
+  if (!userId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
-
-      const hasPermission = await hasUserPermission(req.session.userId, requiredPermission);
+  const hasPermission = await hasUserPermission(userId, requiredPermission);
       
       if (!hasPermission) {
         return res.status(403).json({ 
@@ -30,11 +30,11 @@ export const checkPermission = (requiredPermission: string) => {
 export const checkAnyPermission = (permissions: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.session?.userId) {
+  const userId = (req as any).user?.id as number | undefined;
+  if (!userId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
-
-      const userPermissions = await getUserPermissions(req.session.userId);
+  const userPermissions = await getUserPermissions(userId);
       const hasAnyPermission = permissions.some(permission => 
         userPermissions.includes(permission)
       );
@@ -58,11 +58,11 @@ export const checkAnyPermission = (permissions: string[]) => {
 export const checkAllPermissions = (permissions: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.session?.userId) {
+  const userId = (req as any).user?.id as number | undefined;
+  if (!userId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
-
-      const userPermissions = await getUserPermissions(req.session.userId);
+  const userPermissions = await getUserPermissions(userId);
       const hasAllPermissions = permissions.every(permission => 
         userPermissions.includes(permission)
       );
@@ -89,7 +89,8 @@ export const checkAllPermissions = (permissions: string[]) => {
 // فحص الوصول للمشروع
 export const checkProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.session?.userId) {
+  const userId = (req as any).user?.id as number | undefined;
+  if (!userId) {
       return res.status(401).json({ message: "غير مصرح" });
     }
 
@@ -100,14 +101,14 @@ export const checkProjectAccess = async (req: Request, res: Response, next: Next
     }
 
     // إذا كان المستخدم مدير، يمكنه الوصول لجميع المشاريع
-    const userPermissions = await getUserPermissions(req.session.userId);
+  const userPermissions = await getUserPermissions(userId);
     if (userPermissions.includes('manage_users')) {
       return next();
     }
 
     // فحص إذا كان المستخدم مخصص للمشروع
     const { storage } = await import('./storage');
-    const hasAccess = await storage.checkUserProjectAccess(req.session.userId, projectId);
+  const hasAccess = await storage.checkUserProjectAccess(userId, projectId);
     
     if (!hasAccess) {
       return res.status(403).json({ 
