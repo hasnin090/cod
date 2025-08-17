@@ -445,7 +445,26 @@ async function registerRoutes(app: Express): Promise<Server> {
       (req.session as any).role = user.role;
       (req.session as any).permissions = user.permissions || [];
 
-      await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve(null)));
+      // إذا كنا في بيئة عديمة الحالة (Netlify بدون قاعدة بيانات للجلسات)، أنشئ كوكي JWT
+      if (useJwtSession) {
+        const token = signSessionJwt({
+          userId: user.id,
+          username: user.username,
+          role: user.role,
+          permissions: user.permissions || [],
+          iat: Date.now(),
+          exp: Date.now() + 24 * 60 * 60 * 1000,
+        });
+        res.cookie('accounting.jwt', token, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
+          path: '/',
+          maxAge: 24 * 60 * 60 * 1000,
+        } as any);
+      } else {
+        await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve(null)));
+      }
 
       res.json({
         id: user.id,
