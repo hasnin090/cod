@@ -12,6 +12,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+  "compression": "^1.7.4",
+  "helmet": "^7.1.0",
     "@firebase/auth": "^1.10.7",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@hookform/resolvers": "^3.9.1",

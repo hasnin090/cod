@@ -26,7 +26,6 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    // Vite expects literal true or string[]; keep literal true
     allowedHosts: true as true,
   };
 
@@ -56,7 +55,6 @@ export async function setupVite(app: Express, server: Server) {
         "index.html",
       );
 
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -72,18 +70,21 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "public");
+  // في الإنتاج: الواجهة المبنية عادة في dist/public حسب إعداد vite.config
+  const clientDist = process.env.CLIENT_DIST
+    ? path.resolve(process.env.CLIENT_DIST)
+    : path.resolve(__dirname, "../dist/public");
 
-  if (!fs.existsSync(distPath)) {
+  if (!fs.existsSync(clientDist)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${clientDist}, make sure to build the client first`,
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(clientDist));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path.resolve(clientDist, "index.html"));
   });
 }

@@ -58,10 +58,12 @@ async function registerRoutes(app: Express): Promise<Server> {
   const isNetlifyLocal = !!process.env.NETLIFY_LOCAL; // عند تشغيل netlify dev
   // بيئة إنتاج فعلية فقط (Netlify production أو NODE_ENV=production بدون netlify dev)
   const isProduction = (process.env.NODE_ENV === 'production' && !isNetlifyLocal) || (isNetlify && !isNetlifyLocal);
-  const useJwtSession = isProduction && !process.env.DATABASE_URL; // خادم عديم الحالة بدون قاعدة بيانات
+  // سنحدد لاحقاً إن كنا سنعتمد على JWT حسب توفر وتفعيل مخزن الجلسات في Postgres
+  let useJwtSession = false;
   const SESSION_SECRET = process.env.SESSION_SECRET || "accounting-app-secret-key-2025";
 
   let sessionStore: any;
+  let pgSessionEnabled = false;
   if (isProduction && process.env.DATABASE_URL) {
     try {
       const PgSession = connectPgSimple(session);
@@ -74,6 +76,7 @@ async function registerRoutes(app: Express): Promise<Server> {
         createTableIfMissing: true,
         pruneSessionInterval: 60 * 60 // تنظيف كل ساعة
       });
+      pgSessionEnabled = true;
       console.log('استخدام PostgresStore للجلسات');
     } catch (e) {
       console.warn('تعذر استخدام PostgresStore، الرجوع إلى MemoryStore:', e);
@@ -90,6 +93,13 @@ async function registerRoutes(app: Express): Promise<Server> {
       ttl: 24 * 60 * 60 * 1000, // 24 ساعة
     });
     console.log("استخدام Memory Store للجلسات (وضع التطوير)");
+  }
+
+  // في بيئات السيرفرلس (Netlify) بدون PG Store فعّال، نعتمد JWT للحفاظ على الجلسة بين الاستدعاءات
+  // ملاحظة: حتى لو كانت DATABASE_URL مضبوطة ولكن PG Store فشل، سنمكّن JWT
+  if (isProduction && !pgSessionEnabled) {
+    useJwtSession = true;
+    console.log('تفعيل جلسات JWT (وضع عديم الحالة)');
   }
 
   app.use(session({
@@ -339,11 +349,24 @@ async function registerRoutes(app: Express): Promise<Server> {
 
   // Lightweight session probe
   app.get('/api/auth/whoami', (req: Request, res: Response) => {
+    const rawCookie = req.headers.cookie || '';
+    const hasJwt = rawCookie.includes('accounting.jwt=');
     res.status(200).json({
       hasSession: !!(req.session && (req.session as any).userId),
       userId: (req.session as any)?.userId ?? null,
       role: (req.session as any)?.role ?? null,
       cookies: Object.keys((req as any).cookies || {}),
+      diagnostics: {
+        isNetlify,
+        isNetlifyLocal,
+        isProduction,
+        pgSessionEnabled,
+        useJwtSession,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        url: process.env.URL || null,
+        rawCookieLength: rawCookie.length,
+        hasJwtCookie: hasJwt,
+      }
     });
   });
 
@@ -441,7 +464,7 @@ async function registerRoutes(app: Express): Promise<Server> {
 
       // Determine intended role: promote to admin if email is in ADMIN_EMAILS or metadata flags admin
       try {
-        const adminEmailsEnv = (process.env.ADMIN_EMAILS || 'admin@example.com')
+        const adminEmailsEnv = (process.env.ADMIN_EMAILS || 'admin@example.com,admin@admin.com')
           .split(',')
           .map(e => e.trim().toLowerCase())
           .filter(Boolean);
