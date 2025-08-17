@@ -225,7 +225,7 @@ export class MemStorage implements IStorage {
       username: "admin",
       password: bcrypt.hashSync("admin123", 10),
       name: "مدير النظام",
-      email: "admin@example.com",
+  email: "admin@admin.com",
       role: "admin"
     });
 

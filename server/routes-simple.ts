@@ -244,6 +244,10 @@ async function registerRoutes(app: Express): Promise<Server> {
       const credentials = loginSchema.parse(req.body);
       // Allow login by username OR email
       let user = await storage.getUserByUsername(credentials.username);
+      // Try well-known admin aliases
+      if (!user && ['admin@admin.com','admin@example.com'].includes((credentials.username || '').toLowerCase())) {
+        user = await storage.getUserByUsername('admin');
+      }
       if (!user && credentials.username?.includes?.('@')) {
         user = await storage.getUserByEmail(credentials.username);
       }
