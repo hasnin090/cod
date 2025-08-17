@@ -49,6 +49,8 @@ const __dirname = process.cwd();
 import { documentUpload } from './multer-config';
 
 async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure Express is aware it's behind a proxy (Netlify) so secure cookies work
+  app.set('trust proxy', 1);
   const MemoryStoreSession = MemoryStore(session);
   
   // تهيئة الجلسات: استخدم Postgres Store في Netlify/Production، وMemoryStore في التطوير
@@ -329,6 +331,16 @@ async function registerRoutes(app: Express): Promise<Server> {
       }
       return res.status(500).json({ message: "خطأ في تسجيل الدخول" });
     }
+  });
+
+  // Lightweight session probe
+  app.get('/api/auth/whoami', (req: Request, res: Response) => {
+    res.status(200).json({
+      hasSession: !!(req.session && (req.session as any).userId),
+      userId: (req.session as any)?.userId ?? null,
+      role: (req.session as any)?.role ?? null,
+      cookies: Object.keys((req as any).cookies || {}),
+    });
   });
 
   app.post("/api/auth/logout", authenticate, async (req: Request, res: Response) => {
