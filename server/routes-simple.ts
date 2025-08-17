@@ -24,6 +24,8 @@ import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
 import jwt from 'jsonwebtoken';
+// @ts-ignore - Types provided via middleware/auth.d.ts
+import commonAuthenticate from '../middleware/auth.js';
 import { 
   initializeSupabaseStorage, 
   uploadToSupabase, 
@@ -57,9 +59,6 @@ async function registerRoutes(app: Express): Promise<Server> {
   function signJwt(payload: object, opts?: jwt.SignOptions) {
     return jwt.sign(payload as any, SESSION_SECRET, { expiresIn: '7d', ...(opts || {}) });
   }
-  function verifyJwt(token: string) {
-    return jwt.verify(token, SESSION_SECRET) as any;
-  }
   function setAuthCookie(res: Response, token: string) {
     res.cookie('token', token, {
       httpOnly: true,
@@ -81,30 +80,7 @@ async function registerRoutes(app: Express): Promise<Server> {
       secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
     } as any);
   }
-  function parseCookies(header?: string) {
-    const raw = header || '';
-    return Object.fromEntries(raw.split(';').map(v => v.trim()).filter(Boolean).map(v => {
-      const i = v.indexOf('=');
-      return i === -1 ? [v, ''] : [decodeURIComponent(v.slice(0, i)), decodeURIComponent(v.slice(1 + i))];
-    }));
-  }
-  const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const cookies = parseCookies(req.headers.cookie);
-      const cookieToken = cookies['token'] || cookies['accounting.jwt'];
-      const authHeader = (req.headers.authorization || (req.headers as any).Authorization) as string | undefined;
-      const bearer = authHeader && authHeader.startsWith('Bearer ')
-        ? authHeader.slice('Bearer '.length).trim()
-        : undefined;
-      const token = bearer || cookieToken;
-      if (!token) return res.status(401).json({ message: 'Unauthorized' });
-      const decoded = verifyJwt(token);
-      (req as any).user = decoded;
-      return next();
-    } catch (e) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-  };
+  // Use shared auth middleware
   
   // لا حاجة لأي middleware جلسات بعد اعتماد JWT
 
@@ -114,7 +90,7 @@ async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication middleware (JWT)
-  const authenticate = authMiddleware;
+  const authenticate = commonAuthenticate as unknown as (req: Request, res: Response, next: NextFunction) => void;
 
   // Role-based authorization middleware
   const authorize = (roles: string[]) => {
