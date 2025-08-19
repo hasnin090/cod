@@ -47,7 +47,7 @@ const __dirname = process.cwd();
 
 import { documentUpload } from './multer-config';
 
-async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<Server> {
   // Ensure Express is aware it's behind a proxy (Netlify) so secure cookies work
   app.set('trust proxy', 1);
   // إعدادات البيئة و JWT
@@ -2123,5 +2123,3 @@ async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
   return server;
 }
-
-export { registerRoutes };
