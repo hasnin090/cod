@@ -810,6 +810,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Documents routes
+  app.get("/api/documents", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { isManagerDocument } = req.query;
+      let documents;
+      
+      if (isManagerDocument !== undefined) {
+        const isManager = isManagerDocument === 'true';
+        documents = await storage.listDocuments();
+        documents = documents.filter(doc => (doc as any).isManagerDocument === isManager);
+      } else {
+        documents = await storage.listDocuments();
+      }
+      
+      res.status(200).json(documents);
+    } catch (error: any) {
+      console.error("Error getting documents:", error);
+      res.status(500).json({ message: "خطأ في استرجاع المستندات" });
+    }
+  });
+
   app.post("/api/documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
       const documentData = {
