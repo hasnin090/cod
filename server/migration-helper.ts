@@ -3,7 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { uploadFromLocalFile } from './supabase-storage';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazily obtain a Neon client only when needed to avoid crashing on import
+function requireSql() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error('DATABASE_URL not configured for migration-helper');
+  }
+  return neon(url);
+}
 
 interface MigrationResult {
   success: boolean;
@@ -18,6 +25,7 @@ interface MigrationResult {
 // إنشاء نسخة احتياطية من قاعدة البيانات قبل الانتقال
 export async function createPreMigrationBackup(): Promise<{ success: boolean; backupPath?: string; error?: string }> {
   try {
+  const sql = requireSql();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupPath = `./backups/pre-cloud-migration-${timestamp}.json`;
     
@@ -70,6 +78,7 @@ export async function verifyCurrentData(): Promise<{
   error?: string; 
 }> {
   try {
+  const sql = requireSql();
     const [transactionCount, documentCount, filesWithAttachments] = await Promise.all([
       sql`SELECT COUNT(*) as count FROM transactions`,
       sql`SELECT COUNT(*) as count FROM documents`,
@@ -98,6 +107,7 @@ export async function updateFileUrlsAfterMigration(
   tableName: 'transactions' | 'documents' = 'transactions'
 ): Promise<{ success: boolean; updatedRecords: number; error?: string }> {
   try {
+  const sql = requireSql();
     let result;
     
     if (tableName === 'transactions') {
@@ -136,6 +146,7 @@ export async function safeMigrateToCloud(): Promise<MigrationResult> {
   };
 
   try {
+  const sql = requireSql();
     // 1. إنشاء نسخة احتياطية
     console.log('🔄 إنشاء نسخة احتياطية...');
     const backup = await createPreMigrationBackup();
