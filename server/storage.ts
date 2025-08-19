@@ -1046,4 +1046,33 @@ export class MemStorage implements IStorage {
 // تحديد فئة التخزين النشطة
 // يمكن تغيير هذا لاستخدام MemStorage للتطوير المحلي أو PgStorage للإنتاج
 // استخدم PgStorage إذا كانت قاعدة البيانات مهيأة، وإلا استخدم التخزين في الذاكرة للتشغيل الأساسي
-export const storage: IStorage = process.env.DATABASE_URL ? new PgStorage() : new MemStorage();
+
+let _storage: IStorage | null = null;
+
+function createStorage(): IStorage {
+  if (_storage) return _storage;
+  
+  // Only create PgStorage if DATABASE_URL is properly configured
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
+    try {
+      _storage = new PgStorage();
+      console.log('Using PgStorage with database connection');
+    } catch (error) {
+      console.warn('Failed to initialize PgStorage, falling back to MemStorage:', error);
+      _storage = new MemStorage();
+    }
+  } else {
+    console.log('DATABASE_URL not configured, using MemStorage');
+    _storage = new MemStorage();
+  }
+  
+  return _storage;
+}
+
+export const storage: IStorage = new Proxy({} as IStorage, {
+  get(target, prop) {
+    const actualStorage = createStorage();
+    const value = (actualStorage as any)[prop];
+    return typeof value === 'function' ? value.bind(actualStorage) : value;
+  }
+});
