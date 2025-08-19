@@ -1,5 +1,6 @@
 import serverless from 'serverless-http';
 import express from 'express';
+import { registerRoutes } from './server/routes-simple';
 
 let serverlessHandler: any | null = null;
 
@@ -8,12 +9,8 @@ async function buildHandler() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
 
-  // Register all routes/middleware lazily to prevent top-level import failures from causing 502
+  // Register all routes/middleware
   try {
-    // Import without extension so the bundler can resolve TS/JS appropriately
-    const mod = await import('../../server/routes-simple');
-    const registerRoutes = (mod as any).registerRoutes as (app: any) => Promise<any>;
-    if (typeof registerRoutes !== 'function') throw new Error('registerRoutes not found');
     await registerRoutes(app);
   } catch (e: any) {
     console.error('Failed to initialize full routes:', e?.message || e);
