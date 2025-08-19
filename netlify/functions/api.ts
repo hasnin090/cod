@@ -28,8 +28,10 @@ async function buildHandler() {
     res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
   });
 
-  // Ensure Express sees paths without the Netlify function prefix
-  serverlessHandler = serverless(app, { basePath: '/.netlify/functions/api' } as any);
+  // Ensure Express sees paths with '/api' intact after trimming only the function mount prefix
+  // Incoming path looks like '/.netlify/functions/api/<splat>' via redirect in netlify.toml
+  // By using basePath='/.netlify/functions', Express receives '/api/<splat>' which matches our routes
+  serverlessHandler = serverless(app, { basePath: '/.netlify/functions' } as any);
   return serverlessHandler;
 }
 
