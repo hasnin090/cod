@@ -885,6 +885,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Completed works routes
+  app.get("/api/completed-works", authenticate, async (req: Request, res: Response) => {
+    try {
+      const works = await storage.listCompletedWorks();
+      res.status(200).json(works);
+    } catch (error: any) {
+      console.error("Error getting completed works:", error);
+      res.status(500).json({ message: "خطأ في استرجاع الأعمال المكتملة" });
+    }
+  });
+
   app.post("/api/completed-works", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
       const workData = {
@@ -934,6 +944,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Completed works documents routes
+  app.get("/api/completed-works-documents", authenticate, async (req: Request, res: Response) => {
+    try {
+      const documents = await storage.listCompletedWorksDocuments();
+      res.status(200).json(documents);
+    } catch (error: any) {
+      console.error("Error getting completed works documents:", error);
+      res.status(500).json({ message: "خطأ في استرجاع مستندات الأعمال المكتملة" });
+    }
+  });
+
   app.post("/api/completed-works-documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
       const docData = {
@@ -1537,76 +1557,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // مسار تحميل المستندات مع FormData
-  app.post("/api/upload-document", authenticate, documentUpload.single('file'), async (req: Request, res: Response) => {
+  app.post("/api/upload-document", authenticate, async (req: Request, res: Response) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: "لم يتم تقديم ملف للتحميل" });
-      }
+      // استخدام multer يدوياً مع معالجة أفضل للأخطاء في Netlify
+      documentUpload.single('file')(req, res, async (uploadError: any) => {
+        if (uploadError) {
+          console.error("Multer upload error:", uploadError);
+          return res.status(500).json({ 
+            message: "خطأ في تحميل الملف", 
+            error: uploadError.message 
+          });
+        }
 
-      const { name, description, projectId, isManagerDocument } = req.body;
-      const file = req.file;
-  const userId = (req as any).user.id as number;
-      
-      // التحقق من صلاحية المستخدم للمستندات الإدارية
-  const userRole = (req as any).user.role as string;
-      if (isManagerDocument === 'true' && userRole !== "admin" && userRole !== "manager") {
-        // حذف الملف المؤقت
-        fs.unlinkSync(file.path);
-        return res.status(403).json({ 
-          message: "غير مصرح لك بإنشاء مستندات إدارية" 
-        });
-      }
-      
-      // التحقق من صلاحية المستخدم للوصول للمشروع إذا تم تحديده
-      if (projectId && projectId !== "all") {
-        const projectIdNumber = Number(projectId);
-        if (userRole !== "admin" && userRole !== "manager") {
-          const hasAccess = await storage.checkUserProjectAccess(userId, projectIdNumber);
-          if (!hasAccess) {
+        if (!req.file) {
+          return res.status(400).json({ message: "لم يتم تقديم ملف للتحميل" });
+        }
+
+        try {
+          const { name, description, projectId, isManagerDocument } = req.body;
+          const file = req.file;
+          const userId = (req as any).user.id as number;
+          
+          // التحقق من صلاحية المستخدم للمستندات الإدارية
+          const userRole = (req as any).user.role as string;
+          if (isManagerDocument === 'true' && userRole !== "admin" && userRole !== "manager") {
             // حذف الملف المؤقت
-            fs.unlinkSync(file.path);
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+            }
             return res.status(403).json({ 
-              message: "ليس لديك صلاحية للوصول إلى هذا المشروع" 
+              message: "غير مصرح لك بإنشاء مستندات إدارية" 
             });
           }
+          
+          // التحقق من صلاحية المستخدم للوصول للمشروع إذا تم تحديده
+          if (projectId && projectId !== "all") {
+            const projectIdNumber = Number(projectId);
+            if (userRole !== "admin" && userRole !== "manager") {
+              const hasAccess = await storage.checkUserProjectAccess(userId, projectIdNumber);
+              if (!hasAccess) {
+                // حذف الملف المؤقت
+                if (fs.existsSync(file.path)) {
+                  fs.unlinkSync(file.path);
+                }
+                return res.status(403).json({ 
+                  message: "ليس لديك صلاحية للوصول إلى هذا المشروع" 
+                });
+              }
+            }
+          }
+          
+          // تهيئة البيانات للمستند
+          const documentData = {
+            name: name,
+            description: description || "",
+            projectId: projectId && projectId !== "all" ? Number(projectId) : undefined,
+            fileUrl: `/uploads/${file.filename}`, // مسار الملف المحلي
+            fileType: file.mimetype,
+            uploadDate: new Date(),
+            uploadedBy: userId,
+            isManagerDocument: isManagerDocument === 'true'
+          };
+          
+          // إضافة المستند إلى قاعدة البيانات
+          const document = await storage.createDocument(documentData as any);
+          
+          // تسجيل نشاط إضافة المستند
+          await storage.createActivityLog({
+            action: "create",
+            entityType: "document",
+            entityId: document.id,
+            details: `إضافة مستند جديد: ${document.name}`,
+            userId: userId
+          });
+          
+          return res.status(201).json(document);
+        } catch (error) {
+          // حذف الملف المؤقت في حالة حدوث خطأ
+          if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+          
+          console.error("خطأ في رفع الملف:", error);
+          return res.status(500).json({ message: "حدث خطأ أثناء معالجة الملف" });
         }
-      }
-      
-      // تهيئة البيانات للمستند
-      const documentData = {
-        name: name,
-        description: description || "",
-        projectId: projectId && projectId !== "all" ? Number(projectId) : undefined,
-        fileUrl: `/uploads/${file.filename}`, // مسار الملف المحلي
-        fileType: file.mimetype,
-        uploadDate: new Date(),
-  uploadedBy: userId,
-        isManagerDocument: isManagerDocument === 'true'
-      };
-      
-      try {
-        // إضافة المستند إلى قاعدة البيانات
-        const document = await storage.createDocument(documentData as any);
-        
-        // تسجيل نشاط إضافة المستند
-        await storage.createActivityLog({
-          action: "create",
-          entityType: "document",
-          entityId: document.id,
-          details: `إضافة مستند جديد: ${document.name}`,
-          userId: userId
-        });
-        
-        return res.status(201).json(document);
-      } catch (error) {
-        // حذف الملف المؤقت في حالة حدوث خطأ
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
-        
-        console.error("خطأ في رفع الملف:", error);
-        return res.status(500).json({ message: "حدث خطأ أثناء معالجة الملف" });
-      }
+      });
     } catch (error) {
       console.error("خطأ عام في رفع المستند:", error);
       return res.status(500).json({ message: "خطأ في رفع المستند" });
