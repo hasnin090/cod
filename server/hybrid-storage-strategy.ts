@@ -5,7 +5,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { pgStorage } from './pg-storage.js';
+import { PgStorage } from './pg-storage.js';
 import { initializeSupabaseStorage, getSupabaseClient } from './supabase-storage.js';
 
 interface HybridStorageConfig {
@@ -22,8 +22,10 @@ class HybridStorageManager {
   };
 
   private backupTimer?: NodeJS.Timeout;
+  private pgStorage: PgStorage;
 
   constructor() {
+    this.pgStorage = new PgStorage();
     this.startAutomaticBackup();
   }
 
@@ -119,10 +121,10 @@ class HybridStorageManager {
 
       // جلب البيانات الأساسية
       const [transactions, users, projects, settings] = await Promise.all([
-        pgStorage.listTransactions(),
-        pgStorage.listUsers(),
-        pgStorage.listProjects(),
-        pgStorage.listSettings()
+        this.pgStorage.listTransactions(),
+        this.pgStorage.listUsers(),
+        this.pgStorage.listProjects(),
+        this.pgStorage.listSettings()
       ]);
 
       const backupData = {

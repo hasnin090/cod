@@ -17,7 +17,7 @@ import {
   transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
 } from "../shared/schema";
 import bcrypt from "bcryptjs";
-import { pgStorage } from './pg-storage.js';
+import { PgStorage } from './pg-storage.js';
 
 // Flexible input for granting transaction edit permissions from routes (expiresAt computed in DB)
 export type GrantTransactionEditPermissionInput = {
@@ -1046,4 +1046,4 @@ export class MemStorage implements IStorage {
 // تحديد فئة التخزين النشطة
 // يمكن تغيير هذا لاستخدام MemStorage للتطوير المحلي أو PgStorage للإنتاج
 // استخدم PgStorage إذا كانت قاعدة البيانات مهيأة، وإلا استخدم التخزين في الذاكرة للتشغيل الأساسي
-export const storage: IStorage = process.env.DATABASE_URL ? pgStorage : new MemStorage();
+export const storage: IStorage = process.env.DATABASE_URL ? new PgStorage() : new MemStorage();

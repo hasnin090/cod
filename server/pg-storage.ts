@@ -37,10 +37,32 @@ export class PgStorage implements IStorage {
       return;
     }
 
-    this.sql = neon(url);
-    this.initializeConnection();
-    // Start periodic connection health check
-    this.startHealthCheck();
+    try {
+      this.sql = neon(url);
+      this.initializeConnection();
+      // Start periodic connection health check
+      this.startHealthCheck();
+    } catch (error) {
+      console.error('PgStorage: Failed to initialize neon connection:', error);
+      this.disabled = true;
+    }
+  }
+
+  // Helper to safely get SQL instance and cast results
+  private getSql() {
+    if (this.disabled || !this.sql) {
+      throw new Error('PgStorage is disabled: DATABASE_URL not configured. Cannot perform database operations.');
+    }
+    return this.sql!;
+  }
+
+  private castResult<T>(result: any): T[] {
+    return (result as any[]) || [];
+  }
+
+  private getFirstResult<T>(result: any): T | undefined {
+    const arr = this.castResult<T>(result);
+    return arr[0];
   }
 
   private async initializeConnection() {
@@ -57,8 +79,7 @@ export class PgStorage implements IStorage {
   }
 
   private async testConnection(): Promise<void> {
-    if (this.disabled || !this.sql) throw new Error('PgStorage disabled or not initialized');
-    const sql = this.sql!;
+    const sql = this.getSql();
     await sql`SELECT 1`;
   }
 
@@ -85,6 +106,9 @@ export class PgStorage implements IStorage {
   }
 
   private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+    // Check disabled state and get SQL instance
+    const sql = this.getSql();
+    
     try {
       const result = await operation();
       // Reset connection status on successful operation
@@ -167,22 +191,24 @@ export class PgStorage implements IStorage {
 
   async checkTableExists(tableName: string): Promise<boolean> {
     return this.executeWithRetry(async () => {
-      const result = await this.sql`
+      const sql = this.getSql();
+      const result = await sql`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
           AND table_name = ${tableName}
         );
       `;
-      return result[0]?.exists || false;
+      return this.getFirstResult<{exists: boolean}>(result)?.exists || false;
     });
   }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
     return this.executeWithRetry(async () => {
-      const result = await this.sql`SELECT * FROM users WHERE id = ${id}`;
-      return result[0] as User | undefined;
+      const sql = this.getSql();
+      const result = await sql`SELECT * FROM users WHERE id = ${id}`;
+      return this.getFirstResult<User>(result);
     });
   }
 
@@ -2592,4 +2618,5 @@ export class PgStorage implements IStorage {
   }
 }
 
-export const pgStorage = new PgStorage();
+// Export the class so it can be instantiated conditionally in storage.ts
+// Removed singleton export to prevent early initialization crash when DATABASE_URL is missing
