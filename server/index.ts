@@ -127,7 +127,7 @@ app.use(
 );
 
 // تشغيل الواجهة: تطوير vs إنتاج
-const PORT = Number(process.env.PORT || 5173);
+const PORT = Number(process.env.PORT || (process.env.NODE_ENV === "production" ? 5173 : 3001));
 
 if (process.env.NODE_ENV === "production") {
   serveStatic(app);
