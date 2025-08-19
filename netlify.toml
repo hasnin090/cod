@@ -18,7 +18,7 @@
 ## Proxy API requests to the `api` function
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/api/:splat"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 ## SPA fallback must be last

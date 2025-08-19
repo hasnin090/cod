@@ -10,10 +10,8 @@ async function buildHandler() {
 
   // Register all routes/middleware lazily to prevent top-level import failures from causing 502
   try {
-    const mod = await import('../../server/routes-simple.js').catch(async () => {
-      // When bundling TS, the .js extension might not resolve; try TS path too
-      return await import('../../server/routes-simple');
-    });
+    // Import without extension so the bundler can resolve TS/JS appropriately
+    const mod = await import('../../server/routes-simple');
     const registerRoutes = (mod as any).registerRoutes as (app: any) => Promise<any>;
     if (typeof registerRoutes !== 'function') throw new Error('registerRoutes not found');
     await registerRoutes(app);
