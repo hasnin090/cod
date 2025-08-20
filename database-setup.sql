@@ -10,7 +10,7 @@ EXCEPTION
 END $$;
 
 -- 1. جدول المستخدمين (users)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE users (
 );
 
 -- 2. جدول المشاريع (projects)
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE projects (
 );
 
 -- 3. جدول المعاملات (transactions)
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     date TIMESTAMP NOT NULL,
     amount INTEGER NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE transactions (
 );
 
 -- 4. جدول ربط المستخدمين بالمشاريع (user_projects)
-CREATE TABLE user_projects (
+CREATE TABLE IF NOT EXISTS user_projects (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     project_id INTEGER NOT NULL REFERENCES projects(id),
@@ -62,7 +62,7 @@ CREATE TABLE user_projects (
 );
 
 -- 5. جدول المستندات (documents)
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -77,7 +77,7 @@ CREATE TABLE documents (
 );
 
 -- 6. جدول ربط المستندات بالمعاملات (document_transaction_links)
-CREATE TABLE document_transaction_links (
+CREATE TABLE IF NOT EXISTS document_transaction_links (
     id SERIAL PRIMARY KEY,
     document_id INTEGER NOT NULL REFERENCES documents(id),
     transaction_id INTEGER NOT NULL REFERENCES transactions(id),
@@ -89,7 +89,7 @@ CREATE TABLE document_transaction_links (
 );
 
 -- 7. جدول سجل النشاطات (activity_logs)
-CREATE TABLE activity_logs (
+CREATE TABLE IF NOT EXISTS activity_logs (
     id SERIAL PRIMARY KEY,
     action TEXT NOT NULL, -- create, update, delete
     entity_type TEXT NOT NULL, -- transaction, project, user, document
@@ -100,7 +100,7 @@ CREATE TABLE activity_logs (
 );
 
 -- 8. جدول الإعدادات (settings)
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
     key TEXT NOT NULL UNIQUE,
     value TEXT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE settings (
 );
 
 -- 9. جدول صلاحيات تعديل المعاملات (transaction_edit_permissions)
-CREATE TABLE transaction_edit_permissions (
+CREATE TABLE IF NOT EXISTS transaction_edit_permissions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id), -- المستخدم المخول
     project_id INTEGER REFERENCES projects(id), -- أو المشروع المخول
@@ -123,7 +123,7 @@ CREATE TABLE transaction_edit_permissions (
 );
 
 -- 10. جدول أنواع المصروفات (expense_types)
-CREATE TABLE expense_types (
+CREATE TABLE IF NOT EXISTS expense_types (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -135,7 +135,7 @@ CREATE TABLE expense_types (
 );
 
 -- 11. جدول دفتر الأستاذ (ledger_entries)
-CREATE TABLE ledger_entries (
+CREATE TABLE IF NOT EXISTS ledger_entries (
     id SERIAL PRIMARY KEY,
     date TIMESTAMP NOT NULL,
     transaction_id INTEGER REFERENCES transactions(id),
@@ -152,7 +152,7 @@ CREATE TABLE ledger_entries (
 );
 
 -- 12. جدول الصناديق (funds)
-CREATE TABLE funds (
+CREATE TABLE IF NOT EXISTS funds (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     balance INTEGER NOT NULL DEFAULT 0,
@@ -164,7 +164,7 @@ CREATE TABLE funds (
 );
 
 -- 13. جدول الموظفين (employees)
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     salary INTEGER NOT NULL DEFAULT 0, -- المرتب الشهري المحدد
@@ -181,7 +181,7 @@ CREATE TABLE employees (
 );
 
 -- 14. جدول تصنيفات الحسابات (account_categories)
-CREATE TABLE account_categories (
+CREATE TABLE IF NOT EXISTS account_categories (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT,
@@ -192,7 +192,7 @@ CREATE TABLE account_categories (
 );
 
 -- 15. جدول الدفعات المؤجلة (deferred_payments)
-CREATE TABLE deferred_payments (
+CREATE TABLE IF NOT EXISTS deferred_payments (
     id SERIAL PRIMARY KEY,
     beneficiary_name TEXT NOT NULL, -- اسم المستفيد
     total_amount INTEGER NOT NULL, -- المبلغ الإجمالي
@@ -212,7 +212,7 @@ CREATE TABLE deferred_payments (
 );
 
 -- 16. جدول الأعمال المنجزة (completed_works)
-CREATE TABLE completed_works (
+CREATE TABLE IF NOT EXISTS completed_works (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
@@ -228,7 +228,7 @@ CREATE TABLE completed_works (
 );
 
 -- 17. جدول مستندات الأعمال المنجزة (completed_works_documents)
-CREATE TABLE completed_works_documents (
+CREATE TABLE IF NOT EXISTS completed_works_documents (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
@@ -243,18 +243,18 @@ CREATE TABLE completed_works_documents (
 );
 
 -- إنشاء فهارس للأداء
-CREATE INDEX idx_transactions_project_id ON transactions(project_id);
-CREATE INDEX idx_transactions_created_by ON transactions(created_by);
-CREATE INDEX idx_transactions_date ON transactions(date);
-CREATE INDEX idx_documents_project_id ON documents(project_id);
-CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
-CREATE INDEX idx_activity_logs_timestamp ON activity_logs(timestamp);
-CREATE INDEX idx_user_projects_user_id ON user_projects(user_id);
-CREATE INDEX idx_user_projects_project_id ON user_projects(project_id);
-CREATE INDEX idx_ledger_entries_transaction_id ON ledger_entries(transaction_id);
-CREATE INDEX idx_ledger_entries_project_id ON ledger_entries(project_id);
-CREATE INDEX idx_expense_types_project_id ON expense_types(project_id);
-CREATE INDEX idx_employees_assigned_project_id ON employees(assigned_project_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_project_id ON transactions(project_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_created_by ON transactions(created_by);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+CREATE INDEX IF NOT EXISTS idx_documents_project_id ON documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_user_projects_user_id ON user_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_projects_project_id ON user_projects(project_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_entries_transaction_id ON ledger_entries(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_entries_project_id ON ledger_entries(project_id);
+CREATE INDEX IF NOT EXISTS idx_expense_types_project_id ON expense_types(project_id);
+CREATE INDEX IF NOT EXISTS idx_employees_assigned_project_id ON employees(assigned_project_id);
 
 -- إدراج البيانات الافتراضية
 -- إنشاء مستخدم المدير الافتراضي
