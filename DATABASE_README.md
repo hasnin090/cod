@@ -1,6 +1,8 @@
 # دليل قاعدة البيانات - نظام المحاسبة
 # Database Setup Guide - Cod Accounting System
 
+**آخر تحديث:** 2023-06-15
+
 ## ملفات SQL المتوفرة
 
 ### 1. `database-safe-setup.sql` - الإعداد الآمن المُحسَّن (مُوصى به)
