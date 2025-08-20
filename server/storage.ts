@@ -18,6 +18,8 @@ import {
 } from "../shared/schema";
 import bcrypt from "bcryptjs";
 import { PgStorage } from './pg-storage.js';
+import { SupabaseStorage } from './supabase-storage-class.js';
+import { isSupabaseInitialized } from './supabase-storage';
 
 // Flexible input for granting transaction edit permissions from routes (expiresAt computed in DB)
 export type GrantTransactionEditPermissionInput = {
@@ -1052,7 +1054,18 @@ let _storage: IStorage | null = null;
 function createStorage(): IStorage {
   if (_storage) return _storage;
   
-  // Only create PgStorage if DATABASE_URL is properly configured
+  // First try to use Supabase if initialized
+  if (isSupabaseInitialized()) {
+    try {
+      _storage = new SupabaseStorage();
+      console.log('Using SupabaseStorage for data persistence');
+      return _storage;
+    } catch (error) {
+      console.warn('Failed to initialize SupabaseStorage:', error);
+    }
+  }
+
+  // Fallback to PgStorage if DATABASE_URL is properly configured
   if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
     try {
       _storage = new PgStorage();

@@ -8,6 +8,11 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 let supabaseClient: SupabaseClient | null = null;
 let isInitialized = false;
 
+// التحقق من تم إعداد Supabase
+export function isSupabaseInitialized(): boolean {
+  return isInitialized && supabaseClient !== null;
+}
+
 // تهيئة عميل Supabase
 export async function initializeSupabaseStorage(): Promise<boolean> {
   try {

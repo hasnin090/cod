@@ -4,10 +4,11 @@ let client: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (client) return client;
+  
   const url = import.meta.env.VITE_SUPABASE_URL;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
   if (!url || !anon) {
-    // بيئة بدون Supabase: أعد عميلًا وهميًا بواجهات مطلوبة فقط حتى يعمل التطبيق محلياً
     console.warn('Supabase env missing. Proceeding without Supabase (local dev).');
     // @ts-expect-error - return a minimal facade typed as SupabaseClient
     client = {
@@ -25,6 +26,7 @@ export function getSupabase(): SupabaseClient {
     } as SupabaseClient;
     return client;
   }
+  
   client = createClient(url, anon, {
     auth: {
       persistSession: true,
@@ -32,5 +34,6 @@ export function getSupabase(): SupabaseClient {
       detectSessionInUrl: true,
     },
   });
+  
   return client;
 }

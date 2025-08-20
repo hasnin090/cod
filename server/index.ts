@@ -11,6 +11,19 @@ import { registerRoutes } from "./routes-simple";
 // التخزين والمنطق
 import { storage } from "./storage";
 import { transactionUpload } from "./multer-config";
+import { initializeSupabaseStorage } from "./supabase-storage";
+
+// تهيئة Supabate Storage
+console.log('Initializing Supabate Storage...');
+initializeSupabaseStorage().then(success => {
+  if (success) {
+    console.log('✅ Supabate Storage initialized successfully');
+  } else {
+    console.log('⚠️ Supabate Storage initialization failed, will use fallback storage');
+  }
+}).catch(error => {
+  console.error('❌ Error during Supabate Storage initialization:', error);
+});
 
 // إنشاء التطبيق والخادم
 const app = express();
