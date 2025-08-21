@@ -735,8 +735,8 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
       return res.status(201).json(expenseType);
     } catch (error) {
       console.error('Error creating expense type:', error);
-      if (error instanceof Error && error.message.includes("موجود مسبقاً")) {
-        return res.status(400).json({ message: error.message });
+      if (error instanceof Error && (error.message.includes("موجود مسبقاً") || error.message.includes("UNIQUE constraint failed"))) {
+        return res.status(409).json({ message: "نوع المصروف هذا موجود بالفعل لهذا المشروع." });
       }
       return res.status(500).json({ message: "خطأ في إنشاء نوع المصروف" });
     }
@@ -1904,7 +1904,7 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
     try {
       const employeeData = {
         ...req.body,
-  createdBy: (req as any).user.id as number
+        createdBy: (req as any).user.id as number
       };
       
       const employee = await storage.createEmployee(employeeData);
@@ -1914,12 +1914,16 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
         entityType: "employee",
         entityId: employee.id,
         details: `تم إضافة موظف جديد: ${employee.name}`,
-  userId: (req as any).user.id as number
+        userId: (req as any).user.id as number
       });
 
       res.status(201).json(employee);
     } catch (error: any) {
       console.error("Error creating employee:", error);
+      // Check for unique constraint violation
+      if (error.message && error.message.includes('UNIQUE constraint failed')) {
+        return res.status(409).json({ message: "اسم الموظف موجود بالفعل" });
+      }
       res.status(500).json({ message: "خطأ في إضافة الموظف" });
     }
   });
