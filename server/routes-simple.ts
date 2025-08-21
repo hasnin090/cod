@@ -236,7 +236,7 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
     const decoded = jwt.verify(token, process.env.SESSION_SECRET || 'accounting-app-secret-key-2025') as any;
     
     // Find user in database
-    let user = await storage.getUserById(decoded.id);
+  let user = await storage.getUser(decoded.id);
     
     if (!user) {
       return res.status(401).json({ message: "المستخدم غير موجود" });
@@ -544,6 +544,118 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
       return res.status(200).json(transactions);
     } catch (error) {
       return res.status(500).json({ message: "خطأ في استرجاع المعاملات" });
+    }
+  });
+
+  // أرشفة معاملات متعددة دفعة واحدة
+  app.post("/api/transactions/archive", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const body = req.body as { transactionIds?: unknown };
+      const parsed = z.object({ transactionIds: z.array(z.number().int().positive()).min(1) }).safeParse({
+        transactionIds: Array.isArray(body?.transactionIds)
+          ? body.transactionIds.map(Number).filter(n => !Number.isNaN(n))
+          : [],
+      });
+      if (!parsed.success) {
+        return res.status(400).json({ message: "قائمة المعاملات مطلوبة" });
+      }
+
+      const actorId = (req as any).user?.id as number | undefined;
+      if (!actorId) return res.status(401).json({ message: "غير مصرح" });
+
+      // إن لم يكن admin نتحقق من صلاحية التعديل
+      const actor = await storage.getUser(actorId);
+      if (!actor) return res.status(401).json({ message: "غير مصرح" });
+
+      let canEdit = true;
+      if (actor.role !== 'admin') {
+        const perm = await storage.checkTransactionEditPermission(actorId);
+        canEdit = !!perm;
+        if (!canEdit) {
+          return res.status(403).json({ message: "غير مصرح لك بأرشفة المعاملات - تحتاج لصلاحية تعديل من المدير" });
+        }
+      }
+
+      const ids = parsed.data.transactionIds;
+      const failed: number[] = [];
+      let archivedCount = 0;
+
+      for (const id of ids) {
+        try {
+          if (actor.role !== 'admin') {
+            const canAccess = await storage.canUserAccessTransaction(actorId, id);
+            if (!canAccess) {
+              failed.push(id);
+              continue;
+            }
+          }
+          const updated = await storage.updateTransaction(id, { archived: true } as any);
+          if (updated) archivedCount++;
+          else failed.push(id);
+        } catch {
+          failed.push(id);
+        }
+      }
+
+      return res.status(200).json({ success: true, archivedCount, failed });
+    } catch (error) {
+      console.error("Error bulk archiving transactions:", error);
+      return res.status(500).json({ message: "خطأ في أرشفة المعاملات" });
+    }
+  });
+
+  // تصدير المعاملات إلى CSV (استجابة تحميل ملف)
+  app.post('/api/transactions/export/excel', authenticate, async (req: Request, res: Response) => {
+    try {
+      const uid = (req as any).user.id as number;
+      const user = await storage.getUser(uid);
+      if (!user) return res.status(401).json({ message: 'غير مصرح' });
+
+      const body = req.body as any;
+      const filters = {
+        projectId: body?.projectId ? Number(body.projectId) : undefined,
+        type: typeof body?.type === 'string' ? body.type : undefined,
+        startDate: body?.startDate ? new Date(body.startDate) : undefined,
+        endDate: body?.endDate ? new Date(body.endDate) : undefined,
+      };
+
+      let list: any[];
+      if (user.role === 'admin') {
+        if (filters.projectId) {
+          list = await storage.getTransactionsByProject(filters.projectId);
+        } else {
+          list = await storage.listTransactions();
+        }
+      } else {
+        list = await storage.getTransactionsForUserProjects(uid);
+      }
+
+      // تطبيق الفلاتر الباقية
+      if (filters.type) list = list.filter((t: any) => t.type === filters.type);
+      if (filters.startDate) list = list.filter((t: any) => new Date(t.date) >= filters.startDate!);
+      if (filters.endDate) list = list.filter((t: any) => new Date(t.date) <= filters.endDate!);
+
+      // بناء CSV بسيط
+      const header = ['id','date','type','amount','description','projectId','expenseType','employeeId'];
+      const rows = list.map((t: any) => [
+        t.id,
+        new Date(t.date).toISOString().slice(0,10),
+        t.type,
+        t.amount,
+        (t.description || '').replace(/\r?\n/g, ' '),
+        t.projectId ?? '',
+        t.expenseType ?? '',
+        t.employeeId ?? '',
+      ]);
+      const csv = [header.join(','), ...rows.map(r => r.map(v => String(v).includes(',') ? `"${String(v).replace(/"/g,'""')}"` : String(v)).join(','))].join('\n');
+
+      const filename = `transactions_export_${Date.now()}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.status(200).send(csv);
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      return res.status(500).json({ success: false, message: 'فشل في تصدير البيانات' });
     }
   });
 
