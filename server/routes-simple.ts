@@ -684,7 +684,7 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
   // Expense types routes
   app.get("/api/expense-types", authenticate, async (req: Request, res: Response) => {
     try {
-  const userId = (req as any).user.id as number;
+      const userId = (req as any).user.id as number;
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       
       // Get user to check role
@@ -699,11 +699,18 @@ app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
         expenseTypes = await storage.listExpenseTypes(projectId);
       } else {
         // المستخدمون العاديون يرون فقط أنواع مصروفات مشاريعهم
-        expenseTypes = await storage.listExpenseTypesForUser(userId);
+        // If projectId is provided, filter by it, otherwise get all for user
+        if (projectId) {
+          const userExpenseTypes = await storage.listExpenseTypesForUser(userId);
+          expenseTypes = userExpenseTypes.filter(et => et.projectId === projectId);
+        } else {
+          expenseTypes = await storage.listExpenseTypesForUser(userId);
+        }
       }
       
       return res.status(200).json(expenseTypes);
     } catch (error) {
+      console.error("Error fetching expense types:", error);
       return res.status(500).json({ message: "خطأ في استرجاع أنواع المصروفات" });
     }
   });
