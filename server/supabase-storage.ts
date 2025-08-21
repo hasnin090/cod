@@ -378,7 +378,4 @@ export function getSupabaseClient(): SupabaseClient | null {
   return supabaseClient;
 }
 
-// التحقق من التهيئة
-export function isSupabaseInitialized(): boolean {
-  return isInitialized && supabaseClient !== null;
-}
+// تم حذف الدالة المكررة isSupabaseInitialized من هنا
