@@ -223,73 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-// Supabate authentication route
-app.post("/api/auth/supabase-login", async (req: Request, res: Response) => {
-  try {
-    const { token } = req.body;
-    
-    if (!token) {
-      return res.status(401).json({ message: "Token مفقود" });
-    }
-    
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.SESSION_SECRET || 'accounting-app-secret-key-2025') as any;
-    
-    // Find user in database
-  let user = await storage.getUser(decoded.id);
-    
-    if (!user) {
-      return res.status(401).json({ message: "المستخدم غير موجود" });
-    }
-    
-    // Promote to admin if configured by email (or if username is 'admin')
-    try {
-      const adminEmailsEnv = (process.env.ADMIN_EMAILS || 'admin@example.com,admin@admin.com')
-        .split(',')
-        .map(e => e.trim().toLowerCase())
-        .filter(Boolean);
-      const isAdminEmail = !!(user?.email && adminEmailsEnv.includes(String(user.email).toLowerCase()));
-      const shouldBeAdmin = user.username === 'admin' || isAdminEmail;
-      if (shouldBeAdmin && user.role !== 'admin') {
-        const updated = await storage.updateUser(user.id, { role: 'admin' } as any);
-        if (updated) user = updated;
-      }
-    } catch (promoteErr) {
-      console.warn('Failed to evaluate/promote admin role for Supabate login:', promoteErr);
-    }
-    
-    // Issue JWT (7d) cookie and return token
-    const newToken = signJwt({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      permissions: user.permissions || [],
-    });
-    setAuthCookie(res, newToken);
-    
-    await storage.createActivityLog({
-      action: "login",
-      entityType: "user",
-      entityId: user.id,
-      details: "تسجيل دخول عبر Supabate",
-      userId: user.id
-    });
-    
-    return res.status(200).json({
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      permissions: user.permissions,
-      token: newToken,
-    });
-  } catch (error) {
-    console.error('Supabate login error:', error);
-    return res.status(500).json({ message: "خطأ في تسجيل الدخول عبر Supabate" });
-  }
-});
+// تمت إزالة نسخة قديمة غير صحيحة من مسار supabase-login لتفادي تعارضات
 
   // Lightweight session probe (JWT)
   app.get('/api/auth/whoami', authenticate, (req: Request, res: Response) => {
