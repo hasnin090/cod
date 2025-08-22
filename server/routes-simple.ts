@@ -45,7 +45,7 @@ import {
 // نستخدم process.cwd() كجذر للتعامل مع مسارات uploads الثابتة
 const __dirname = process.cwd();
 
-import { documentUpload } from './multer-config';
+import { documentUpload, transactionUpload } from './multer-config';
 import { createClient } from '@supabase/supabase-js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -459,6 +459,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transactions routes - تحديث لاستخدام النظام المبني على المشاريع
+  // إنشاء معاملة مع رفع ملف (مطلوب عبر Netlify Function أيضاً)
+  app.post(
+    "/api/transactions",
+    authenticate,
+    transactionUpload.single("file"),
+    async (
+      req: Request & { file?: Express.Multer.File },
+      res: Response,
+    ) => {
+      try {
+        const currentUserId = (req as any).user?.id as number | undefined;
+        if (!currentUserId) {
+          return res.status(401).json({ message: "غير مصرح" });
+        }
+
+        const { date, amount, type, description, projectId, expenseType, employeeId } = req.body as any;
+        if (!date || !amount || !type || !description) {
+          return res.status(400).json({ message: "جميع الحقول مطلوبة" });
+        }
+
+        const parsedDate = new Date(date);
+        const parsedAmount = Number(amount);
+        if (isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ message: "تاريخ غير صالح" });
+        }
+        if (!Number.isFinite(parsedAmount)) {
+          return res.status(400).json({ message: "مبلغ غير صالح" });
+        }
+
+        const transactionData = {
+          date: parsedDate,
+          type,
+          amount: parsedAmount,
+          description,
+          projectId: projectId ? Number(projectId) : null,
+          expenseType: expenseType || null,
+          employeeId: employeeId ? Number(employeeId) : null,
+          createdBy: currentUserId,
+          fileUrl: req.file ? `/uploads/transactions/${req.file.filename}` : null,
+          fileType: req.file ? req.file.mimetype : null,
+          archived: false,
+        } as any;
+
+        // تحقق الرواتب
+        if (
+          transactionData.type === 'expense' &&
+          transactionData.expenseType === 'راتب' &&
+          transactionData.employeeId
+        ) {
+          const employee = await storage.getEmployee(transactionData.employeeId);
+          if (!employee) {
+            return res.status(400).json({ message: "الموظف غير موجود" });
+          }
+          if (!employee.active) {
+            return res.status(400).json({ message: "لا يمكن صرف راتب لموظف غير فعّال" });
+          }
+        }
+
+        const created = await storage.createTransaction(transactionData);
+        return res.status(201).json(created);
+      } catch (err) {
+        console.error('Create transaction error:', err);
+        return res.status(500).json({ message: "حدث خطأ غير متوقع" });
+      }
+    },
+  );
+
   app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
   const uid = (req as any).user.id as number;
