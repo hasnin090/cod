@@ -575,7 +575,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
-  const uid = (req as any).user.id as number;
+      const uid = Number((req as any)?.user?.id);
+      if (!uid || Number.isNaN(uid)) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
       const user = await storage.getUser(uid);
       if (!user) {
         return res.status(401).json({ message: "غير مصرح" });
@@ -588,9 +591,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // المستخدمون العاديون يرون فقط معاملات المشاريع المخصصة لهم
-  const transactions = await storage.getTransactionsForUserProjects(uid);
+      const transactions = await storage.getTransactionsForUserProjects(uid);
       return res.status(200).json(transactions);
     } catch (error) {
+      console.error('GET /api/transactions failed:', {
+        error,
+        userId: (req as any)?.user?.id,
+        path: req.path,
+      });
       return res.status(500).json({ message: "خطأ في استرجاع المعاملات" });
     }
   });
