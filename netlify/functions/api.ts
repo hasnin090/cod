@@ -31,7 +31,11 @@ async function buildHandler() {
   // Ensure Express sees paths with '/api' intact after trimming only the function mount prefix
   // Incoming path looks like '/.netlify/functions/api/<splat>' via redirect in netlify.toml
   // By using basePath='/.netlify/functions', Express receives '/api/<splat>' which matches our routes
-  serverlessHandler = serverless(app, { basePath: '/.netlify/functions' } as any);
+  // Enable binary payloads for multipart/form-data and file uploads
+  serverlessHandler = serverless(app, {
+    basePath: '/.netlify/functions',
+    binary: ['multipart/form-data', 'application/octet-stream', 'image/*']
+  } as any);
   return serverlessHandler;
 }
 

@@ -292,9 +292,19 @@ export class SupabaseStorage {
   async createProject(project: InsertProject): Promise<Project> {
     this.checkConnection();
     try {
+      const payload: any = {
+        name: (project as any).name,
+        description: (project as any).description,
+        start_date: ((project as any).startDate instanceof Date) ? ((project as any).startDate as Date).toISOString() : (project as any).startDate,
+        budget: (project as any).budget ?? 0,
+        spent: (project as any).spent ?? 0,
+        status: (project as any).status ?? 'active',
+        progress: (project as any).progress ?? 0,
+        created_by: (project as any).createdBy,
+      };
       const { data, error } = await this.supabase
         .from('projects')
-        .insert([project])
+        .insert([payload])
         .select()
         .single();
 
@@ -312,9 +322,19 @@ export class SupabaseStorage {
   async updateProject(id: number, project: Partial<Project>): Promise<Project | undefined> {
     this.checkConnection();
     try {
+      const updates: Record<string, any> = {};
+      if ((project as any).name !== undefined) updates.name = (project as any).name;
+      if ((project as any).description !== undefined) updates.description = (project as any).description;
+      if ((project as any).startDate !== undefined) updates.start_date = ((project as any).startDate instanceof Date) ? ((project as any).startDate as Date).toISOString() : (project as any).startDate;
+      if ((project as any).budget !== undefined) updates.budget = (project as any).budget;
+      if ((project as any).spent !== undefined) updates.spent = (project as any).spent;
+      if ((project as any).status !== undefined) updates.status = (project as any).status;
+      if ((project as any).progress !== undefined) updates.progress = (project as any).progress;
+      if ((project as any).createdBy !== undefined) updates.created_by = (project as any).createdBy;
+
       const { data, error } = await this.supabase
         .from('projects')
-        .update(project)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
@@ -687,9 +707,17 @@ export class SupabaseStorage {
   async createActivityLog(activityLog: InsertActivityLog): Promise<ActivityLog> {
     this.checkConnection();
     try {
+      const payload: any = {
+        action: (activityLog as any).action,
+        entity_type: (activityLog as any).entityType,
+        entity_id: (activityLog as any).entityId,
+        details: (activityLog as any).details,
+        user_id: (activityLog as any).userId,
+        // timestamp defaults in DB
+      };
       const { data, error } = await this.supabase
         .from('activity_logs')
-        .insert([activityLog])
+        .insert([payload])
         .select()
         .single();
 
@@ -1739,7 +1767,8 @@ export class SupabaseStorage {
       const { data, error } = await this.supabase
         .from('completed_works_documents')
         .select('*')
-        .eq('completedWorkId', workId);
+        // If there is a foreign key, the correct column is likely completed_work_id
+        .eq('completed_work_id', workId);
 
       if (error) {
         console.error('SupabaseStorage: Error getting completed works documents:', error);
