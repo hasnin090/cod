@@ -394,9 +394,24 @@ export class SupabaseStorage {
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
     this.checkConnection();
     try {
+      // Map camelCase -> snake_case for DB insert
+      const payload: any = {
+        date: (transaction.date as any) instanceof Date ? (transaction.date as any as Date).toISOString() : (transaction as any).date,
+        amount: (transaction as any).amount,
+        type: (transaction as any).type,
+        expense_type: (transaction as any).expenseType ?? null,
+        description: (transaction as any).description,
+        project_id: (transaction as any).projectId ?? null,
+        created_by: (transaction as any).createdBy,
+        employee_id: (transaction as any).employeeId ?? null,
+        file_url: (transaction as any).fileUrl ?? null,
+        file_type: (transaction as any).fileType ?? null,
+        archived: (transaction as any).archived ?? false,
+      };
+
       const { data, error } = await this.supabase
         .from('transactions')
-        .insert([transaction])
+        .insert([payload])
         .select()
         .single();
 
@@ -414,9 +429,23 @@ export class SupabaseStorage {
   async updateTransaction(id: number, transaction: Partial<Transaction>): Promise<Transaction | undefined> {
     this.checkConnection();
     try {
+      // Map camelCase -> snake_case for DB update, include only provided fields
+      const updates: Record<string, any> = {};
+      if (transaction.date !== undefined) updates.date = (transaction.date as any) instanceof Date ? (transaction.date as any as Date).toISOString() : (transaction as any).date;
+      if (transaction.amount !== undefined) updates.amount = transaction.amount;
+      if (transaction.type !== undefined) updates.type = transaction.type as any;
+      if ((transaction as any).expenseType !== undefined) updates.expense_type = (transaction as any).expenseType;
+      if (transaction.description !== undefined) updates.description = transaction.description;
+      if ((transaction as any).projectId !== undefined) updates.project_id = (transaction as any).projectId;
+      if ((transaction as any).createdBy !== undefined) updates.created_by = (transaction as any).createdBy;
+      if ((transaction as any).employeeId !== undefined) updates.employee_id = (transaction as any).employeeId;
+      if ((transaction as any).fileUrl !== undefined) updates.file_url = (transaction as any).fileUrl;
+      if ((transaction as any).fileType !== undefined) updates.file_type = (transaction as any).fileType;
+      if (transaction.archived !== undefined) updates.archived = transaction.archived;
+
       const { data, error } = await this.supabase
         .from('transactions')
-        .update(transaction)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();

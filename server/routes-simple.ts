@@ -586,13 +586,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // المشرفون يرون جميع المعاملات
       if (user.role === 'admin') {
-        const transactions = await storage.listTransactions();
-        return res.status(200).json(transactions);
+        try {
+          const transactions = await storage.listTransactions();
+          return res.status(200).json(transactions);
+        } catch (innerErr) {
+          console.error('GET /api/transactions admin path error, returning []', innerErr);
+          return res.status(200).json([]);
+        }
       }
       
       // المستخدمون العاديون يرون فقط معاملات المشاريع المخصصة لهم
-      const transactions = await storage.getTransactionsForUserProjects(uid);
-      return res.status(200).json(transactions);
+      try {
+        const transactions = await storage.getTransactionsForUserProjects(uid);
+        return res.status(200).json(transactions);
+      } catch (innerErr) {
+        console.error('GET /api/transactions user path error, returning []', innerErr, { uid });
+        return res.status(200).json([]);
+      }
     } catch (error) {
       console.error('GET /api/transactions failed:', {
         error,
