@@ -1268,6 +1268,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get employees by project
+  app.get("/api/employees/by-project/:projectId", authenticate, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "معرف المشروع غير صحيح" });
+      }
+
+      const employees = await storage.getEmployeesByProject(projectId);
+      return res.status(200).json(employees);
+    } catch (error) {
+      console.error('Error getting employees by project:', error);
+      return res.status(500).json({ message: "خطأ في استرجاع موظفي المشروع" });
+    }
+  });
+
   // Dashboard routes
   app.get("/api/dashboard", authenticate, async (req: Request, res: Response) => {
     try {

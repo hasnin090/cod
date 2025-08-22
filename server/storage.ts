@@ -202,6 +202,10 @@ export class MemStorage implements IStorage {
   private settingIdCounter: number;
   private userProjectIdCounter: number;
   private fundIdCounter: number;
+  private expenseTypesData: Map<number, ExpenseType>;
+  private employeesData: Map<number, Employee>;
+  private expenseTypeIdCounter: number;
+  private employeeIdCounter: number;
 
   constructor() {
     this.usersData = new Map();
@@ -212,6 +216,8 @@ export class MemStorage implements IStorage {
     this.settingsData = new Map();
     this.userProjectsData = new Map();
     this.fundsData = new Map();
+    this.expenseTypesData = new Map();
+    this.employeesData = new Map();
     this.userIdCounter = 1;
     this.projectIdCounter = 1;
     this.transactionIdCounter = 1;
@@ -220,6 +226,8 @@ export class MemStorage implements IStorage {
     this.settingIdCounter = 1;
     this.userProjectIdCounter = 1;
     this.fundIdCounter = 1;
+    this.expenseTypeIdCounter = 1;
+    this.employeeIdCounter = 1;
 
     // Add default admin user
     this.createUser({
@@ -866,27 +874,70 @@ export class MemStorage implements IStorage {
   }
 
   // دعم أنواع المصروفات الأساسي للـ MemStorage
-  async getExpenseType(id: number): Promise<any> {
-    return undefined;
+  async getExpenseType(id: number): Promise<ExpenseType | undefined> {
+    return this.expenseTypesData.get(id);
   }
 
-  async getExpenseTypeByName(name: string): Promise<any> {
-    return undefined;
+  async getExpenseTypeByName(name: string): Promise<ExpenseType | undefined> {
+    return Array.from(this.expenseTypesData.values()).find(
+      (type) => type.name === name
+    );
   }
 
-  async createExpenseType(expenseType: any): Promise<any> {
-    throw new Error("MemStorage لا يدعم أنواع المصروفات");
+  async createExpenseType(expenseType: InsertExpenseType): Promise<ExpenseType> {
+    const id = this.expenseTypeIdCounter++;
+    const newExpenseType: ExpenseType = {
+      id,
+      name: expenseType.name,
+      description: expenseType.description || null,
+      projectId: expenseType.projectId || null,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.expenseTypesData.set(id, newExpenseType);
+    return newExpenseType;
   }
 
-  async updateExpenseType(id: number, expenseType: any): Promise<any> {
-    return undefined;
+  async updateExpenseType(id: number, expenseType: Partial<ExpenseType>): Promise<ExpenseType | undefined> {
+    const existing = this.expenseTypesData.get(id);
+    if (!existing) return undefined;
+    
+    const updated: ExpenseType = { 
+      ...existing, 
+      ...expenseType, 
+      updatedAt: new Date() 
+    };
+    this.expenseTypesData.set(id, updated);
+    return updated;
   }
 
-  async listExpenseTypes(_projectId?: number): Promise<any[]> { return []; }
-  async listExpenseTypesForUser(_userId: number): Promise<any[]> { return []; }
+  async listExpenseTypes(projectId?: number): Promise<ExpenseType[]> {
+    const all = Array.from(this.expenseTypesData.values());
+    if (projectId) {
+      return all.filter(type => type.projectId === projectId);
+    }
+    return all;
+  }
+
+  async listExpenseTypesForUser(userId: number): Promise<ExpenseType[]> {
+    const user = await this.getUser(userId);
+    if (user?.role === 'admin') {
+      return this.listExpenseTypes();
+    }
+    
+    // Get user's project IDs
+    const userProjectIds = Array.from(this.userProjectsData.values())
+      .filter(up => up.userId === userId)
+      .map(up => up.projectId);
+    
+    return Array.from(this.expenseTypesData.values()).filter(type => 
+      type.projectId === null || userProjectIds.includes(type.projectId!)
+    );
+  }
 
   async deleteExpenseType(id: number): Promise<boolean> {
-    return false;
+    return this.expenseTypesData.delete(id);
   }
 
   // دعم تصنيفات أنواع الحسابات الأساسي للـ MemStorage
@@ -941,31 +992,63 @@ export class MemStorage implements IStorage {
 
   // Employees implementation for MemStorage
   async getEmployee(id: number): Promise<Employee | undefined> {
-    return undefined;
+    return this.employeesData.get(id);
   }
 
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
-    throw new Error("MemStorage لا يدعم إدارة الموظفين");
+    const id = this.employeeIdCounter++;
+    const newEmployee: Employee = {
+      id,
+      name: employee.name,
+      salary: employee.salary || 0,
+      hireDate: employee.hireDate || new Date(),
+      active: employee.active !== false,
+      assignedProjectId: employee.assignedProjectId || null,
+      notes: employee.notes || null,
+      createdBy: 1, // Default admin
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      currentBalance: 0,
+      totalPaid: 0,
+      lastSalaryReset: null,
+    };
+    this.employeesData.set(id, newEmployee);
+    return newEmployee;
   }
 
   async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee> {
-    throw new Error("MemStorage لا يدعم تحديث الموظفين");
+    const existing = this.employeesData.get(id);
+    if (!existing) {
+      throw new Error("الموظف غير موجود");
+    }
+    
+    const updated: Employee = { 
+      ...existing, 
+      ...employee, 
+      updatedAt: new Date() 
+    };
+    this.employeesData.set(id, updated);
+    return updated;
   }
 
   async getEmployees(): Promise<Employee[]> {
-    return [];
+    return Array.from(this.employeesData.values());
   }
 
   async deleteEmployee(id: number): Promise<boolean> {
-    return false;
+    return this.employeesData.delete(id);
   }
 
   async getEmployeesByProject(projectId: number): Promise<Employee[]> {
-    return [];
+    return Array.from(this.employeesData.values()).filter(
+      emp => emp.assignedProjectId === projectId
+    );
   }
 
   async getActiveEmployees(): Promise<Employee[]> {
-    return [];
+    return Array.from(this.employeesData.values()).filter(
+      emp => emp.active
+    );
   }
 
   // Completed Works - Independent section (MemStorage implementations)
