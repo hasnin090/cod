@@ -85,6 +85,8 @@ netlify*.toml
 
 # Function builds
 functions/
+# Keep our Netlify function sources under version control
+!netlify/functions/**
 
 # Documentation files (if you want to keep them private)
 COMPREHENSIVE_*.md
