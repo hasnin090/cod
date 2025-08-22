@@ -90,6 +90,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ ok: true, ts: Date.now() });
   });
 
+  // Simple diagnostics: which storage backend is active
+  app.get('/api/diagnostics/storage', (_req: Request, res: Response) => {
+    const impl = (storage as any).__proto__?.constructor?.name || '[proxy]';
+    // Attempt to infer actual target through a test call signature
+    let kind = 'unknown';
+    try {
+      const target = (storage as any);
+      if (target && target.supabase) kind = 'SupabaseStorage';
+      else if (target && target.getConnectionStatus) kind = 'PgStorage';
+    } catch {}
+    res.status(200).json({
+      ok: true,
+      impl,
+      detected: kind,
+      hasSupabaseEnv: !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      nodeEnv: process.env.NODE_ENV,
+      netlify: !!process.env.NETLIFY,
+    });
+  });
+
   // Authentication middleware (JWT)
   const authenticate = commonAuthenticate as unknown as (req: Request, res: Response, next: NextFunction) => void;
 

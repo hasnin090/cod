@@ -19,7 +19,6 @@ import {
 import bcrypt from "bcryptjs";
 import { PgStorage } from './pg-storage.js';
 import { SupabaseStorage } from './supabase-storage-class.js';
-import { isSupabaseInitialized } from './supabase-storage';
 
 // Flexible input for granting transaction edit permissions from routes (expiresAt computed in DB)
 export type GrantTransactionEditPermissionInput = {
@@ -1046,40 +1045,43 @@ export class MemStorage implements IStorage {
 }
 
 // تحديد فئة التخزين النشطة
-// يمكن تغيير هذا لاستخدام MemStorage للتطوير المحلي أو PgStorage للإنتاج
-// استخدم PgStorage إذا كانت قاعدة البيانات مهيأة، وإلا استخدم التخزين في الذاكرة للتشغيل الأساسي
+// الترتيب: Supabase (إذا توفرت مفاتيحها) ثم PostgreSQL (إذا توفر DATABASE_URL) ثم ذاكرة مؤقتة
 
-let _storage: IStorage | null = null;
+// Internal singleton instance (typed as any to allow different backends at runtime)
+let _storage: any = null;
 
 function createStorage(): IStorage {
   if (_storage) return _storage;
-  
-  // First try to use Supabase if initialized
-  if (isSupabaseInitialized()) {
+
+  const hasSupabaseEnv = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const hasDatabaseUrl = !!process.env.DATABASE_URL && !!process.env.DATABASE_URL.trim();
+
+  // 1) Supabase (PostgREST) storage
+  if (hasSupabaseEnv) {
     try {
       _storage = new SupabaseStorage();
-      console.log('Using SupabaseStorage for data persistence');
-      return _storage;
+      console.log('Using SupabaseStorage (env detected) for data persistence');
+      return _storage as IStorage;
     } catch (error) {
-      console.warn('Failed to initialize SupabaseStorage:', error);
+      console.warn('Failed to initialize SupabaseStorage, will try PgStorage next:', error);
     }
   }
 
-  // Fallback to PgStorage if DATABASE_URL is properly configured
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) {
+  // 2) Direct Postgres storage via DATABASE_URL
+  if (hasDatabaseUrl) {
     try {
       _storage = new PgStorage();
       console.log('Using PgStorage with database connection');
+      return _storage as IStorage;
     } catch (error) {
       console.warn('Failed to initialize PgStorage, falling back to MemStorage:', error);
-      _storage = new MemStorage();
     }
-  } else {
-    console.log('DATABASE_URL not configured, using MemStorage');
-    _storage = new MemStorage();
   }
-  
-  return _storage;
+
+  // 3) Fallback to in-memory (non-persistent)
+  console.warn('No persistent storage configured (missing SUPABASE_* or DATABASE_URL). Using MemStorage (ephemeral).');
+  _storage = new MemStorage();
+  return _storage as IStorage;
 }
 
 export const storage: IStorage = new Proxy({} as IStorage, {
