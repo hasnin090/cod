@@ -8,6 +8,14 @@ const isNetlify = !!process.env.NETLIFY || !!process.env.NETLIFY_LOCAL;
 const baseWritableDir = isNetlify ? "/tmp" : process.cwd();
 
 export const createMulterConfig = (destination: string = "uploads") => {
+  // On Netlify, prefer memory storage to avoid read-only FS errors during multipart parsing
+  if (isNetlify) {
+    return multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    });
+  }
+
   const resolvedDest = path.isAbsolute(destination)
     ? destination
     : path.join(baseWritableDir, destination);

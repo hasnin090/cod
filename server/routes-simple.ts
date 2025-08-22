@@ -515,23 +515,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.file) {
           fileType = req.file.mimetype || null;
           const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-          if (hasSupabase) {
-            try {
-              const fileBuffer = fs.readFileSync(req.file.path);
-              const up = await uploadToSupabase(fileBuffer, req.file.originalname, 'transactions');
+          const isMemory = (req.file as any).buffer && !(req.file as any).path;
+          try {
+            if (hasSupabase) {
+              const buffer = isMemory ? (req.file as any).buffer : fs.readFileSync((req.file as any).path);
+              const up = await uploadToSupabase(buffer, req.file.originalname, 'transactions');
               if (up.success && up.url) {
                 fileUrl = up.url;
               } else {
                 console.warn('Supabase upload failed, falling back to local URL:', up.error);
-                fileUrl = `/uploads/transactions/${req.file.filename}`;
               }
-            } catch (e) {
-              console.warn('Upload to Supabase threw, fallback to local URL:', e);
-              fileUrl = `/uploads/transactions/${req.file.filename}`;
             }
-          } else {
-            // No Supabase configured; keep local reference (may be ephemeral on serverless)
-            fileUrl = `/uploads/transactions/${req.file.filename}`;
+          } catch (e) {
+            console.warn('Upload to Supabase threw:', e);
+          }
+
+          // Fallback local URL (may be ephemeral on serverless)
+          if (!fileUrl) {
+            const fname = (req.file as any).filename || `${Date.now()}_${req.file.originalname.replace(/\s+/g,'_')}`;
+            fileUrl = `/uploads/transactions/${fname}`;
           }
   } else if ((req as any).rawBody && typeof (req as any).rawBody === 'string') {
           // Netlify sometimes leaves rawBody when body parsing fails; avoid hard 502 by warning
