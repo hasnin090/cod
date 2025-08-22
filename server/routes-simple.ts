@@ -509,6 +509,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "مبلغ غير صالح" });
         }
 
+        // Handle attachment: prefer Supabase Storage when configured
+        let fileUrl: string | null = null;
+        let fileType: string | null = null;
+        if (req.file) {
+          fileType = req.file.mimetype || null;
+          const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+          if (hasSupabase) {
+            try {
+              const fileBuffer = fs.readFileSync(req.file.path);
+              const up = await uploadToSupabase(fileBuffer, req.file.originalname, 'transactions');
+              if (up.success && up.url) {
+                fileUrl = up.url;
+              } else {
+                console.warn('Supabase upload failed, falling back to local URL:', up.error);
+                fileUrl = `/uploads/transactions/${req.file.filename}`;
+              }
+            } catch (e) {
+              console.warn('Upload to Supabase threw, fallback to local URL:', e);
+              fileUrl = `/uploads/transactions/${req.file.filename}`;
+            }
+          } else {
+            // No Supabase configured; keep local reference (may be ephemeral on serverless)
+            fileUrl = `/uploads/transactions/${req.file.filename}`;
+          }
+        }
+
         const transactionData = {
           date: parsedDate,
           type,
@@ -518,8 +544,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expenseType: expenseType || null,
           employeeId: employeeId ? Number(employeeId) : null,
           createdBy: currentUserId,
-          fileUrl: req.file ? `/uploads/transactions/${req.file.filename}` : null,
-          fileType: req.file ? req.file.mimetype : null,
+          fileUrl,
+          fileType,
           archived: false,
         } as any;
 
