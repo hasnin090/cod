@@ -19,11 +19,11 @@ import {
   completedWorksDocuments, type CompletedWorksDocument, type InsertCompletedWorksDocument,
   transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
 } from '../shared/schema';
-import { IStorage } from './storage';
+import { IStorage, type GrantTransactionEditPermissionInput } from './storage';
 import { getSupabaseClient } from './supabase-storage';
 
-export class SupabaseStorage implements IStorage {
-  private supabase: SupabaseClient | null = null;
+export class SupabaseStorage {
+  private supabase: SupabaseClient;
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -443,10 +443,74 @@ export class SupabaseStorage implements IStorage {
         console.error('SupabaseStorage: Error listing transactions:', error);
         return [];
       }
-      return data as Transaction[];
+      return (data || []).map(row => this.mapTransaction(row));
     } catch (error) {
       console.error('SupabaseStorage: Exception listing transactions:', error);
       return [];
+    }
+  }
+
+  async getTransactionsByProject(projectId: number): Promise<Transaction[]> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('transactions')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting transactions by project:', error);
+        return [];
+      }
+      return (data || []).map(row => this.mapTransaction(row));
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting transactions by project:', error);
+      return [];
+    }
+  }
+
+  async getTransactionsForUserProjects(userId: number): Promise<Transaction[]> {
+    this.checkConnection();
+    try {
+      const user = await this.getUser(userId);
+      if (user?.role === 'admin') return this.listTransactions();
+
+      const { data: upRows, error: upErr } = await this.supabase
+        .from('user_projects')
+        .select('project_id')
+        .eq('user_id', userId);
+      if (upErr) {
+        console.error('SupabaseStorage: Error getting user projects for transactions:', upErr);
+        return [];
+      }
+      if (!upRows || upRows.length === 0) return [];
+      const ids = upRows.map((r: any) => r.project_id);
+      const { data, error } = await this.supabase
+        .from('transactions')
+        .select('*')
+        .in('project_id', ids);
+      if (error) {
+        console.error('SupabaseStorage: Error getting transactions for user projects:', error);
+        return [];
+      }
+      return (data || []).map(row => this.mapTransaction(row));
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting transactions for user projects:', error);
+      return [];
+    }
+  }
+
+  async canUserAccessTransaction(userId: number, transactionId: number): Promise<boolean> {
+    this.checkConnection();
+    try {
+      const user = await this.getUser(userId);
+      if (user?.role === 'admin') return true;
+      const tx = await this.getTransaction(transactionId);
+      if (!tx || !tx.projectId) return false;
+      return this.checkUserProjectAccess(userId, tx.projectId);
+    } catch (error) {
+      console.error('SupabaseStorage: Exception checking transaction access:', error);
+      return false;
     }
   }
 
@@ -510,6 +574,25 @@ export class SupabaseStorage implements IStorage {
     } catch (error) {
       console.error('SupabaseStorage: Exception creating document:', error);
       throw error;
+    }
+  }
+
+  async getDocumentsByProject(projectId: number): Promise<Document[]> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('documents')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting documents by project:', error);
+        return [];
+      }
+      return data as Document[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting documents by project:', error);
+      return [];
     }
   }
 
@@ -654,17 +737,20 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
-  async updateSetting(id: number, setting: Partial<Setting>): Promise<Setting | undefined> {
+  async updateSetting(key: string, value: string): Promise<Setting | undefined> {
     this.checkConnection();
     try {
       const { data, error } = await this.supabase
         .from('settings')
-        .update(setting)
-        .eq('id', id)
+        .update({ value })
+        .eq('key', key)
         .select()
         .single();
 
       if (error) {
+        if ((error as any).code === 'PGRST116') {
+          return undefined;
+        }
         console.error('SupabaseStorage: Error updating setting:', error);
         return undefined;
       }
@@ -713,19 +799,31 @@ export class SupabaseStorage implements IStorage {
   }
 
   // User Projects
-  async getUserProjects(userId: number): Promise<UserProject[]> {
+  async getUserProjects(userId: number): Promise<Project[]> {
     this.checkConnection();
     try {
-      const { data, error } = await this.supabase
+      const { data: upRows, error: upErr } = await this.supabase
         .from('user_projects')
-        .select('*')
-        .eq('userId', userId);
+        .select('project_id')
+        .eq('user_id', userId);
 
-      if (error) {
-        console.error('SupabaseStorage: Error getting user projects:', error);
+      if (upErr) {
+        console.error('SupabaseStorage: Error getting user_projects:', upErr);
         return [];
       }
-      return data as UserProject[];
+      if (!upRows || upRows.length === 0) return [];
+
+      const ids = upRows.map((r: any) => r.project_id);
+      const { data: projects, error } = await this.supabase
+        .from('projects')
+        .select('*')
+        .in('id', ids);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting projects for user:', error);
+        return [];
+      }
+      return projects as Project[];
     } catch (error) {
       console.error('SupabaseStorage: Exception getting user projects:', error);
       return [];
@@ -735,9 +833,15 @@ export class SupabaseStorage implements IStorage {
   async createUserProject(userProject: InsertUserProject): Promise<UserProject> {
     this.checkConnection();
     try {
+      const payload = {
+        user_id: (userProject as any).userId,
+        project_id: (userProject as any).projectId,
+        assigned_by: (userProject as any).assignedBy ?? 1,
+        assigned_at: (userProject as any).assignedAt ?? new Date().toISOString(),
+      };
       const { data, error } = await this.supabase
         .from('user_projects')
-        .insert([userProject])
+        .insert([payload])
         .select()
         .single();
 
@@ -758,8 +862,8 @@ export class SupabaseStorage implements IStorage {
       const { error } = await this.supabase
         .from('user_projects')
         .delete()
-        .eq('userId', userId)
-        .eq('projectId', projectId);
+        .eq('user_id', userId)
+        .eq('project_id', projectId);
 
       if (error) {
         console.error('SupabaseStorage: Error deleting user project:', error);
@@ -768,6 +872,64 @@ export class SupabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error('SupabaseStorage: Exception deleting user project:', error);
+      return false;
+    }
+  }
+
+  // IStorage aliases and helpers for user-projects
+  async assignUserToProject(userProject: InsertUserProject): Promise<UserProject> {
+    return this.createUserProject(userProject);
+  }
+
+  async removeUserFromProject(userId: number, projectId: number): Promise<boolean> {
+    return this.deleteUserProject(userId, projectId);
+  }
+
+  async getProjectUsers(projectId: number): Promise<User[]> {
+    this.checkConnection();
+    try {
+      const { data: upRows, error: upErr } = await this.supabase
+        .from('user_projects')
+        .select('user_id')
+        .eq('project_id', projectId);
+      if (upErr) {
+        console.error('SupabaseStorage: Error getting user_projects by project:', upErr);
+        return [];
+      }
+      if (!upRows || upRows.length === 0) return [];
+      const ids = upRows.map((r: any) => r.user_id);
+      const { data: users, error } = await this.supabase
+        .from('users')
+        .select('*')
+        .in('id', ids);
+      if (error) {
+        console.error('SupabaseStorage: Error getting users for project:', error);
+        return [];
+      }
+      return users as User[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting project users:', error);
+      return [];
+    }
+  }
+
+  async checkUserProjectAccess(userId: number, projectId: number): Promise<boolean> {
+    this.checkConnection();
+    try {
+      const user = await this.getUser(userId);
+      if (user?.role === 'admin') return true;
+      const { count, error } = await this.supabase
+        .from('user_projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('project_id', projectId);
+      if (error) {
+        console.error('SupabaseStorage: Error checking user project access:', error);
+        return false;
+      }
+      return !!(count && count > 0);
+    } catch (error) {
+      console.error('SupabaseStorage: Exception checking user project access:', error);
       return false;
     }
   }
@@ -1094,6 +1256,32 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
+  // IStorage expects listDeferredPayments (admin gets all)
+  async listDeferredPayments(): Promise<DeferredPayment[]> {
+    return this.getDeferredPayments();
+  }
+
+  async getDeferredPayment(id: number): Promise<DeferredPayment | undefined> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('deferred_payments')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        if ((error as any).code === 'PGRST116') return undefined;
+        console.error('SupabaseStorage: Error getting deferred payment:', error);
+        return undefined;
+      }
+      return data as DeferredPayment;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting deferred payment:', error);
+      return undefined;
+    }
+  }
+
   async createDeferredPayment(payment: InsertDeferredPayment): Promise<DeferredPayment> {
     this.checkConnection();
     try {
@@ -1132,6 +1320,167 @@ export class SupabaseStorage implements IStorage {
     } catch (error) {
       console.error('SupabaseStorage: Exception updating deferred payment:', error);
       return undefined;
+    }
+  }
+
+  async deleteDeferredPayment(id: number): Promise<boolean> {
+    this.checkConnection();
+    try {
+      const { error } = await this.supabase
+        .from('deferred_payments')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('SupabaseStorage: Error deleting deferred payment:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception deleting deferred payment:', error);
+      return false;
+    }
+  }
+
+  async getDeferredPaymentsForUserProjects(userId: number): Promise<DeferredPayment[]> {
+    this.checkConnection();
+    try {
+      // Admin can see all deferred payments
+      const user = await this.getUser(userId);
+      if (user?.role === 'admin') return this.listDeferredPayments();
+
+      const { data: upRows, error: upErr } = await this.supabase
+        .from('user_projects')
+        .select('project_id')
+        .eq('user_id', userId);
+      if (upErr) {
+        console.error('SupabaseStorage: Error querying user projects for deferred payments:', upErr);
+        return [];
+      }
+      if (!upRows || upRows.length === 0) return [];
+      const projectIds = (upRows as any[]).map(r => r.project_id);
+
+      const { data, error } = await this.supabase
+        .from('deferred_payments')
+        .select('*')
+        .in('project_id', projectIds);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting deferred payments for user projects:', error);
+        return [];
+      }
+      return (data || []) as DeferredPayment[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting deferred payments for user projects:', error);
+      return [];
+    }
+  }
+
+  async payDeferredPaymentInstallment(id: number, amount: number, userId: number): Promise<{ payment: DeferredPayment; transaction?: Transaction }> {
+    this.checkConnection();
+    try {
+      const payment = await this.getDeferredPayment(id);
+      if (!payment) throw new Error('Deferred payment not found');
+
+      const currentPaid = Number((payment as any).paidAmount ?? (payment as any).paid_amount ?? 0);
+      const total = Number((payment as any).totalAmount ?? (payment as any).total_amount ?? 0);
+      const payAmt = Number(amount);
+      if (!payAmt || isNaN(payAmt) || payAmt <= 0) throw new Error('Invalid payment amount');
+
+      const newPaidAmount = currentPaid + payAmt;
+      const newRemainingAmount = total - newPaidAmount;
+      const newStatus = newRemainingAmount <= 0 ? 'completed' : (currentPaid === 0 ? 'partial' : 'partial');
+
+      const updated = await this.updateDeferredPayment(id, {
+        paidAmount: newPaidAmount,
+        remainingAmount: newRemainingAmount,
+        status: newStatus,
+      } as any);
+
+      // Prepare expense type: try beneficiary name, else fallback to 'دفعات آجلة'
+      let expenseTypeName: string | null = null;
+      try {
+        const beneficiaryName = (payment as any).beneficiaryName || (payment as any).beneficiary_name || null;
+        if (beneficiaryName) {
+          const { data: et, error: etErr } = await this.supabase
+            .from('expense_types')
+            .select('*')
+            .eq('name', beneficiaryName)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          if (!etErr && et) expenseTypeName = (et as any).name;
+        }
+        if (!expenseTypeName) {
+          const { data: fallback, error: fbErr } = await this.supabase
+            .from('expense_types')
+            .select('*')
+            .eq('name', 'دفعات آجلة')
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          if (!fbErr && fallback) expenseTypeName = (fallback as any).name;
+          if (!expenseTypeName) {
+            const { data: created, error: cErr } = await this.supabase
+              .from('expense_types')
+              .insert([{ name: 'دفعات آجلة', description: 'المدفوعات للمستحقات والأقساط المؤجلة', is_active: true, created_by: userId }])
+              .select()
+              .single();
+            if (!cErr && created) expenseTypeName = (created as any).name;
+          }
+        }
+      } catch (etError) {
+        console.warn('SupabaseStorage: Expense type resolution failed for deferred payment:', etError);
+      }
+
+      // Create linked expense transaction
+      let transaction: Transaction | undefined;
+      try {
+        const beneficiary = (payment as any).beneficiaryName || (payment as any).beneficiary_name || 'غير محدد';
+        const description = (payment as any).description
+          ? `دفع قسط من: ${(payment as any).description} (${beneficiary})`
+          : `دفع قسط للمستفيد: ${beneficiary}`;
+
+        const insertTx: InsertTransaction = {
+          date: new Date(),
+          amount: payAmt,
+          type: 'expense' as const,
+          expenseType: expenseTypeName || null,
+          description,
+          projectId: (payment as any).projectId ?? (payment as any).project_id ?? null,
+          createdBy: userId,
+          employeeId: null,
+          fileUrl: null,
+          fileType: null,
+          archived: false,
+        } as any;
+
+        const { data: tx, error: txErr } = await this.supabase
+          .from('transactions')
+          .insert([{
+            date: (insertTx.date as Date).toISOString(),
+            amount: insertTx.amount,
+            type: insertTx.type,
+            expense_type: insertTx.expenseType,
+            description: insertTx.description,
+            project_id: insertTx.projectId,
+            created_by: insertTx.createdBy,
+            employee_id: insertTx.employeeId,
+            file_url: insertTx.fileUrl,
+            file_type: insertTx.fileType,
+            archived: insertTx.archived,
+          }])
+          .select()
+          .single();
+        if (!txErr && tx) transaction = this.mapTransaction(tx);
+      } catch (txError) {
+        console.warn('SupabaseStorage: Failed to create transaction for deferred payment installment:', txError);
+      }
+
+      return { payment: updated || (payment as DeferredPayment), transaction };
+    } catch (error) {
+      console.error('SupabaseStorage: Error paying deferred payment installment:', error);
+      throw error;
     }
   }
 
@@ -1174,7 +1523,7 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
-  async updateEmployee(id: number, employee: Partial<Employee>): Promise<Employee | undefined> {
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee> {
     this.checkConnection();
     try {
       const { data, error } = await this.supabase
@@ -1186,12 +1535,12 @@ export class SupabaseStorage implements IStorage {
 
       if (error) {
         console.error('SupabaseStorage: Error updating employee:', error);
-        return undefined;
+        throw error;
       }
       return data as Employee;
     } catch (error) {
       console.error('SupabaseStorage: Exception updating employee:', error);
-      return undefined;
+      throw error as any;
     }
   }
 
@@ -1243,7 +1592,7 @@ export class SupabaseStorage implements IStorage {
       const { data, error } = await this.supabase
         .from('employees')
         .select('*')
-        .eq('assignedProjectId', projectId);
+  .eq('assigned_project_id', projectId);
 
       if (error) {
         console.error('SupabaseStorage: Error getting employees by project:', error);
@@ -1425,7 +1774,7 @@ export class SupabaseStorage implements IStorage {
           grantedBy: permission.grantedBy,
           reason: permission.reason,
           notes: permission.notes,
-          expiresAt: permission.expiresAt || null
+          // expiresAt intentionally omitted; not part of the input type here
         }])
         .select()
         .single();
@@ -1512,16 +1861,23 @@ export class SupabaseStorage implements IStorage {
   async expireTransactionEditPermissions(): Promise<number> {
     this.checkConnection();
     try {
-      const { data, error } = await this.supabase
+      const nowIso = new Date().toISOString();
+      const { count, error: countErr } = await this.supabase
+        .from('transaction_edit_permissions')
+        .select('*', { head: true, count: 'exact' })
+        .lt('expiresAt', nowIso);
+      if (countErr) {
+        console.error('SupabaseStorage: Error counting expiring permissions:', countErr);
+      }
+      const { error } = await this.supabase
         .from('transaction_edit_permissions')
         .update({ isActive: false })
-        .lt('expiresAt', new Date().toISOString());
-
+        .lt('expiresAt', nowIso);
       if (error) {
         console.error('SupabaseStorage: Error expiring transaction edit permissions:', error);
         return 0;
       }
-      return data ? data.length : 0;
+      return count ?? 0;
     } catch (error) {
       console.error('SupabaseStorage: Exception expiring transaction edit permissions:', error);
       return 0;
