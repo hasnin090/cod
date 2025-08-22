@@ -47,6 +47,54 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
+  // Helpers to map snake_case (DB) -> camelCase (API)
+  private mapTransaction(row: any): Transaction {
+    return {
+      id: row.id,
+      date: row.date,
+      type: row.type,
+      amount: row.amount,
+      description: row.description,
+      projectId: row.project_id ?? row.projectId ?? null,
+      createdBy: row.created_by ?? row.createdBy,
+      expenseType: row.expense_type ?? row.expenseType ?? null,
+      employeeId: row.employee_id ?? row.employeeId ?? null,
+      fileUrl: row.file_url ?? row.fileUrl ?? null,
+      fileType: row.file_type ?? row.fileType ?? null,
+      archived: row.archived ?? false,
+    } as Transaction;
+  }
+
+  private mapExpenseType(row: any): ExpenseType {
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description ?? null,
+      projectId: row.project_id ?? row.projectId ?? null,
+      isActive: (row.is_active ?? row.isActive ?? true) as boolean,
+      // timestamps omitted
+    } as ExpenseType;
+  }
+
+  private mapEmployee(row: any): Employee {
+    return {
+      id: row.id,
+      name: row.name,
+      salary: row.salary ?? 0,
+      currentBalance: row.current_balance ?? row.currentBalance ?? 0,
+      totalPaid: row.total_paid ?? row.totalPaid ?? 0,
+      lastSalaryReset: row.last_salary_reset ?? row.lastSalaryReset ?? null,
+      assignedProjectId: row.assigned_project_id ?? row.assignedProjectId ?? null,
+      assignedProject: undefined as any,
+      active: row.active ?? true,
+      hireDate: row.hire_date ?? row.hireDate ?? null,
+      notes: row.notes ?? null,
+      createdBy: row.created_by ?? row.createdBy,
+      createdAt: row.created_at ?? row.createdAt ?? null,
+      updatedAt: row.updated_at ?? row.updatedAt ?? null,
+    } as unknown as Employee;
+  }
+
   // Users
   async getUser(id: number): Promise<User | undefined> {
     this.checkConnection();
@@ -785,24 +833,6 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Expense Types
-  async getExpenseTypes(): Promise<ExpenseType[]> {
-    this.checkConnection();
-    try {
-      const { data, error } = await this.supabase
-        .from('expense_types')
-        .select('*');
-
-      if (error) {
-        console.error('SupabaseStorage: Error getting expense types:', error);
-        return [];
-      }
-      return data as ExpenseType[];
-    } catch (error) {
-      console.error('SupabaseStorage: Exception getting expense types:', error);
-      return [];
-    }
-  }
-
   async createExpenseType(expenseType: InsertExpenseType): Promise<ExpenseType> {
     this.checkConnection();
     try {
@@ -820,6 +850,150 @@ export class SupabaseStorage implements IStorage {
     } catch (error) {
       console.error('SupabaseStorage: Exception creating expense type:', error);
       throw error;
+    }
+  }
+
+  async getExpenseType(id: number): Promise<ExpenseType | undefined> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('expense_types')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          return undefined;
+        }
+        console.error('SupabaseStorage: Error getting expense type:', error);
+        return undefined;
+      }
+      return data as ExpenseType;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting expense type:', error);
+      return undefined;
+    }
+  }
+
+  async getExpenseTypeByName(name: string): Promise<ExpenseType | undefined> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('expense_types')
+        .select('*')
+        .eq('name', name)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          return undefined;
+        }
+        console.error('SupabaseStorage: Error getting expense type by name:', error);
+        return undefined;
+      }
+      return data as ExpenseType;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting expense type by name:', error);
+      return undefined;
+    }
+  }
+
+  async updateExpenseType(id: number, expenseType: Partial<ExpenseType>): Promise<ExpenseType | undefined> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('expense_types')
+        .update(expenseType)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('SupabaseStorage: Error updating expense type:', error);
+        return undefined;
+      }
+      return data as ExpenseType;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception updating expense type:', error);
+      return undefined;
+    }
+  }
+
+  async listExpenseTypes(projectId?: number): Promise<ExpenseType[]> {
+    this.checkConnection();
+    try {
+      let query = this.supabase.from('expense_types').select('*');
+      
+      if (projectId !== undefined) {
+        query = query.eq('project_id', projectId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('SupabaseStorage: Error listing expense types:', error);
+        return [];
+      }
+      return data as ExpenseType[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception listing expense types:', error);
+      return [];
+    }
+  }
+
+  async listExpenseTypesForUser(userId: number): Promise<ExpenseType[]> {
+    this.checkConnection();
+    try {
+      // Get projects for the user, then get expense types for those projects
+      const { data: userProjects, error: userError } = await this.supabase
+        .from('user_projects')
+        .select('project_id')
+        .eq('user_id', userId);
+
+      if (userError) {
+        console.error('SupabaseStorage: Error getting user projects:', userError);
+        return [];
+      }
+
+      if (!userProjects || userProjects.length === 0) {
+        return [];
+      }
+
+      const projectIds = userProjects.map(up => up.project_id);
+      
+      const { data, error } = await this.supabase
+        .from('expense_types')
+        .select('*')
+        .in('project_id', projectIds);
+
+      if (error) {
+        console.error('SupabaseStorage: Error listing expense types for user:', error);
+        return [];
+      }
+      return data as ExpenseType[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception listing expense types for user:', error);
+      return [];
+    }
+  }
+
+  async deleteExpenseType(id: number): Promise<boolean> {
+    this.checkConnection();
+    try {
+      const { error } = await this.supabase
+        .from('expense_types')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('SupabaseStorage: Error deleting expense type:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception deleting expense type:', error);
+      return false;
     }
   }
 
@@ -1018,6 +1192,86 @@ export class SupabaseStorage implements IStorage {
     } catch (error) {
       console.error('SupabaseStorage: Exception updating employee:', error);
       return undefined;
+    }
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('employees')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          return undefined;
+        }
+        console.error('SupabaseStorage: Error getting employee:', error);
+        return undefined;
+      }
+      return data as Employee;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting employee:', error);
+      return undefined;
+    }
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    this.checkConnection();
+    try {
+      const { error } = await this.supabase
+        .from('employees')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('SupabaseStorage: Error deleting employee:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('SupabaseStorage: Exception deleting employee:', error);
+      return false;
+    }
+  }
+
+  async getEmployeesByProject(projectId: number): Promise<Employee[]> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('employees')
+        .select('*')
+        .eq('assignedProjectId', projectId);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting employees by project:', error);
+        return [];
+      }
+      return data as Employee[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting employees by project:', error);
+      return [];
+    }
+  }
+
+  async getActiveEmployees(): Promise<Employee[]> {
+    this.checkConnection();
+    try {
+      const { data, error } = await this.supabase
+        .from('employees')
+        .select('*')
+        .eq('active', true);
+
+      if (error) {
+        console.error('SupabaseStorage: Error getting active employees:', error);
+        return [];
+      }
+      return data as Employee[];
+    } catch (error) {
+      console.error('SupabaseStorage: Exception getting active employees:', error);
+      return [];
     }
   }
 
