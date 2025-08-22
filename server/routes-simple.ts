@@ -533,7 +533,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // No Supabase configured; keep local reference (may be ephemeral on serverless)
             fileUrl = `/uploads/transactions/${req.file.filename}`;
           }
-        }
+  } else if ((req as any).rawBody && typeof (req as any).rawBody === 'string') {
+          // Netlify sometimes leaves rawBody when body parsing fails; avoid hard 502 by warning
+          console.warn('No req.file parsed but rawBody present - possible multipart parsing issue');
+  }
 
         const transactionData = {
           date: parsedDate,
@@ -567,8 +570,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const created = await storage.createTransaction(transactionData);
         return res.status(201).json(created);
       } catch (err) {
-        console.error('Create transaction error:', err);
-        return res.status(500).json({ message: "حدث خطأ غير متوقع" });
+  console.error('Create transaction error:', err);
+  return res.status(500).json({ message: "تعذر حفظ المرفق أو المعاملة. تأكد من أن حجم الملف أقل من 20MB وأن الاتصال مستقر" });
       }
     },
   );

@@ -34,7 +34,8 @@ async function buildHandler() {
   // Enable binary payloads for multipart/form-data and file uploads
   serverlessHandler = serverless(app, {
     basePath: '/.netlify/functions',
-    binary: ['multipart/form-data', 'application/octet-stream', 'image/*']
+    // Accept all content types as binary to reliably decode Netlify base64 payloads (multipart has boundary)
+    binary: ['*/*']
   } as any);
   return serverlessHandler;
 }
