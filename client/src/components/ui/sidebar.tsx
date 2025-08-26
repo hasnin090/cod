@@ -299,76 +299,96 @@ function CompanyName() {
           )}
           
           {/* Main menu section - المحتوى الرئيسي */}
-          <div className="mt-6 border border-blue-100 dark:border-gray-600 rounded-2xl overflow-hidden shadow-sm bg-blue-50/30 dark:bg-gray-700 slide-in-up">
-            <div className="py-2.5 px-4 bg-gradient-to-l from-[hsl(var(--primary))/20] to-[hsl(var(--primary))/5] dark:from-[hsl(var(--primary))/30] dark:to-[hsl(var(--primary))/10] border-b border-blue-100 dark:border-gray-600">
-              <h3 className="text-[hsl(var(--primary))] dark:text-white font-semibold text-sm sm:text-base">القائمة الرئيسية</h3>
+          <div className="mt-6 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-white/90 to-slate-50/50 dark:from-slate-800/90 dark:to-slate-900/50 backdrop-blur-sm slide-in-up">
+            <div className="py-3 px-4 bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 dark:from-blue-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 border-b border-slate-200/60 dark:border-slate-700/60">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <i className="fas fa-layer-group text-white text-xs"></i>
+                </div>
+                <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">القائمة الرئيسية</h3>
+              </div>
             </div>
-            <nav className="p-2.5 space-y-1.5">
+            <nav className="p-3 space-y-2">
               <Link
                 href="/"
-                className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
+                className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/" 
-                    ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                    : "text-[hsl(var(--primary))] dark:text-white hover:bg-blue-50 dark:hover:bg-gray-600 hover:scale-102"
-                } transition-all duration-200 transform`}
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25" 
+                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                }`}
               >
-                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/" ? "bg-white/20 text-white" : "bg-blue-100 dark:bg-gray-600"}`}>
-                  <i className="fas fa-chart-line"></i>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  location === "/" 
+                    ? "bg-white/20 text-white shadow-inner" 
+                    : "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-700 dark:to-slate-600 text-blue-600 dark:text-blue-400 group-hover:from-blue-200 group-hover:to-indigo-200"
+                }`}>
+                  <i className="fas fa-chart-line text-lg"></i>
                 </div>
-                <span className="text-sm sm:text-base">لوحة التحكم</span>
+                <span className="text-sm font-medium">لوحة التحكم</span>
+                {location === "/" && (
+                  <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                )}
               </Link>
               
               {/* قسم الحسابات القابل للطي */}
               <div className="space-y-1">
                 <button
                   onClick={() => setIsAccountsOpen(!isAccountsOpen)}
-                  className={`w-full flex items-center justify-between space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
+                  className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     (location === "/transactions" || location === "/receivables")
-                      ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                      : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                  } transition-all duration-200 transform`}
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg shadow-emerald-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
                 >
-                  <div className="flex items-center space-x-reverse space-x-3">
-                    <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${(location === "/transactions" || location === "/receivables") ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                      <i className="fas fa-wallet"></i>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                      (location === "/transactions" || location === "/receivables") 
+                        ? "bg-white/20 text-white shadow-inner" 
+                        : "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-slate-700 dark:to-slate-600 text-emerald-600 dark:text-emerald-400 group-hover:from-emerald-200 group-hover:to-teal-200"
+                    }`}>
+                      <i className="fas fa-wallet text-lg"></i>
                     </div>
-                    <span className="text-sm sm:text-base">الحسابات</span>
+                    <span className="text-sm font-medium">الحسابات</span>
                   </div>
-                  <i className={`fas fa-chevron-${isAccountsOpen ? 'up' : 'down'} text-xs transition-transform duration-200`}></i>
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    isAccountsOpen ? 'rotate-180' : ''
+                  }`}>
+                    <i className="fas fa-chevron-down text-xs"></i>
+                  </div>
                 </button>
                 
                 {/* القائمة الفرعية */}
-                <div className={`overflow-hidden transition-all duration-300 ${isAccountsOpen ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="mr-4 space-y-1">
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                  isAccountsOpen ? 'max-h-40 opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-2'
+                }`}>
+                  <div className="ml-6 mr-2 mt-2 space-y-1 border-r-2 border-slate-200/50 dark:border-slate-700/50 pl-4">
                     <Link
                       href="/transactions"
-                      className={`flex items-center space-x-reverse space-x-2 px-3 py-2 rounded-lg no-flicker touch-target ${
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
                         location === "/transactions" 
-                          ? "bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] font-medium border-r-2 border-[hsl(var(--primary))]" 
-                          : "text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600"
-                      } transition-all duration-200`}
+                          ? "bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 text-emerald-700 dark:text-emerald-300 font-medium border-r-2 border-emerald-500 shadow-sm" 
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-emerald-600 dark:hover:text-emerald-400"
+                      }`}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-blue-100 dark:bg-gray-600">
-                        <i className="fas fa-coins text-xs"></i>
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+                        <i className="fas fa-exchange-alt text-xs"></i>
                       </div>
-                      <span className="text-sm">العمليات النقدية</span>
+                      <span className="text-xs font-medium">المعاملات</span>
                     </Link>
                     
                     <Link
                       href="/receivables"
-                      className={`flex items-center space-x-reverse space-x-2 px-3 py-2 rounded-lg no-flicker touch-target ${
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
                         location === "/receivables" 
-                          ? "bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] font-medium border-r-2 border-[hsl(var(--primary))]" 
-                          : "text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600"
-                      } transition-all duration-200`}
+                          ? "bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 text-emerald-700 dark:text-emerald-300 font-medium border-r-2 border-emerald-500 shadow-sm" 
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-emerald-600 dark:hover:text-emerald-400"
+                      }`}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-orange-100 dark:bg-gray-600">
-                        <i className="fas fa-user text-xs"></i>
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+                        <i className="fas fa-hand-holding-usd text-xs"></i>
                       </div>
-                      <span className="text-sm">المستحقات</span>
+                      <span className="text-xs font-medium">المبالغ المستحقة</span>
                     </Link>
-                    
-
                   </div>
                 </div>
               </div>
@@ -377,102 +397,103 @@ function CompanyName() {
               {user?.role !== 'viewer' && (
                 <Link
                   href="/projects"
-                  className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/projects" 
-                      ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                      : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                  } transition-all duration-200 transform`}
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
                 >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/projects" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                    <i className="fas fa-project-diagram"></i>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    location === "/projects" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-600 text-amber-600 dark:text-amber-400 group-hover:from-amber-200 group-hover:to-orange-200"
+                  }`}>
+                    <i className="fas fa-project-diagram text-lg"></i>
                   </div>
-                  <span className="text-sm sm:text-base">المشاريع</span>
+                  <span className="text-sm font-medium">المشاريع</span>
+                  {location === "/projects" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
                 </Link>
               )}
-              
+
+              <Link
+                href="/users"
+                className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                  location === "/users" 
+                    ? "bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold shadow-lg shadow-purple-500/25" 
+                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-violet-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  location === "/users" 
+                    ? "bg-white/20 text-white shadow-inner" 
+                    : "bg-gradient-to-br from-purple-100 to-violet-100 dark:from-slate-700 dark:to-slate-600 text-purple-600 dark:text-purple-400 group-hover:from-purple-200 group-hover:to-violet-200"
+                }`}>
+                  <i className="fas fa-users text-lg"></i>
+                </div>
+                <span className="text-sm font-medium">المستخدمين</span>
+                {location === "/users" && (
+                  <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                )}
+              </Link>
+
               <Link
                 href="/documents"
-                className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
+                className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/documents" 
-                    ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                    : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                } transition-all duration-200 transform`}
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/25" 
+                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                }`}
               >
-                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/documents" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                  <i className="fas fa-file-invoice"></i>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  location === "/documents" 
+                    ? "bg-white/20 text-white shadow-inner" 
+                    : "bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-slate-700 dark:to-slate-600 text-cyan-600 dark:text-cyan-400 group-hover:from-cyan-200 group-hover:to-blue-200"
+                }`}>
+                  <i className="fas fa-file-alt text-lg"></i>
                 </div>
-                <span className="text-sm sm:text-base">المستندات</span>
+                <span className="text-sm font-medium">الوثائق</span>
+                {location === "/documents" && (
+                  <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                )}
               </Link>
-              
-              <Link
-                href="/archive"
-                className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
-                  location === "/archive" 
-                    ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                    : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                } transition-all duration-200 transform`}
-              >
-                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/archive" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                  <i className="fas fa-archive"></i>
-                </div>
-                <span className="text-sm sm:text-base">الأرشيف</span>
-              </Link>
-              
-              {/* قسم الموظفين - مخصص للمدير فقط */}
-              {user?.role === 'admin' && (
-                <Link
-                  href="/employees"
-                  className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
-                    location === "/employees" 
-                      ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                      : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                  } transition-all duration-200 transform`}
-                >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/employees" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                    <i className="fas fa-users"></i>
-                  </div>
-                  <span className="text-sm sm:text-base">الموظفين</span>
-                </Link>
-              )}
-
-              {/* قسم التقارير - مخصص للمدير فقط */}
-              {user?.role === 'admin' && (
-                <Link
-                  href="/reports"
-                  className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
-                    location === "/reports" 
-                      ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                      : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                  } transition-all duration-200 transform`}
-                >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/reports" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                    <i className="fas fa-chart-pie"></i>
-                  </div>
-                  <span className="text-sm sm:text-base">التقارير</span>
-                </Link>
-              )}
-
-              {/* قسم الأعمال المنجزة - مخصص للمدير والمدراء فقط */}
-              {(user?.role === 'admin' || user?.role === 'manager') && (
-                <Link
-                  href="/completed-works"
-                  className={`flex items-center space-x-reverse space-x-3 px-3 py-2.5 rounded-xl no-flicker touch-target ${
-                    location === "/completed-works" 
-                      ? "bg-[hsl(var(--primary))] text-white font-semibold shadow-md" 
-                      : "text-[hsl(var(--primary))] hover:bg-blue-50 hover:scale-102"
-                  } transition-all duration-200 transform`}
-                >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center no-flicker ${location === "/completed-works" ? "bg-white/20 text-white" : "bg-blue-100"}`}>
-                    <i className="fas fa-tasks"></i>
-                  </div>
-                  <span className="text-sm sm:text-base">الأعمال المنجزة</span>
-                </Link>
-              )}
-
-
             </nav>
           </div>
-          
+                            
+          {/* Reports section - قسم التقارير */}
+          <div className="mt-4 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-white/90 to-slate-50/50 dark:from-slate-800/90 dark:to-slate-900/50 backdrop-blur-sm slide-in-up">
+            <div className="py-3 px-4 bg-gradient-to-r from-rose-600/10 via-pink-600/10 to-red-600/10 dark:from-rose-500/20 dark:via-pink-500/20 dark:to-red-500/20 border-b border-slate-200/60 dark:border-slate-700/60">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center">
+                  <i className="fas fa-chart-bar text-white text-xs"></i>
+                </div>
+                <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">التقارير والإحصائيات</h3>
+              </div>
+            </div>
+            <nav className="p-3 space-y-2">
+              <Link
+                href="/reports"
+                className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                  location === "/reports" 
+                    ? "bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold shadow-lg shadow-rose-500/25" 
+                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-rose-50 hover:to-red-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  location === "/reports" 
+                    ? "bg-white/20 text-white shadow-inner" 
+                    : "bg-gradient-to-br from-rose-100 to-red-100 dark:from-slate-700 dark:to-slate-600 text-rose-600 dark:text-rose-400 group-hover:from-rose-200 group-hover:to-red-200"
+                }`}>
+                  <i className="fas fa-chart-pie text-lg"></i>
+                </div>
+                <span className="text-sm font-medium">التقارير</span>
+                {location === "/reports" && (
+                  <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                )}
+              </Link>
+            </nav>
+          </div>
           {/* المشاريع المتاحة للمستخدم العادي - User Projects Section */}
           {user && user.role !== "admin" && (
             <div className="mt-4 border border-blue-100 dark:border-gray-600 rounded-2xl overflow-hidden shadow-sm bg-blue-50/30 dark:bg-gray-700 slide-in-up" style={{ animationDelay: '0.1s' }}>

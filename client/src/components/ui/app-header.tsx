@@ -80,12 +80,22 @@ const MenuToggleButton = memo(({ onClick }: { onClick: () => void }) => (
   <div className="flex items-center">
     <button
       onClick={onClick}
-      className="sidebar-toggle-button relative mr-2 w-10 h-10 rounded-full bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/40 dark:to-gray-800/50 flex items-center justify-center text-blue-600 dark:text-blue-300 transform transition-all hover:scale-110 active:scale-95 shadow-sm hover:shadow-md border border-blue-100/50 dark:border-blue-800/30 touch-target group overflow-hidden"
+      className="sidebar-toggle-button relative mr-2 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-slate-800/80 dark:to-slate-700/80 backdrop-blur-sm flex items-center justify-center text-blue-600 dark:text-blue-400 transform transition-all duration-300 hover:scale-[1.08] active:scale-95 shadow-lg hover:shadow-xl border border-blue-100/60 dark:border-slate-600/60 touch-target group overflow-hidden"
       aria-label="فتح القائمة"
     >
-      <i className="fas fa-stream text-lg relative z-10"></i>
-      <span className="absolute inset-0 rounded-full bg-blue-200/30 dark:bg-blue-400/20 transform scale-0 transition-transform duration-500 ease-out group-hover:scale-[1.2]"></span>
-      <span className="absolute -inset-2 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 dark:from-blue-400/0 dark:via-blue-400/20 dark:to-blue-400/0 opacity-0 group-hover:opacity-100 animate-shimmer"></span>
+      {/* Icon container with gradient background */}
+      <div className="relative z-10 w-6 h-6 flex items-center justify-center">
+        <i className="fas fa-bars text-base font-medium"></i>
+      </div>
+      
+      {/* Hover effect backgrounds */}
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-400/10 dark:to-indigo-400/10 transform scale-0 transition-transform duration-300 ease-out group-hover:scale-100"></div>
+      
+      {/* Animated shimmer effect */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent dark:via-blue-300/20 opacity-0 group-hover:opacity-100 animate-shimmer rounded-xl"></div>
+      
+      {/* Border glow effect */}
+      <div className="absolute inset-0 rounded-xl ring-1 ring-blue-500/20 dark:ring-blue-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </button>
   </div>
 ));
@@ -128,22 +138,28 @@ export const AppHeader = memo(({ onOpenSidebar }: AppHeaderProps) => {
   
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 xs:px-4 md:px-6 py-2 xs:py-3 md:py-4 transition-all duration-300 dark:border-b dark:border-gray-700/50"
+      className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 xs:px-6 md:px-8 py-3 xs:py-4 md:py-5 transition-all duration-300 border-b border-slate-200/60 dark:border-slate-700/60"
       style={headerStyles}
       data-theme={headerStyles.dataTheme}
     >
       <MenuToggleButton onClick={onOpenSidebar} />
-      <DateDisplay />
       
-      <div className="flex items-center space-x-3 space-x-reverse">
+      {/* Center content - Date Display */}
+      <div className="flex-1 flex justify-center">
+        <DateDisplay />
+      </div>
+      
+      {/* Right side controls */}
+      <div className="flex items-center gap-3">
         <DateDisplay isMobile />
         <DatabaseStatus />
-        {user && <UserAvatar name={user.name} role={user.role} />}
         
-        <ThemeToggle 
-          className="w-9 h-9 p-2 relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/40 dark:to-gray-800/50 border border-blue-100/50 dark:border-blue-800/30 shadow-sm hover:shadow-md"
-          iconClassName="h-4 w-4"
-        />
+        {/* Theme toggle with enhanced styling */}
+        <div className="relative">
+          <ThemeToggle />
+        </div>
+        
+        {user && <UserAvatar name={user.name} role={user.role} />}
       </div>
     </header>
   );
