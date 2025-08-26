@@ -1,0 +1,384 @@
+/* تحسينات التصميم والألوان المطلوبة من المستخدم */
+
+/* ============================================
+   متغيرات الألوان المحدثة حسب طلب المستخدم
+   ============================================ */
+
+:root {
+  /* الوضع الفاتح - أبيض رمادي بدلاً من الأبيض الناصع */
+  --background: 220 14% 96%;
+  --foreground: 220 8.9% 46.1%;
+  --card: 220 14% 95%;
+  --card-foreground: 220 8.9% 46.1%;
+  --popover: 220 14% 95%;
+  --popover-foreground: 220 8.9% 46.1%;
+  
+  /* الألوان الأساسية - الأزرق الفاتح */
+  --primary: 214 95% 93%;
+  --primary-foreground: 214 100% 27%;
+  --secondary: 220 14% 95%;
+  --secondary-foreground: 220 8.9% 46.1%;
+  --muted: 220 14% 95%;
+  --muted-foreground: 220 8.9% 46.1%;
+  --accent: 214 95% 93%;
+  --accent-foreground: 214 100% 27%;
+  
+  /* ألوان الحدود والحقول */
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 214 100% 27%;
+  
+  /* متغيرات جديدة للأزرق الفاتح */
+  --light-blue: 214 100% 85%;
+  --light-blue-hover: 214 100% 80%;
+  --light-blue-text: 214 100% 27%;
+}
+
+.dark {
+  /* الوضع المظلم - رمادي أسود بدلاً من الأسود الناصع */
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  --card: 224 71% 6%;
+  --card-foreground: 213 31% 91%;
+  --popover: 224 71% 6%;
+  --popover-foreground: 213 31% 91%;
+  
+  /* الألوان الأساسية في الوضع المظلم */
+  --primary: 214 95% 85%;
+  --primary-foreground: 224 71% 4%;
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 213 31% 91%;
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+  --accent: 215 27.9% 16.9%;
+  --accent-foreground: 213 31% 91%;
+  
+  /* ألوان الحدود والحقول */
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 214 95% 85%;
+  
+  /* متغيرات جديدة للأزرق الفاتح في الوضع المظلم */
+  --light-blue: 214 95% 85%;
+  --light-blue-hover: 214 95% 90%;
+  --light-blue-text: 214 95% 85%;
+}
+
+/* ============================================
+   توحيد ألوان الأزرار - أزرق فاتح
+   ============================================ */
+
+/* الأزرار الأساسية */
+.btn-primary,
+button[class*="bg-blue"],
+button[class*="bg-gradient"]:not([class*="red"]):not([class*="green"]):not([class*="amber"]),
+.primary-button {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: hsl(var(--light-blue-text)) !important;
+  border-color: hsl(var(--light-blue)) !important;
+  text-shadow: none !important;
+}
+
+.btn-primary:hover,
+button[class*="bg-blue"]:hover,
+button[class*="bg-gradient"]:not([class*="red"]):not([class*="green"]):not([class*="amber"]):hover,
+.primary-button:hover {
+  background: linear-gradient(135deg, hsl(var(--light-blue-hover)) 0%, hsl(214 100% 70%) 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 25px -5px hsl(214 100% 75% / 0.4) !important;
+}
+
+/* الأزرار الثانوية */
+.btn-secondary,
+button[class*="outline"],
+.secondary-button {
+  background: transparent !important;
+  color: hsl(var(--light-blue-text)) !important;
+  border: 2px solid hsl(var(--light-blue)) !important;
+}
+
+.btn-secondary:hover,
+button[class*="outline"]:hover,
+.secondary-button:hover {
+  background: hsl(var(--light-blue) / 0.1) !important;
+  border-color: hsl(var(--light-blue-hover)) !important;
+}
+
+/* أزرار القوائم */
+nav button,
+.sidebar button,
+.menu-button,
+button[role="menuitem"] {
+  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+nav button:hover,
+.sidebar button:hover,
+.menu-button:hover,
+button[role="menuitem"]:hover {
+  background: linear-gradient(135deg, hsl(var(--light-blue) / 0.15) 0%, hsl(var(--light-blue) / 0.1) 100%) !important;
+  color: hsl(var(--light-blue-text)) !important;
+}
+
+nav button.active,
+.sidebar button.active,
+.menu-button.active,
+button[role="menuitem"].active {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+}
+
+/* ============================================
+   إصلاح مشاكل وضوح النصوص
+   ============================================ */
+
+/* تحسين تباين النصوص على الأزرار */
+button span,
+button .text,
+.btn-primary span,
+.btn-primary .text {
+  color: inherit !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+/* إصلاح النصوص فوق الأزرار الملونة */
+.bg-gradient-to-r span,
+.bg-gradient-to-br span,
+.bg-blue-500 span,
+.bg-blue-600 span {
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* تحسين وضوح الأيقونات */
+button i,
+.btn i,
+button svg,
+.btn svg {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* ============================================
+   توحيد ألوان القوائم
+   ============================================ */
+
+/* القوائم الجانبية */
+.sidebar,
+nav,
+.navigation-menu {
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* عناصر القوائم */
+.sidebar-item,
+.nav-item,
+.menu-item {
+  color: hsl(var(--foreground)) !important;
+  transition: all 0.3s ease !important;
+}
+
+.sidebar-item:hover,
+.nav-item:hover,
+.menu-item:hover {
+  background: linear-gradient(135deg, hsl(var(--light-blue) / 0.15) 0%, hsl(var(--light-blue) / 0.1) 100%) !important;
+  color: hsl(var(--light-blue-text)) !important;
+  border-radius: 0.75rem !important;
+}
+
+.sidebar-item.active,
+.nav-item.active,
+.menu-item.active {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px -3px hsl(214 100% 75% / 0.3) !important;
+}
+
+/* ============================================
+   تحسينات خاصة بالوضع المظلم
+   ============================================ */
+
+.dark {
+  /* خلفية رمادية سوداء بدلاً من السوداء الناصعة */
+  background-color: hsl(224 71% 4%) !important;
+}
+
+.dark .sidebar,
+.dark nav,
+.dark .card,
+.dark .bg-white {
+  background-color: hsl(224 71% 6%) !important;
+  border-color: hsl(215 27.9% 16.9%) !important;
+}
+
+/* تحسين النصوص في الوضع المظلم */
+.dark,
+.dark body,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark p,
+.dark span,
+.dark div {
+  color: hsl(213 31% 91%) !important;
+}
+
+/* ============================================
+   تحسينات خاصة بالوضع الفاتح
+   ============================================ */
+
+/* خلفية بيضاء رمادية بدلاً من البيضاء الناصعة */
+body,
+.bg-white,
+.card,
+.sidebar {
+  background-color: hsl(220 14% 96%) !important;
+}
+
+.card,
+.bg-white {
+  background-color: hsl(220 14% 95%) !important;
+  border-color: hsl(220 13% 91%) !important;
+}
+
+/* ============================================
+   تحسينات عامة للتصميم
+   ============================================ */
+
+/* تحسين الظلال */
+.shadow,
+.shadow-md,
+.shadow-lg {
+  box-shadow: 0 4px 15px -3px hsl(var(--foreground) / 0.1),
+              0 2px 8px -2px hsl(var(--foreground) / 0.05) !important;
+}
+
+/* تحسين الحدود */
+.border,
+.border-gray-200,
+.border-slate-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* تحسين التحولات */
+button,
+.btn,
+.card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* تحسين التركيز */
+button:focus,
+.btn:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px hsl(var(--light-blue)) !important;
+  border-color: hsl(var(--light-blue)) !important;
+}
+
+/* ============================================
+   إصلاحات محددة للمكونات
+   ============================================ */
+
+/* إصلاح أزرار الإجراءات في الجداول */
+.table-actions button,
+td button,
+.action-button {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.table-actions button:hover,
+td button:hover,
+.action-button:hover {
+  background: linear-gradient(135deg, hsl(var(--light-blue-hover)) 0%, hsl(214 100% 70%) 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* إصلاح أزرار الصفحات الفرعية */
+.page-header button,
+.toolbar button,
+.controls button {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* إصلاح نصوص التبديل والمؤشرات */
+.toggle-button span,
+.indicator span,
+.badge span {
+  color: inherit !important;
+  font-weight: 500 !important;
+}
+
+/* ============================================
+   تحسينات الاستجابة للأجهزة المحمولة
+   ============================================ */
+
+@media (max-width: 768px) {
+  button,
+  .btn {
+    min-height: 44px !important;
+    font-size: 1rem !important;
+  }
+  
+  .sidebar-item,
+  .nav-item {
+    padding: 0.75rem !important;
+  }
+}
+
+/* ============================================
+   إصلاحات خاصة بمكونات معينة
+   ============================================ */
+
+/* إصلاح أزرار الشريط الجانبي */
+.sidebar a,
+.sidebar Link {
+  color: hsl(var(--foreground)) !important;
+  text-decoration: none !important;
+}
+
+.sidebar a:hover,
+.sidebar Link:hover {
+  color: hsl(var(--light-blue-text)) !important;
+}
+
+.sidebar a.active,
+.sidebar Link.active {
+  color: white !important;
+}
+
+/* إصلاح أزرار لوحة التحكم */
+.dashboard-button,
+.stats-card button,
+.quick-action-button {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* إصلاح أزرار النماذج */
+form button[type="submit"],
+.form-submit,
+.submit-button {
+  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600 !important;
+}

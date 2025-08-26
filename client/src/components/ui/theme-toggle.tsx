@@ -58,12 +58,12 @@ export function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
 
   // تحديد الألوان والتأثيرات حسب الوضع الحالي
   const buttonClasses = theme === "light" 
-    ? "bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30" 
-    : "bg-indigo-900/30 hover:bg-indigo-900/40 dark:bg-indigo-950/50 dark:hover:bg-indigo-950/60";
+    ? "bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30" 
+    : "bg-slate-900/30 hover:bg-slate-900/40 dark:bg-slate-950/50 dark:hover:bg-slate-950/60";
     
   const iconClasses = theme === "light"
-    ? "text-blue-600 dark:text-blue-400"
-    : "text-indigo-300 dark:text-indigo-200";
+    ? "text-sky-600 dark:text-sky-400"
+    : "text-slate-300 dark:text-slate-200";
 
   return (
     <button
@@ -99,10 +99,10 @@ export function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-indigo-500/10 dark:to-purple-500/10 transform scale-0 transition-transform duration-300 ease-out group-hover:scale-100"></div>
       
       {/* Animated shimmer effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-amber-400/20 dark:via-indigo-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-shimmer rounded-xl"></div>
+      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-sky-400/20 dark:via-sky-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-shimmer rounded-xl"></div>
       
       {/* Border glow effect */}
-      <div className="absolute inset-0 rounded-xl ring-1 ring-amber-500/20 dark:ring-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute inset-0 rounded-xl ring-1 ring-sky-500/20 dark:ring-sky-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
       {/* Loading indicator when transitioning */}
       {isTransitioning && (
