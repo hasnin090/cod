@@ -22,7 +22,6 @@ interface Project {
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAccountsOpen, setIsAccountsOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
@@ -30,17 +29,6 @@ export function Sidebar() {
   useEffect(() => {
     if (location === "/transactions" || location === "/receivables") {
       setIsAccountsOpen(true);
-    }
-  }, [location]);
-
-  // فتح قسم الإعدادات تلقائياً عند زيارة إحدى صفحاته
-  useEffect(() => {
-    const settingsRoutes = [
-      "/settings", "/database-management", "/hybrid-storage", 
-      "/supabase-status", "/file-migration", "/whatsapp-integration"
-    ];
-    if (settingsRoutes.includes(location)) {
-      setIsSettingsOpen(true);
     }
   }, [location]);
 
@@ -705,9 +693,9 @@ function CompanyName() {
           {/* Settings section - قسم الإعدادات */}
           {user?.role === "admin" && (
             <div className="mt-4 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-white/90 to-slate-50/50 dark:from-slate-800/90 dark:to-slate-900/50 backdrop-blur-sm slide-in-up">
-              <div className="py-3 px-4 bg-gradient-to-r from-gray-600/10 via-slate-600/10 to-zinc-600/10 dark:from-gray-500/20 dark:via-slate-500/20 dark:to-zinc-500/20 border-b border-slate-200/60 dark:border-slate-700/60">
+              <div className="py-3 px-4 bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 dark:from-blue-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 border-b border-slate-200/60 dark:border-slate-700/60">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                     <i className="fas fa-cogs text-white text-xs"></i>
                   </div>
                   <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">إعدادات النظام</h3>
@@ -719,16 +707,16 @@ function CompanyName() {
                   href="/settings"
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/settings" 
-                      ? "bg-gradient-to-r from-gray-500 to-slate-600 text-white font-semibold shadow-lg shadow-gray-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
                     location === "/settings" 
                       ? "bg-white/20 text-white shadow-inner" 
-                      : "bg-gradient-to-br from-gray-100 to-slate-100 dark:from-slate-700 dark:to-slate-600 text-gray-600 dark:text-gray-400 group-hover:from-gray-200 group-hover:to-slate-200"
+                      : "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-700 dark:to-slate-600 text-blue-600 dark:text-blue-400"
                   }`}>
-                    <i className="fas fa-cog text-lg"></i>
+                    <i className="fas fa-cog text-sm"></i>
                   </div>
                   <span className="text-sm font-medium">الإعدادات العامة</span>
                   {location === "/settings" && (
@@ -736,110 +724,123 @@ function CompanyName() {
                   )}
                 </Link>
 
-                {/* قسم إدارة البيانات القابل للطي */}
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                    className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
-                      ["/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/cloud-migration"].includes(location)
-                        ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25" 
-                        : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                        ["/database-management", "/hybrid-storage", "/supabase-status", "/file-migration", "/cloud-migration"].includes(location) 
-                          ? "bg-white/20 text-white shadow-inner" 
-                          : "bg-gradient-to-br from-green-100 to-emerald-100 dark:from-slate-700 dark:to-slate-600 text-green-600 dark:text-green-400 group-hover:from-green-200 group-hover:to-emerald-200"
-                      }`}>
-                        <i className="fas fa-database text-lg"></i>
-                      </div>
-                      <span className="text-sm font-medium">إدارة البيانات</span>
-                    </div>
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                      isSettingsOpen ? 'rotate-180' : ''
-                    }`}>
-                      <i className="fas fa-chevron-down text-xs"></i>
-                    </div>
-                  </button>
-                  
-                  {/* القائمة الفرعية لإدارة البيانات */}
-                  <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                    isSettingsOpen ? 'max-h-96 opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-2'
+                {/* إدارة قواعد البيانات */}
+                <Link
+                  href="/database-management"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                    location === "/database-management" 
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    location === "/database-management" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-green-100 to-emerald-100 dark:from-slate-700 dark:to-slate-600 text-green-600 dark:text-green-400"
                   }`}>
-                    <div className="ml-6 mr-2 mt-2 space-y-1 border-r-2 border-slate-200/50 dark:border-slate-700/50 pl-4">
-                      <Link
-                        href="/database-management"
-                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
-                          location === "/database-management" 
-                            ? "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 font-medium border-r-2 border-green-500 shadow-sm" 
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-green-600 dark:hover:text-green-400"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                          <i className="fas fa-server text-xs"></i>
-                        </div>
-                        <span className="text-xs font-medium">إدارة قواعد البيانات</span>
-                      </Link>
-                      
-                      <Link
-                        href="/hybrid-storage"
-                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
-                          location === "/hybrid-storage" 
-                            ? "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 font-medium border-r-2 border-green-500 shadow-sm" 
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-green-600 dark:hover:text-green-400"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                          <i className="fas fa-cloud text-xs"></i>
-                        </div>
-                        <span className="text-xs font-medium">التخزين الهجين</span>
-                      </Link>
-                      
-                      <Link
-                        href="/supabase-status"
-                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
-                          location === "/supabase-status" 
-                            ? "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 font-medium border-r-2 border-green-500 shadow-sm" 
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-green-600 dark:hover:text-green-400"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                          <i className="fas fa-heartbeat text-xs"></i>
-                        </div>
-                        <span className="text-xs font-medium">حالة النظام</span>
-                      </Link>
-                      
-                      <Link
-                        href="/file-migration"
-                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
-                          location === "/file-migration" 
-                            ? "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 font-medium border-r-2 border-green-500 shadow-sm" 
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-green-600 dark:hover:text-green-400"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                          <i className="fas fa-file-export text-xs"></i>
-                        </div>
-                        <span className="text-xs font-medium">نقل الملفات</span>
-                      </Link>
-                      
-                      <Link
-                        href="/cloud-migration"
-                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg no-flicker touch-target transition-all duration-200 ${
-                          location === "/cloud-migration" 
-                            ? "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 font-medium border-r-2 border-green-500 shadow-sm" 
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-700/40 hover:text-green-600 dark:hover:text-green-400"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                          <i className="fas fa-cloud-upload text-xs"></i>
-                        </div>
-                        <span className="text-xs font-medium">الانتقال للسحابة</span>
-                      </Link>
-                    </div>
+                    <i className="fas fa-database text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">إدارة قواعد البيانات</span>
+                  {location === "/database-management" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
+                </Link>
+
+                {/* التخزين الهجين */}
+                <Link
+                  href="/hybrid-storage"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                    location === "/hybrid-storage" 
+                      ? "bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold shadow-lg shadow-purple-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-violet-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    location === "/hybrid-storage" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-purple-100 to-violet-100 dark:from-slate-700 dark:to-slate-600 text-purple-600 dark:text-purple-400"
+                  }`}>
+                    <i className="fas fa-cloud text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">التخزين الهجين</span>
+                  {location === "/hybrid-storage" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
+                </Link>
+
+                {/* حالة النظام */}
+                <Link
+                  href="/supabase-status"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                    location === "/supabase-status" 
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    location === "/supabase-status" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-slate-700 dark:to-slate-600 text-cyan-600 dark:text-cyan-400"
+                  }`}>
+                    <i className="fas fa-heartbeat text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">حالة النظام</span>
+                  {location === "/supabase-status" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
+                </Link>
+
+                {/* فاصل بصري */}
+                <div className="my-3">
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent"></div>
+                  <div className="text-center -mt-2">
+                    <span className="bg-white dark:bg-slate-800 px-3 text-xs text-slate-500 dark:text-slate-400 font-medium">أدوات إضافية</span>
                   </div>
                 </div>
+
+                {/* نقل الملفات */}
+                <Link
+                  href="/file-migration"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                    location === "/file-migration" 
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    location === "/file-migration" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-600 text-amber-600 dark:text-amber-400"
+                  }`}>
+                    <i className="fas fa-file-export text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">نقل الملفات</span>
+                  {location === "/file-migration" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
+                </Link>
+
+                {/* الانتقال للسحابة */}
+                <Link
+                  href="/cloud-migration"
+                  className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
+                    location === "/cloud-migration" 
+                      ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold shadow-lg shadow-teal-500/25" 
+                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    location === "/cloud-migration" 
+                      ? "bg-white/20 text-white shadow-inner" 
+                      : "bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-slate-700 dark:to-slate-600 text-teal-600 dark:text-teal-400"
+                  }`}>
+                    <i className="fas fa-cloud-upload text-sm"></i>
+                  </div>
+                  <span className="text-sm font-medium">الانتقال للسحابة</span>
+                  {location === "/cloud-migration" && (
+                    <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                  )}
+                </Link>
 
                 {/* تكامل WhatsApp */}
                 <Link
@@ -850,12 +851,12 @@ function CompanyName() {
                       : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
                     location === "/whatsapp-integration" 
                       ? "bg-white/20 text-white shadow-inner" 
-                      : "bg-gradient-to-br from-green-100 to-emerald-100 dark:from-slate-700 dark:to-slate-600 text-green-600 dark:text-green-400 group-hover:from-green-200 group-hover:to-emerald-200"
+                      : "bg-gradient-to-br from-green-100 to-emerald-100 dark:from-slate-700 dark:to-slate-600 text-green-600 dark:text-green-400"
                   }`}>
-                    <i className="fab fa-whatsapp text-lg"></i>
+                    <i className="fab fa-whatsapp text-sm"></i>
                   </div>
                   <span className="text-sm font-medium">تكامل WhatsApp</span>
                   {location === "/whatsapp-integration" && (
