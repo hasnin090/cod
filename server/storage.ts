@@ -218,6 +218,8 @@ export class MemStorage implements IStorage {
     this.fundsData = new Map();
     this.expenseTypesData = new Map();
     this.employeesData = new Map();
+    this.completedWorksData = new Map();
+    this.completedWorksDocumentsData = new Map();
     this.userIdCounter = 1;
     this.projectIdCounter = 1;
     this.transactionIdCounter = 1;
@@ -228,6 +230,8 @@ export class MemStorage implements IStorage {
     this.fundIdCounter = 1;
     this.expenseTypeIdCounter = 1;
     this.employeeIdCounter = 1;
+    this.completedWorkIdCounter = 1;
+    this.completedWorksDocumentIdCounter = 1;
 
     // Add default admin user
     this.createUser({
@@ -1053,48 +1057,115 @@ export class MemStorage implements IStorage {
 
   // Completed Works - Independent section (MemStorage implementations)
   async createCompletedWork(work: InsertCompletedWork): Promise<CompletedWork> {
-    throw new Error("MemStorage لا يدعم الأعمال المنجزة");
+    const id = this.completedWorkIdCounter++;
+    const now = new Date();
+    const newWork: CompletedWork = {
+      id,
+      title: work.title,
+      description: work.description || null,
+      amount: work.amount || null,
+      date: work.date,
+      category: work.category || null,
+      status: work.status || 'active',
+      fileUrl: work.fileUrl || null,
+      fileType: work.fileType || null,
+      createdBy: work.createdBy,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.completedWorksData.set(id, newWork);
+    return newWork;
   }
 
   async listCompletedWorks(): Promise<CompletedWork[]> {
-    return [];
+    return Array.from(this.completedWorksData.values());
   }
 
   async getCompletedWork(id: number): Promise<CompletedWork | undefined> {
-    return undefined;
+    return this.completedWorksData.get(id);
   }
 
   async updateCompletedWork(id: number, updates: Partial<CompletedWork>): Promise<CompletedWork | undefined> {
-    return undefined;
+    const work = this.completedWorksData.get(id);
+    if (!work) return undefined;
+    
+    const updatedWork: CompletedWork = { 
+      ...work, 
+      ...updates, 
+      updatedAt: new Date()
+    };
+    this.completedWorksData.set(id, updatedWork);
+    return updatedWork;
   }
 
   async deleteCompletedWork(id: number): Promise<boolean> {
-    return false;
+    // Also delete associated documents
+    const documents = Array.from(this.completedWorksDocumentsData.values())
+      .filter(doc => doc.completedWorkId === id);
+    documents.forEach(doc => this.completedWorksDocumentsData.delete(doc.id));
+    
+    return this.completedWorksData.delete(id);
   }
 
   async archiveCompletedWork(id: number): Promise<boolean> {
-    return false;
+    const work = this.completedWorksData.get(id);
+    if (!work) return false;
+    
+    work.status = 'archived';
+    work.updatedAt = new Date();
+    return true;
   }
+
+  private completedWorksData: Map<number, CompletedWork>;
+  private completedWorksDocumentsData: Map<number, CompletedWorksDocument>;
+  private completedWorkIdCounter: number;
+  private completedWorksDocumentIdCounter: number;
 
   // Completed Works Documents - Independent document management (MemStorage implementations)
   async createCompletedWorksDocument(document: InsertCompletedWorksDocument): Promise<CompletedWorksDocument> {
-    throw new Error("MemStorage لا يدعم مستندات الأعمال المنجزة");
+    const id = this.completedWorksDocumentIdCounter++;
+    const now = new Date();
+    const newDocument: CompletedWorksDocument = {
+      id,
+      title: document.title,
+      description: document.description || null,
+      fileUrl: document.fileUrl,
+      fileType: document.fileType,
+      category: document.category || null,
+      tags: document.tags || [],
+      uploadDate: now,
+      completedWorkId: document.completedWorkId || null,
+      uploadedBy: document.uploadedBy,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.completedWorksDocumentsData.set(id, newDocument);
+    return newDocument;
   }
 
   async listCompletedWorksDocuments(): Promise<CompletedWorksDocument[]> {
-    return [];
+    return Array.from(this.completedWorksDocumentsData.values());
   }
 
   async getCompletedWorksDocument(id: number): Promise<CompletedWorksDocument | undefined> {
-    return undefined;
+    return this.completedWorksDocumentsData.get(id);
   }
 
   async updateCompletedWorksDocument(id: number, updates: Partial<CompletedWorksDocument>): Promise<CompletedWorksDocument | undefined> {
-    return undefined;
+    const document = this.completedWorksDocumentsData.get(id);
+    if (!document) return undefined;
+    
+    const updatedDocument: CompletedWorksDocument = { 
+      ...document, 
+      ...updates, 
+      updatedAt: new Date()
+    };
+    this.completedWorksDocumentsData.set(id, updatedDocument);
+    return updatedDocument;
   }
 
   async deleteCompletedWorksDocument(id: number): Promise<boolean> {
-    return false;
+    return this.completedWorksDocumentsData.delete(id);
   }
 
   // Transaction Edit Permissions - للذاكرة المؤقتة فقط

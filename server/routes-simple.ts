@@ -45,7 +45,7 @@ import {
 // نستخدم process.cwd() كجذر للتعامل مع مسارات uploads الثابتة
 const __dirname = process.cwd();
 
-import { documentUpload, transactionUpload } from './multer-config';
+import { documentUpload, transactionUpload, completedWorksUpload, completedWorksDocsUpload } from './multer-config';
 import { createClient } from '@supabase/supabase-js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1174,11 +1174,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/completed-works", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+  app.post("/api/completed-works", authenticate, authorize(["admin", "manager"]), 
+    completedWorksUpload.single("file"),
+    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
     try {
+      // Handle file upload if present
+      let fileUrl: string | null = null;
+      let fileType: string | null = null;
+      
+      if (req.file) {
+        fileType = req.file.mimetype || null;
+        const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const isMemory = (req.file as any).buffer && !(req.file as any).path;
+        
+        try {
+          if (hasSupabase) {
+            const buffer = isMemory ? (req.file as any).buffer : fs.readFileSync((req.file as any).path);
+            const up = await uploadToSupabase(buffer, req.file.originalname, 'completed-works');
+            if (up.success && up.url) {
+              fileUrl = up.url;
+            } else {
+              console.warn('Supabase upload failed for completed work:', up.error);
+            }
+          }
+        } catch (e) {
+          console.warn('Upload to Supabase threw for completed work:', e);
+        }
+
+        // Fallback local URL
+        if (!fileUrl) {
+          const fname = (req.file as any).filename || `${Date.now()}_${req.file.originalname.replace(/\s+/g,'_')}`;
+          fileUrl = `/uploads/completed-works/${fname}`;
+        }
+      }
+
       const workData = {
         ...req.body,
-  createdBy: (req as any).user.id as number
+        createdBy: (req as any).user.id as number,
+        fileUrl,
+        fileType,
       };
       
       const work = await storage.createCompletedWork(workData);
@@ -1188,7 +1222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_work",
         entityId: work.id,
         details: `تم إنشاء عمل منجز جديد: ${work.title}`,
-  userId: (req as any).user.id as number
+        userId: (req as any).user.id as number
       });
 
       res.status(201).json(work);
@@ -1233,11 +1267,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/completed-works-documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+  // Completed works documents routes
+  app.get("/api/completed-works-documents", authenticate, async (req: Request, res: Response) => {
     try {
+      const documents = await storage.listCompletedWorksDocuments();
+      res.status(200).json(documents);
+    } catch (error: any) {
+      console.error("Error getting completed works documents:", error);
+      res.status(500).json({ message: "خطأ في استرجاع مستندات الأعمال المنجزة" });
+    }
+  });
+
+  app.post("/api/completed-works-documents", authenticate, authorize(["admin", "manager"]), 
+    completedWorksDocsUpload.single("file"),
+    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "يجب تحديد ملف" });
+      }
+
+      // Handle file upload
+      let fileUrl: string | null = null;
+      let fileType: string | null = req.file.mimetype || null;
+      const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const isMemory = (req.file as any).buffer && !(req.file as any).path;
+      
+      try {
+        if (hasSupabase) {
+          const buffer = isMemory ? (req.file as any).buffer : fs.readFileSync((req.file as any).path);
+          const up = await uploadToSupabase(buffer, req.file.originalname, 'completed-works');
+          if (up.success && up.url) {
+            fileUrl = up.url;
+          } else {
+            console.warn('Supabase upload failed for completed works document:', up.error);
+          }
+        }
+      } catch (e) {
+        console.warn('Upload to Supabase threw for completed works document:', e);
+      }
+
+      // Fallback local URL
+      if (!fileUrl) {
+        const fname = (req.file as any).filename || `${Date.now()}_${req.file.originalname.replace(/\s+/g,'_')}`;
+        fileUrl = `/uploads/completed-works-docs/${fname}`;
+      }
+
       const docData = {
-        ...req.body,
-  createdBy: (req as any).user.id as number
+        title: req.body.title,
+        description: req.body.description || null,
+        fileUrl: fileUrl!,
+        fileType: fileType!,
+        category: req.body.category || null,
+        tags: req.body.tags ? req.body.tags.split(',').map((t: string) => t.trim()) : [],
+        completedWorkId: req.body.completedWorkId ? parseInt(req.body.completedWorkId) : null,
+        uploadedBy: (req as any).user.id as number,
+        uploadDate: new Date(),
       };
       
       const doc = await storage.createCompletedWorksDocument(docData);
@@ -1247,7 +1331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "completed_works_document",
         entityId: doc.id,
         details: `تم إنشاء مستند عمل منجز جديد: ${doc.title}`,
-  userId: (req as any).user.id as number
+        userId: (req as any).user.id as number
       });
 
       res.status(201).json(doc);
@@ -2231,6 +2315,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting completed work:", error);
       res.status(500).json({ message: "خطأ في حذف العمل المنجز" });
+    }
+  });
+
+  // WhatsApp Integration routes
+  app.get("/api/whatsapp/webhook", (req: Request, res: Response) => {
+    const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "your-verify-token";
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === verifyToken) {
+      console.log("WhatsApp webhook verified");
+      res.status(200).send(challenge);
+    } else {
+      res.status(403).json({ error: "Forbidden" });
+    }
+  });
+
+  app.post("/api/whatsapp/webhook", express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+    try {
+      const body = JSON.parse(req.body.toString());
+      
+      // Process WhatsApp webhook payload
+      if (body.object === "whatsapp_business_account") {
+        for (const entry of body.entry || []) {
+          for (const change of entry.changes || []) {
+            if (change.field === "messages") {
+              const messages = change.value?.messages || [];
+              
+              for (const message of messages) {
+                // Process each incoming message
+                console.log("WhatsApp message received:", message);
+                
+                // Here you would implement the message processing logic
+                // For now, just log the message
+                await storage.createActivityLog({
+                  action: "whatsapp_message_received",
+                  entityType: "whatsapp",
+                  entityId: 1,
+                  details: `WhatsApp message from ${message.from}: ${message.type}`,
+                  userId: 1, // System user
+                });
+              }
+            }
+          }
+        }
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("WhatsApp webhook error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/upload-whatsapp-file", authenticate, 
+    documentUpload.single("file"),
+    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "يجب تحديد ملف" });
+      }
+
+      // Handle file upload similar to other uploads
+      let fileUrl: string | null = null;
+      let fileType: string | null = req.file.mimetype || null;
+      const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const isMemory = (req.file as any).buffer && !(req.file as any).path;
+      
+      try {
+        if (hasSupabase) {
+          const buffer = isMemory ? (req.file as any).buffer : fs.readFileSync((req.file as any).path);
+          const up = await uploadToSupabase(buffer, req.file.originalname, 'documents');
+          if (up.success && up.url) {
+            fileUrl = up.url;
+          } else {
+            console.warn('Supabase upload failed for WhatsApp file:', up.error);
+          }
+        }
+      } catch (e) {
+        console.warn('Upload to Supabase threw for WhatsApp file:', e);
+      }
+
+      // Fallback local URL
+      if (!fileUrl) {
+        const fname = (req.file as any).filename || `${Date.now()}_${req.file.originalname.replace(/\s+/g,'_')}`;
+        fileUrl = `/uploads/whatsapp/${fname}`;
+      }
+
+      res.status(200).json({ 
+        success: true, 
+        fileUrl: fileUrl,
+        fileName: req.file.originalname,
+        fileType: fileType 
+      });
+    } catch (error: any) {
+      console.error("Error uploading WhatsApp file:", error);
+      res.status(500).json({ message: "خطأ في رفع الملف" });
+    }
+  });
+
+  app.post("/api/transactions/link-document", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { transactionId, fileUrl, source } = req.body;
+      
+      if (!transactionId || !fileUrl) {
+        return res.status(400).json({ message: "معرف المعاملة ورابط الملف مطلوبان" });
+      }
+
+      // Check if transaction exists
+      const transaction = await storage.getTransaction(transactionId);
+      if (!transaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+
+      // Create a document linked to this transaction
+      const documentData = {
+        name: `مرفق من ${source || 'النظام'} - معاملة #${transactionId}`,
+        description: `ملف مرتبط بالمعاملة #${transactionId} من ${source || 'النظام'}`,
+        fileUrl: fileUrl,
+        fileType: 'application/octet-stream', // Default, could be improved
+        uploadDate: new Date(),
+        projectId: transaction.projectId,
+        uploadedBy: (req as any).user.id as number,
+        category: source || 'linked',
+        tags: [source || 'system', 'transaction-linked'],
+      };
+
+      const document = await storage.createDocument(documentData);
+
+      await storage.createActivityLog({
+        action: "link_document_to_transaction",
+        entityType: "transaction",
+        entityId: transactionId,
+        details: `تم ربط مستند من ${source} بالمعاملة #${transactionId}`,
+        userId: (req as any).user.id as number,
+      });
+
+      res.status(201).json({ 
+        success: true, 
+        documentId: document.id,
+        message: "تم ربط الملف بالمعاملة بنجاح" 
+      });
+    } catch (error: any) {
+      console.error("Error linking document to transaction:", error);
+      res.status(500).json({ message: "خطأ في ربط الملف بالمعاملة" });
     }
   });
 

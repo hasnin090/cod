@@ -46,4 +46,6 @@ export const createMulterConfig = (destination: string = "uploads") => {
 };
 
 export const transactionUpload = createMulterConfig("uploads/transactions");
-export const documentUpload = createMulterConfig("uploads");
+export const documentUpload = createMulterConfig("uploads/documents");
+export const completedWorksUpload = createMulterConfig("uploads/completed-works");
+export const completedWorksDocsUpload = createMulterConfig("uploads/completed-works-docs");
