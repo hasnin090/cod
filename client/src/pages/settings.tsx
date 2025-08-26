@@ -288,214 +288,307 @@ export default function Settings() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      {/* Modern Header */}
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      {/* Header Section */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-6">
           <div className="relative">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <SettingsIcon className="h-7 w-7 text-white" />
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <SettingsIcon className="h-8 w-8 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+            </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               الإعدادات العامة
             </h1>
-            <p className="text-muted-foreground mt-1">إدارة شاملة لإعدادات النظام والشركة</p>
+            <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">إدارة شاملة لإعدادات النظام والشركة</p>
           </div>
         </div>
         
-        {/* Quick Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">معلومات الشركة</span>
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30 p-6 rounded-2xl border border-blue-200 dark:border-blue-800/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300">معلومات الشركة</h3>
+                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">البيانات الأساسية</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
             </div>
-            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">4 إعدادات أساسية</p>
+            <div className="mt-4 text-2xl font-bold text-blue-700 dark:text-blue-300">4</div>
+            <div className="text-xs text-blue-600 dark:text-blue-400">إعدادات أساسية</div>
           </div>
           
-          <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800/50">
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">أنواع المصاريف</span>
+          <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/30 p-6 rounded-2xl border border-green-200 dark:border-green-800/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">أنواع المصاريف</h3>
+                <p className="text-sm text-green-600 dark:text-green-400 mt-1">تصنيفات المعاملات</p>
+              </div>
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                <Tag className="h-6 w-6 text-white" />
+              </div>
             </div>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-1">{expenseTypes?.length || 0} نوع مصروف</p>
+            <div className="mt-4 text-2xl font-bold text-green-700 dark:text-green-300">{expenseTypes?.length || 0}</div>
+            <div className="text-xs text-green-600 dark:text-green-400">نوع مصروف</div>
           </div>
           
-          <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800/50">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              <span className="text-sm font-medium text-orange-700 dark:text-orange-300">الأمان</span>
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/50 dark:to-orange-900/30 p-6 rounded-2xl border border-orange-200 dark:border-orange-800/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-orange-700 dark:text-orange-300">الأمان</h3>
+                <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">حماية الحساب</p>
+              </div>
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
             </div>
-            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">كلمة المرور</p>
-          </div>
-          
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800/50">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">المستخدمين</span>
-            </div>
-            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">إدارة الصلاحيات</p>
+            <div className="mt-4 text-lg font-bold text-orange-700 dark:text-orange-300">محمي</div>
+            <div className="text-xs text-orange-600 dark:text-orange-400">كلمة مرور قوية</div>
           </div>
         </div>
       </div>
 
       {isLoading && (
         <div className="text-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-slate-600 dark:text-slate-400 text-lg">جاري تحميل الإعدادات...</p>
         </div>
       )}
 
-      <div className="space-y-6">
-        {/* 1. Company Information Section */}
-        <Collapsible open={isGeneralOpen} onOpenChange={setIsGeneralOpen} defaultOpen>
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-background to-blue-50/30 dark:from-background dark:to-blue-950/20">
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-all duration-200 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                      <Building2 className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-foreground">معلومات الشركة</CardTitle>
-                      <CardDescription className="text-muted-foreground">البيانات الأساسية ومعلومات التواصل</CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-                      4 إعدادات
-                    </div>
-                    {isGeneralOpen ? (
-                      <ChevronDown className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <CardContent className="pt-0 pb-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      اسم الشركة
-                    </label>
-                    <SettingField 
-                      settings={settings}
-                      settingKey="company_name"
-                      label=""
-                      onSave={handleSaveSetting}
-                      isSaving={false}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      عنوان الشركة
-                    </label>
-                    <SettingField 
-                      settings={settings}
-                      settingKey="company_address"
-                      label=""
-                      onSave={handleSaveSetting}
-                      isSaving={false}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      هاتف الشركة
-                    </label>
-                    <SettingField 
-                      settings={settings}
-                      settingKey="company_phone"
-                      label=""
-                      type="tel"
-                      onSave={handleSaveSetting}
-                      isSaving={false}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      البريد الإلكتروني
-                    </label>
-                    <SettingField 
-                      settings={settings}
-                      settingKey="company_email"
-                      label=""
-                      type="email"
-                      onSave={handleSaveSetting}
-                      isSaving={false}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+      <div className="space-y-8">
+        {/* 1. معلومات الشركة */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-white" />
+              <h2 className="text-xl font-bold text-white">معلومات الشركة</h2>
+            </div>
+            <p className="text-blue-100 mt-1">البيانات الأساسية ومعلومات التواصل</p>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                  اسم الشركة
+                </label>
+                <SettingField 
+                  settings={settings}
+                  settingKey="company_name"
+                  label=""
+                  onSave={handleSaveSetting}
+                  isSaving={false}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  عنوان الشركة
+                </label>
+                <SettingField 
+                  settings={settings}
+                  settingKey="company_address"
+                  label=""
+                  onSave={handleSaveSetting}
+                  isSaving={false}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Phone className="h-4 w-4 text-blue-600" />
+                  هاتف الشركة
+                </label>
+                <SettingField 
+                  settings={settings}
+                  settingKey="company_phone"
+                  label=""
+                  type="tel"
+                  onSave={handleSaveSetting}
+                  isSaving={false}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  البريد الإلكتروني
+                </label>
+                <SettingField 
+                  settings={settings}
+                  settingKey="company_email"
+                  label=""
+                  type="email"
+                  onSave={handleSaveSetting}
+                  isSaving={false}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* 2. Security Settings Section */}
-        <Collapsible open={isSecurityOpen} onOpenChange={setIsSecurityOpen}>
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-background to-orange-50/30 dark:from-background dark:to-orange-950/20">
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-orange-50/50 dark:hover:bg-orange-950/30 transition-all duration-200 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
-                      <Shield className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-foreground">الأمان وكلمة المرور</CardTitle>
-                      <CardDescription className="text-muted-foreground">حماية الحساب وإدارة كلمات المرور</CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="px-3 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
-                      محمي
-                    </div>
-                    {isSecurityOpen ? (
-                      <ChevronDown className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    )}
-                  </div>
+        {/* 2. أمان النظام */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Shield className="h-6 w-6 text-white" />
+              <h2 className="text-xl font-bold text-white">أمان النظام</h2>
+            </div>
+            <p className="text-orange-100 mt-1">حماية الحساب وإدارة كلمات المرور</p>
+          </div>
+          
+          <div className="p-6">
+            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-white" />
                 </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <CardContent className="pt-6">
-                <div className="bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/50 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-200">تغيير كلمة المرور</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-200">تغيير كلمة المرور</h3>
+                  <p className="text-sm text-orange-600 dark:text-orange-400">قم بتحديث كلمة المرور لحماية حسابك</p>
+                </div>
+              </div>
+              
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordChangeSubmit)} className="space-y-6">
+                  <FormField
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700 dark:text-slate-300">كلمة المرور الحالية</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            {...field} 
+                            className="h-12 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-orange-400 focus:ring-orange-200"
+                            placeholder="أدخل كلمة المرور الحالية"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <FormField
+                      control={passwordForm.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700 dark:text-slate-300">كلمة المرور الجديدة</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              {...field} 
+                              className="h-12 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-orange-400 focus:ring-orange-200"
+                              placeholder="كلمة مرور قوية (8 أحرف على الأقل)"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={passwordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700 dark:text-slate-300">تأكيد كلمة المرور</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              {...field} 
+                              className="h-12 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-orange-400 focus:ring-orange-200"
+                              placeholder="إعادة كتابة كلمة المرور الجديدة"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  <Form {...passwordForm}>
-                    <form onSubmit={passwordForm.handleSubmit(onPasswordChangeSubmit)} className="space-y-5">
+                  <div className="flex items-center justify-between pt-4 border-t border-orange-200 dark:border-orange-800/50">
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                      💡 استخدم كلمة مرور قوية تحتوي على أرقام وحروف ورموز
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={changePasswordMutation.isPending}
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg h-12 px-8"
+                    >
+                      {changePasswordMutation.isPending && (
+                        <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                      )}
+                      تحديث كلمة المرور
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. إدارة أنواع المصاريف */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Tag className="h-6 w-6 text-white" />
+                <div>
+                  <h2 className="text-xl font-bold text-white">إدارة أنواع المصاريف</h2>
+                  <p className="text-green-100 mt-1">تصنيفات ذكية للمعاملات المالية</p>
+                </div>
+              </div>
+              <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setEditingExpenseType(null);
+                      expenseTypeForm.reset({ name: '', description: '', projectId: undefined });
+                    }}
+                    className="bg-white text-green-600 hover:bg-green-50 shadow-lg"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    إضافة نوع جديد
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">
+                      {editingExpenseType ? 'تعديل نوع المصروف' : 'إضافة نوع مصروف جديد'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {editingExpenseType 
+                        ? 'قم بتعديل بيانات نوع المصروف المحدد' 
+                        : 'أدخل بيانات نوع المصروف الجديد لتصنيف المعاملات'
+                      }
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...expenseTypeForm}>
+                    <form onSubmit={expenseTypeForm.handleSubmit(onExpenseTypeSubmit)} className="space-y-6">
                       <FormField
-                        control={passwordForm.control}
-                        name="currentPassword"
+                        control={expenseTypeForm.control}
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-semibold text-foreground">كلمة المرور الحالية</FormLabel>
+                            <FormLabel className="text-sm font-semibold">اسم نوع المصروف</FormLabel>
                             <FormControl>
                               <Input 
-                                type="password" 
                                 {...field} 
-                                className="bg-background border-border focus:border-orange-400 focus:ring-orange-200"
-                                placeholder="أدخل كلمة المرور الحالية"
+                                placeholder="مثال: وقود، صيانة، مكتبية، مواد خام"
+                                className="h-12"
                               />
                             </FormControl>
                             <FormMessage />
@@ -503,305 +596,186 @@ export default function Settings() {
                         )}
                       />
                       
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <FormField
-                          control={passwordForm.control}
-                          name="newPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold text-foreground">كلمة المرور الجديدة</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="password" 
-                                  {...field} 
-                                  className="bg-background border-border focus:border-orange-400 focus:ring-orange-200"
-                                  placeholder="كلمة مرور قوية"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={passwordForm.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold text-foreground">تأكيد كلمة المرور</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="password" 
-                                  {...field} 
-                                  className="bg-background border-border focus:border-orange-400 focus:ring-orange-200"
-                                  placeholder="إعادة كتابة كلمة المرور"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FormField
+                        control={expenseTypeForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-semibold">الوصف (اختياري)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="وصف مختصر لنوع المصروف وكيفية استخدامه"
+                                className="min-h-[80px]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
-                      <div className="flex items-center justify-between pt-4 border-t border-orange-200">
-                        <div className="text-xs text-gray-500">
-                          يُنصح باستخدام كلمة مرور قوية تحتوي على أرقام وحروف ورموز
-                        </div>
+                      <FormField
+                        control={expenseTypeForm.control}
+                        name="projectId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-semibold">المشروع المرتبط</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(value === "general" ? undefined : parseInt(value))}
+                              value={field.value?.toString() || "general"}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="h-12">
+                                  <SelectValue placeholder="اختر مشروع أو اتركه عام لجميع المشاريع" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="general">عام (جميع المشاريع)</SelectItem>
+                                {projects.map((project) => (
+                                  <SelectItem key={project.id} value={project.id.toString()}>
+                                    {project.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter>
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsExpenseDialogOpen(false)}
+                        >
+                          إلغاء
+                        </Button>
                         <Button 
                           type="submit" 
-                          disabled={changePasswordMutation.isPending}
-                          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md"
+                          disabled={createExpenseTypeMutation.isPending || updateExpenseTypeMutation.isPending}
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                         >
-                          {changePasswordMutation.isPending && (
+                          {(createExpenseTypeMutation.isPending || updateExpenseTypeMutation.isPending) && (
                             <Loader2 className="h-4 w-4 animate-spin ml-2" />
                           )}
-                          تحديث كلمة المرور
+                          {editingExpenseType ? 'تحديث النوع' : 'إضافة النوع'}
                         </Button>
-                      </div>
+                      </DialogFooter>
                     </form>
                   </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {/* إحصائيات سريعة */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-green-700 dark:text-green-300">{expenseTypes?.length || 0}</div>
+                <div className="text-sm text-green-600 dark:text-green-400">إجمالي الأنواع</div>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  {expenseTypes?.filter(et => et.is_active).length || 0}
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-
-        {/* 3. Expense Types Section */}
-        <Collapsible open={isExpenseTypesOpen} onOpenChange={setIsExpenseTypesOpen}>
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-background to-green-50/30 dark:from-background dark:to-green-950/20">
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-green-50/50 dark:hover:bg-green-950/30 transition-all duration-200 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
-                      <Tag className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-foreground">أنواع المصاريف</CardTitle>
-                      <CardDescription className="text-muted-foreground">تصنيفات ذكية للمعاملات المالية</CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
-                      {expenseTypes?.length || 0} نوع
-                    </div>
-                    {isExpenseTypesOpen ? (
-                      <ChevronDown className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    )}
-                  </div>
+                <div className="text-sm text-blue-600 dark:text-blue-400">النشطة</div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-red-700 dark:text-red-300">
+                  {expenseTypes?.filter(et => !et.is_active).length || 0}
                 </div>
-              </CardHeader>
-            </CollapsibleTrigger>
+                <div className="text-sm text-red-600 dark:text-red-400">المعطلة</div>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                  {Math.round(((expenseTypes?.filter(et => et.is_active).length || 0) / Math.max(expenseTypes?.length || 1, 1)) * 100)}%
+                </div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">معدل النشاط</div>
+              </div>
+            </div>
             
-            <CollapsibleContent>
-              <CardContent className="pt-0 pb-6">
-                {/* Quick Stats */}
-                <div className="bg-green-50/50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/50 rounded-lg p-4 mb-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">{expenseTypes?.length || 0}</div>
-                      <div className="text-xs text-green-600 dark:text-green-400">إجمالي الأنواع</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {expenseTypes?.filter(et => et.is_active).length || 0}
-                      </div>
-                      <div className="text-xs text-green-600 dark:text-green-400">الأنواع النشطة</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {expenseTypes?.filter(et => !et.is_active).length || 0}
-                      </div>
-                      <div className="text-xs text-green-600 dark:text-green-400">الأنواع المعطلة</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {Math.round(((expenseTypes?.filter(et => et.is_active).length || 0) / Math.max(expenseTypes?.length || 1, 1)) * 100)}%
-                      </div>
-                      <div className="text-xs text-green-600 dark:text-green-400">معدل النشاط</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Header Section */}
-                <div className="flex justify-between items-center mb-6">
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800">إدارة أنواع المصاريف</h3>
-                    <p className="text-sm text-gray-600">تصنيف وتنظيم المعاملات المالية حسب النوع</p>
-                  </div>
-                  <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        onClick={() => {
-                          setEditingExpenseType(null);
-                          expenseTypeForm.reset({ name: '', description: '', projectId: undefined });
-                        }}
-                        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        إضافة نوع جديد
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingExpenseType ? 'تعديل نوع المصروف' : 'إضافة نوع مصروف جديد'}
-                        </DialogTitle>
-                        <DialogDescription>
-                          {editingExpenseType 
-                            ? 'قم بتعديل بيانات نوع المصروف' 
-                            : 'أدخل بيانات نوع المصروف الجديد'
-                          }
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <Form {...expenseTypeForm}>
-                        <form onSubmit={expenseTypeForm.handleSubmit(onExpenseTypeSubmit)} className="space-y-4">
-                          <FormField
-                            control={expenseTypeForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>اسم نوع المصروف</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="مثال: وقود، صيانة، مكتبية" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={expenseTypeForm.control}
-                            name="description"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>الوصف (اختياري)</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} placeholder="وصف مختصر لنوع المصروف" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={expenseTypeForm.control}
-                            name="projectId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>المشروع المرتبط</FormLabel>
-                                <Select 
-                                  onValueChange={(value) => field.onChange(value === "general" ? undefined : parseInt(value))}
-                                  value={field.value?.toString() || "general"}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="اختر مشروع (اختياري - سيكون عام إذا لم تختر)" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="general">عام (جميع المشاريع)</SelectItem>
-                                    {projects.map((project) => (
-                                      <SelectItem key={project.id} value={project.id.toString()}>
-                                        {project.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <DialogFooter>
-                            <Button 
-                              type="submit" 
-                              disabled={createExpenseTypeMutation.isPending || updateExpenseTypeMutation.isPending}
+            {/* جدول أنواع المصاريف */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="text-right font-semibold">اسم نوع المصروف</TableHead>
+                    <TableHead className="text-center font-semibold">المشروع المرتبط</TableHead>
+                    <TableHead className="text-center font-semibold">الحالة</TableHead>
+                    <TableHead className="text-center font-semibold">الإجراءات</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenseTypes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-12">
+                        <div className="flex flex-col items-center gap-3">
+                          <Tag className="h-12 w-12 text-slate-400" />
+                          <div>
+                            <p className="text-slate-600 dark:text-slate-400 font-medium">لا توجد أنواع مصاريف</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-500">أضف نوع مصروف جديد للبدء في التصنيف</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    expenseTypes.map((expenseType) => (
+                      <TableRow key={expenseType.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <TableCell className="font-medium">{expenseType.name}</TableCell>
+                        <TableCell className="text-center">
+                          {expenseType.project_id ? (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                              {projects.find(p => p.id === expenseType.project_id)?.name || `مشروع ${expenseType.project_id}`}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              عام (جميع المشاريع)
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge 
+                            variant={expenseType.is_active ? "default" : "secondary"}
+                            className={expenseType.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                          >
+                            {expenseType.is_active ? 'نشط' : 'معطل'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditExpenseType(expenseType)}
+                              className="h-9 w-9 p-0 hover:bg-blue-100 hover:text-blue-700"
                             >
-                              {(createExpenseTypeMutation.isPending || updateExpenseTypeMutation.isPending) && (
-                                <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                              )}
-                              {editingExpenseType ? 'تحديث' : 'إضافة'}
+                              <Edit className="h-4 w-4" />
                             </Button>
-                          </DialogFooter>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                
-                {/* Simple Table */}
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">اسم نوع المصروف</TableHead>
-                        <TableHead className="text-center">المشروع المرتبط</TableHead>
-                        <TableHead className="text-center">الإجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {expenseTypes.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            لا توجد أنواع مصاريف. أضف نوع مصروف جديد للبدء.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        expenseTypes.map((expenseType) => (
-                          <TableRow key={expenseType.id}>
-                            <TableCell className="font-medium">{expenseType.name}</TableCell>
-                            <TableCell className="text-center">
-                              {expenseType.project_id ? (
-                                <Badge variant="outline" className="text-xs">
-                                  {projects.find(p => p.id === expenseType.project_id)?.name || `مشروع ${expenseType.project_id}`}
-                                </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteExpenseTypeMutation.mutate(expenseType.id)}
+                              disabled={deleteExpenseTypeMutation.isPending}
+                              className="h-9 w-9 p-0 hover:bg-red-100 hover:text-red-700"
+                            >
+                              {deleteExpenseTypeMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <Badge variant="secondary" className="text-xs">
-                                  عام (جميع المشاريع)
-                                </Badge>
+                                <Trash2 className="h-4 w-4" />
                               )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditExpenseType(expenseType)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => deleteExpenseTypeMutation.mutate(expenseType.id)}
-                                  disabled={deleteExpenseTypeMutation.isPending}
-                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                >
-                                  {deleteExpenseTypeMutation.isPending ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-
-
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
