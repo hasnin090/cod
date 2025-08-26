@@ -1622,9 +1622,10 @@ export class PgStorage implements IStorage {
   }
 
   async getDeferredPayment(id: number): Promise<DeferredPayment | undefined> {
-    try {
-      const result = await this.sql`SELECT * FROM deferred_payments WHERE id = ${id}`;
-      const row = result[0];
+    return this.executeWithRetry(async () => {
+      const sql = this.getSql();
+      const result = await sql`SELECT * FROM deferred_payments WHERE id = ${id}`;
+      const row = this.getFirstResult<any>(result);
       
       if (!row) return undefined;
       
@@ -1647,15 +1648,13 @@ export class PgStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at
       } as DeferredPayment;
-    } catch (error) {
-      console.error('Error getting deferred payment:', error);
-      return undefined;
-    }
+    });
   }
 
   async createDeferredPayment(payment: InsertDeferredPayment): Promise<DeferredPayment> {
-    try {
-      const result = await this.sql`
+    return this.executeWithRetry(async () => {
+      const sql = this.getSql();
+      const result = await sql`
         INSERT INTO deferred_payments (
           beneficiary_name, 
           total_amount, 
@@ -1686,11 +1685,8 @@ export class PgStorage implements IStorage {
         )
         RETURNING *
       `;
-      return result[0] as DeferredPayment;
-    } catch (error) {
-      console.error('Error creating deferred payment:', error);
-      throw error;
-    }
+      return this.getFirstResult<DeferredPayment>(result)!;
+    });
   }
 
   async updateDeferredPayment(id: number, payment: Partial<DeferredPayment>): Promise<DeferredPayment | undefined> {
@@ -1764,8 +1760,9 @@ export class PgStorage implements IStorage {
   }
 
   async listDeferredPayments(): Promise<DeferredPayment[]> {
-    try {
-      const result = await this.sql`
+    return this.executeWithRetry(async () => {
+      const sql = this.getSql();
+      const result = await sql`
         SELECT 
           dp.*,
           p.name as project_name
@@ -1773,7 +1770,7 @@ export class PgStorage implements IStorage {
         LEFT JOIN projects p ON dp.project_id = p.id
         ORDER BY dp.created_at DESC
       `;
-      return result.map(row => ({
+      return this.castResult<any>(result).map((row: any) => ({
         id: row.id,
         beneficiaryName: row.beneficiary_name,
         totalAmount: row.total_amount,
@@ -1791,11 +1788,8 @@ export class PgStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         projectName: row.project_name
-      })) as any[];
-    } catch (error) {
-      console.error('Error listing deferred payments:', error);
-      return [];
-    }
+      })) as DeferredPayment[];
+    });
   }
 
   /**
@@ -1803,10 +1797,11 @@ export class PgStorage implements IStorage {
    * كل مستخدم يرى فقط مستحقات المشاريع التي هو مخصص لها
    */
   async getDeferredPaymentsForUserProjects(userId: number): Promise<DeferredPayment[]> {
-    try {
+    return this.executeWithRetry(async () => {
+      const sql = this.getSql();
       console.log(`Getting deferred payments for user ${userId} projects...`);
       
-      const result = await this.sql`
+      const result = await sql`
         SELECT 
           dp.*,
           p.name as project_name
@@ -1817,7 +1812,7 @@ export class PgStorage implements IStorage {
         ORDER BY dp.created_at DESC
       `;
       
-      const mappedResults = result.map(row => ({
+      const mappedResults = this.castResult<any>(result).map((row: any) => ({
         id: row.id,
         beneficiaryName: row.beneficiary_name,
         totalAmount: row.total_amount,
@@ -1835,14 +1830,11 @@ export class PgStorage implements IStorage {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         projectName: row.project_name
-      })) as any[];
+      })) as DeferredPayment[];
 
       console.log(`Found ${mappedResults.length} deferred payments for user ${userId}`);
       return mappedResults;
-    } catch (error) {
-      console.error('Error getting deferred payments for user projects:', error);
-      return [];
-    }
+    });
   }
 
   async deleteDeferredPayment(id: number): Promise<boolean> {
@@ -2000,11 +1992,11 @@ export class PgStorage implements IStorage {
     }
   }
 
-  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+  async createEmployee(employee: InsertEmployee & { createdBy: number }): Promise<Employee> {
     try {
       const result = await this.sql`
         INSERT INTO employees (name, salary, assigned_project_id, active, hire_date, notes, created_by)
-        VALUES (${employee.name}, ${employee.salary || 0}, ${employee.assignedProjectId || null}, ${employee.active !== false}, ${employee.hireDate || new Date()}, ${employee.notes || null}, ${1})
+        VALUES (${employee.name}, ${employee.salary || 0}, ${employee.assignedProjectId || null}, ${employee.active !== false}, ${employee.hireDate || new Date()}, ${employee.notes || null}, ${employee.createdBy})
         RETURNING *
       `;
       return result[0] as Employee;

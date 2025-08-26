@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -1621,6 +1622,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching payment details:', error);
       return res.status(500).json({ message: "خطأ في استرجاع تفاصيل المستحق" });
+    }
+  });
+
+  // Create new deferred payment
+  app.post("/api/deferred-payments", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const deferredPaymentData = {
+        ...req.body,
+        createdBy: (req as any).user.id as number
+      };
+      
+      const deferredPayment = await storage.createDeferredPayment(deferredPaymentData);
+
+      await storage.createActivityLog({
+        action: "create_deferred_payment",
+        entityType: "deferred_payment",
+        entityId: deferredPayment.id,
+        details: `تم إضافة مستحق جديد: ${deferredPayment.description} بمبلغ ${deferredPayment.totalAmount}`,
+        userId: (req as any).user.id as number
+      });
+
+      res.status(201).json(deferredPayment);
+    } catch (error: any) {
+      console.error("Error creating deferred payment:", error);
+      res.status(500).json({ message: "خطأ في إضافة المستحق" });
     }
   });
 

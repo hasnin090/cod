@@ -139,7 +139,7 @@ export interface IStorage {
 
   // Employees
   getEmployee(id: number): Promise<Employee | undefined>;
-  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  createEmployee(employee: InsertEmployee & { createdBy: number }): Promise<Employee>;
   updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee>;
   getEmployees(): Promise<Employee[]>;
   deleteEmployee(id: number): Promise<boolean>;
@@ -999,7 +999,7 @@ export class MemStorage implements IStorage {
     return this.employeesData.get(id);
   }
 
-  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+  async createEmployee(employee: InsertEmployee & { createdBy: number }): Promise<Employee> {
     const id = this.employeeIdCounter++;
     const newEmployee: Employee = {
       id,
@@ -1009,7 +1009,7 @@ export class MemStorage implements IStorage {
       active: employee.active !== false,
       assignedProjectId: employee.assignedProjectId || null,
       notes: employee.notes || null,
-      createdBy: 1, // Default admin
+      createdBy: employee.createdBy,
       createdAt: new Date(),
       updatedAt: new Date(),
       currentBalance: 0,
