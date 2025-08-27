@@ -32,7 +32,7 @@ function createDatabaseConnection() {
     });
     
     // اختبار الاتصال
-    sql'SELECT 1'.then(() => {
+    sql'SELECT 1;'.then(() => {
       logger.log('Database connection successful');
     }).catch(err => {
       logger.error('Database connection test failed:', err);
