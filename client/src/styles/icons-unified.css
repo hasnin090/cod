@@ -1,0 +1,596 @@
+/* ============================================
+   تخصيص ألوان الأيقونات - نظام أزرق موحد
+   ============================================ */
+
+/* أيقونات React Icons و Font Awesome */
+svg[data-icon],
+i[class*="fa-"],
+i[class*="fas"],
+i[class*="far"],
+i[class*="fab"],
+i[class*="fal"],
+span[class*="icon"],
+.react-icon,
+.feather,
+.lucide {
+  color: var(--light-blue-600) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* أيقونات في الأزرار */
+button svg,
+button i[class*="fa-"],
+.btn svg,
+.btn i[class*="fa-"],
+a[role="button"] svg,
+a[role="button"] i[class*="fa-"] {
+  color: inherit !important;
+}
+
+/* أيقونات في القوائم والشريط الجانبي */
+.sidebar svg,
+.sidebar i[class*="fa-"],
+nav svg,
+nav i[class*="fa-"],
+.navigation svg,
+.navigation i[class*="fa-"],
+.menu svg,
+.menu i[class*="fa-"] {
+  color: var(--light-blue-600) !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.sidebar button:hover svg,
+.sidebar button:hover i[class*="fa-"],
+nav button:hover svg,
+nav button:hover i[class*="fa-"],
+.navigation button:hover svg,
+.navigation button:hover i[class*="fa-"],
+.menu button:hover svg,
+.menu button:hover i[class*="fa-"] {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+.sidebar button.active svg,
+.sidebar button.active i[class*="fa-"],
+nav button.active svg,
+nav button.active i[class*="fa-"],
+.navigation button.active svg,
+.navigation button.active i[class*="fa-"],
+.menu button.active svg,
+.menu button.active i[class*="fa-"] {
+  color: white !important;
+}
+
+.sidebar a:hover svg,
+.sidebar a:hover i[class*="fa-"],
+nav a:hover svg,
+nav a:hover i[class*="fa-"] {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+.sidebar a.active svg,
+.sidebar a.active i[class*="fa-"],
+nav a.active svg,
+nav a.active i[class*="fa-"] {
+  color: white !important;
+}
+
+/* أيقونات في الجداول */
+table svg,
+table i[class*="fa-"],
+.table svg,
+.table i[class*="fa-"],
+.data-table svg,
+.data-table i[class*="fa-"] {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--light-blue-600) !important;
+}
+
+td svg:hover,
+td i[class*="fa-"]:hover,
+.table-cell svg:hover,
+.table-cell i[class*="fa-"]:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.2) !important;
+}
+
+/* أيقونات الحالة والعمليات */
+.edit-icon,
+.delete-icon,
+.view-icon,
+.add-icon,
+.save-icon,
+.cancel-icon {
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.edit-icon:hover {
+  color: var(--info-light) !important;
+}
+
+.delete-icon:hover {
+  color: var(--error-light) !important;
+}
+
+.view-icon:hover {
+  color: var(--light-blue-700) !important;
+}
+
+.add-icon:hover,
+.save-icon:hover {
+  color: var(--success-light) !important;
+}
+
+.cancel-icon:hover {
+  color: var(--warning-light) !important;
+}
+
+/* أيقونات التحكم في الصفحات */
+.pagination svg,
+.pagination i[class*="fa-"],
+.page-controls svg,
+.page-controls i[class*="fa-"] {
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--light-blue-600) !important;
+}
+
+/* أيقونات التصفية والبحث */
+.search-icon,
+.filter-icon,
+.sort-icon {
+  color: var(--light-blue-600) !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.search-icon:hover,
+.filter-icon:hover,
+.sort-icon:hover {
+  color: var(--light-blue-700) !important;
+}
+
+/* أيقونات النوافذ المنبثقة */
+.modal svg,
+.modal i[class*="fa-"],
+.dialog svg,
+.dialog i[class*="fa-"],
+.popup svg,
+.popup i[class*="fa-"] {
+  color: var(--light-blue-600) !important;
+}
+
+.modal-close svg,
+.modal-close i[class*="fa-"],
+.dialog-close svg,
+.dialog-close i[class*="fa-"] {
+  color: var(--text-secondary) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.modal-close:hover svg,
+.modal-close:hover i[class*="fa-"],
+.dialog-close:hover svg,
+.dialog-close:hover i[class*="fa-"] {
+  color: var(--error-light) !important;
+}
+
+/* أيقونات الإشعارات */
+.notification svg,
+.notification i[class*="fa-"],
+.alert svg,
+.alert i[class*="fa-"],
+.toast svg,
+.toast i[class*="fa-"] {
+  width: 20px !important;
+  height: 20px !important;
+  margin-left: 8px !important;
+}
+
+.notification-success svg,
+.notification-success i[class*="fa-"],
+.alert-success svg,
+.alert-success i[class*="fa-"] {
+  color: var(--success-light) !important;
+}
+
+.notification-warning svg,
+.notification-warning i[class*="fa-"],
+.alert-warning svg,
+.alert-warning i[class*="fa-"] {
+  color: var(--warning-light) !important;
+}
+
+.notification-error svg,
+.notification-error i[class*="fa-"],
+.alert-error svg,
+.alert-error i[class*="fa-"],
+.notification-danger svg,
+.notification-danger i[class*="fa-"],
+.alert-danger svg,
+.alert-danger i[class*="fa-"] {
+  color: var(--error-light) !important;
+}
+
+.notification-info svg,
+.notification-info i[class*="fa-"],
+.alert-info svg,
+.alert-info i[class*="fa-"] {
+  color: var(--info-light) !important;
+}
+
+/* أيقونات أشرطة التقدم */
+.progress svg,
+.progress i[class*="fa-"],
+.loading svg,
+.loading i[class*="fa-"],
+.spinner svg,
+.spinner i[class*="fa-"] {
+  color: var(--light-blue-500) !important;
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* أيقونات التبويبات */
+.tab svg,
+.tab i[class*="fa-"],
+.tab-item svg,
+.tab-item i[class*="fa-"] {
+  width: 16px !important;
+  height: 16px !important;
+  margin-left: 6px !important;
+  color: inherit !important;
+}
+
+/* أيقونات التوسيط والانهيار */
+.collapse-icon,
+.expand-icon,
+.toggle-icon {
+  color: var(--light-blue-600) !important;
+  transition: transform 0.3s ease !important;
+}
+
+.collapsed .collapse-icon,
+.collapsed .toggle-icon {
+  transform: rotate(-90deg) !important;
+}
+
+.expanded .expand-icon,
+.expanded .toggle-icon {
+  transform: rotate(0deg) !important;
+}
+
+/* أيقونات الدروب داون */
+.dropdown svg,
+.dropdown i[class*="fa-"],
+.select svg,
+.select i[class*="fa-"] {
+  width: 12px !important;
+  height: 12px !important;
+  color: var(--light-blue-600) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.dropdown.open svg,
+.dropdown.open i[class*="fa-"],
+.select.open svg,
+.select.open i[class*="fa-"] {
+  transform: rotate(180deg) !important;
+}
+
+/* أيقونات الملفات والوثائق */
+.file-icon,
+.document-icon,
+.pdf-icon,
+.image-icon,
+.video-icon {
+  color: var(--light-blue-600) !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.file-icon:hover,
+.document-icon:hover,
+.pdf-icon:hover,
+.image-icon:hover,
+.video-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+/* أيقونات التحميل والرفع */
+.upload-icon,
+.download-icon {
+  color: var(--light-blue-600) !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.upload-icon:hover,
+.download-icon:hover {
+  color: var(--light-blue-700) !important;
+  animation: bounce 0.5s ease !important;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}
+
+/* أيقونات الشبكات الاجتماعية */
+.social-icon {
+  color: var(--light-blue-600) !important;
+  width: 24px !important;
+  height: 24px !important;
+  transition: all 0.3s ease !important;
+}
+
+.social-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.2) rotate(5deg) !important;
+}
+
+/* أيقونات الأدوات */
+.tool-icon,
+.utility-icon,
+.settings-icon {
+  color: var(--light-blue-600) !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.tool-icon:hover,
+.utility-icon:hover,
+.settings-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: rotate(45deg) !important;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .sidebar svg,
+  .sidebar i[class*="fa-"],
+  nav svg,
+  nav i[class*="fa-"] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  
+  table svg,
+  table i[class*="fa-"],
+  .table svg,
+  .table i[class*="fa-"] {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  
+  .modal-close svg,
+  .modal-close i[class*="fa-"],
+  .dialog-close svg,
+  .dialog-close i[class*="fa-"] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar svg,
+  .sidebar i[class*="fa-"],
+  nav svg,
+  nav i[class*="fa-"] {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  .file-icon,
+  .document-icon,
+  .pdf-icon,
+  .image-icon,
+  .video-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  .social-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* تخصيصات خاصة للتطبيق */
+
+/* أيقونات لوحة التحكم */
+.dashboard-icon {
+  color: var(--light-blue-600) !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.dashboard-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+/* أيقونات الإحصائيات */
+.stats-icon,
+.chart-icon,
+.graph-icon {
+  color: var(--light-blue-600) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.stats-icon:hover,
+.chart-icon:hover,
+.graph-icon:hover {
+  color: var(--light-blue-700) !important;
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* أيقونات المشاريع */
+.project-icon {
+  color: var(--light-blue-600) !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.project-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: rotateY(180deg) !important;
+}
+
+/* أيقونات المعاملات */
+.transaction-icon {
+  color: var(--light-blue-600) !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.transaction-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.15) !important;
+}
+
+/* أيقونات المستخدمين */
+.user-icon,
+.profile-icon {
+  color: var(--light-blue-600) !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.user-icon:hover,
+.profile-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+/* أيقونات التقارير */
+.report-icon {
+  color: var(--light-blue-600) !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.report-icon:hover {
+  color: var(--light-blue-700) !important;
+  transform: rotateX(360deg) !important;
+}
+
+/* إعادة تعريف ألوان أيقونات مكتبات محددة */
+
+/* Lucide React Icons */
+.lucide {
+  stroke: var(--light-blue-600) !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+}
+
+/* Hero Icons */
+.heroicon {
+  color: var(--light-blue-600) !important;
+  fill: currentColor !important;
+}
+
+/* Feather Icons */
+.feather {
+  stroke: var(--light-blue-600) !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Tabler Icons */
+.tabler-icon {
+  color: var(--light-blue-600) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* Bootstrap Icons */
+.bi {
+  color: var(--light-blue-600) !important;
+  fill: currentColor !important;
+}
+
+/* React Icons من مكتبات مختلفة */
+.react-icons {
+  color: var(--light-blue-600) !important;
+}
+
+/* تحسين الوضوح للأيقونات الصغيرة */
+svg[width="12"],
+svg[width="14"],
+svg[width="16"],
+i[class*="fa-xs"],
+i[class*="fa-sm"] {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+}
+
+/* ضمان التباين في الوضع المظلم */
+.dark svg,
+.dark i[class*="fa-"],
+.dark .icon {
+  color: var(--light-blue-400) !important;
+}
+
+.dark button svg,
+.dark button i[class*="fa-"],
+.dark .btn svg,
+.dark .btn i[class*="fa-"] {
+  color: inherit !important;
+}
+
+.dark .sidebar svg:hover,
+.dark .sidebar i[class*="fa-"]:hover,
+.dark nav svg:hover,
+.dark nav i[class*="fa-"]:hover {
+  color: var(--light-blue-300) !important;
+}
+
+.dark .edit-icon:hover {
+  color: var(--info-dark) !important;
+}
+
+.dark .delete-icon:hover {
+  color: var(--error-dark) !important;
+}
+
+.dark .add-icon:hover,
+.dark .save-icon:hover {
+  color: var(--success-dark) !important;
+}
+
+.dark .cancel-icon:hover {
+  color: var(--warning-dark) !important;
+}

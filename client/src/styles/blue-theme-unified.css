@@ -1,0 +1,691 @@
+/* ============================================
+   نظام أزرق فاتح موحد ومتطور - إضافات شاملة
+   ============================================ */
+
+/* تحسين الأزرار الثانوية */
+.btn-secondary:hover,
+button[class*="outline"]:hover,
+button[class*="secondary"]:hover,
+.secondary-button:hover {
+  background: var(--light-blue-100) !important;
+  border-color: var(--light-blue-500) !important;
+  color: var(--light-blue-800) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* ============================================
+   الأيقونات والعناصر المرئية
+   ============================================ */
+
+/* توحيد ألوان الأيقونات */
+svg, i[class*="icon"], i[class*="fa"], .icon {
+  color: var(--light-blue-600) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* أيقونات في الأزرار */
+button svg, 
+button i[class*="icon"], 
+button i[class*="fa"],
+.btn svg,
+.btn i[class*="icon"],
+.btn i[class*="fa"] {
+  color: inherit !important;
+}
+
+/* أيقونات القوائم والتنقل */
+nav svg,
+.sidebar svg,
+.navigation svg,
+.menu svg {
+  color: var(--light-blue-600) !important;
+  transition: all 0.3s ease !important;
+}
+
+nav button:hover svg,
+.sidebar button:hover svg,
+.navigation button:hover svg,
+.menu button:hover svg {
+  color: var(--light-blue-700) !important;
+  transform: scale(1.1) !important;
+}
+
+nav button.active svg,
+.sidebar button.active svg,
+.navigation button.active svg,
+.menu button.active svg {
+  color: white !important;
+}
+
+/* أيقونات الحالة */
+.success-icon, .icon-success { color: var(--success-light) !important; }
+.warning-icon, .icon-warning { color: var(--warning-light) !important; }
+.error-icon, .icon-error { color: var(--error-light) !important; }
+.info-icon, .icon-info { color: var(--info-light) !important; }
+
+/* ============================================
+   القوائم والتنقل
+   ============================================ */
+
+/* القوائم الجانبية */
+.sidebar,
+nav,
+.navigation-menu,
+.side-panel {
+  background: var(--bg-secondary) !important;
+  border-color: var(--light-blue-200) !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* عناصر القوائم */
+.sidebar-item,
+.nav-item,
+.menu-item,
+nav a,
+.sidebar a {
+  color: var(--text-on-light) !important;
+  transition: all 0.3s ease !important;
+  border-radius: 8px !important;
+  margin: 2px 0 !important;
+  padding: 8px 12px !important;
+}
+
+.sidebar-item:hover,
+.nav-item:hover,
+.menu-item:hover,
+nav a:hover,
+.sidebar a:hover {
+  background: var(--light-blue-100) !important;
+  color: var(--light-blue-800) !important;
+  transform: translateX(4px) !important;
+}
+
+.sidebar-item.active,
+.nav-item.active,
+.menu-item.active,
+nav a.active,
+.sidebar a.active {
+  background: linear-gradient(135deg, var(--light-blue-500), var(--light-blue-400)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* ============================================
+   البطاقات والحاويات
+   ============================================ */
+
+/* البطاقات الأساسية */
+.card,
+.panel,
+.widget,
+.container,
+div[class*="card"],
+div[class*="panel"] {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--light-blue-200) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-light) !important;
+  transition: all 0.3s ease !important;
+}
+
+.card:hover,
+.panel:hover,
+.widget:hover {
+  box-shadow: var(--shadow-medium) !important;
+  transform: translateY(-2px) !important;
+  border-color: var(--light-blue-300) !important;
+}
+
+/* رؤوس البطاقات */
+.card-header,
+.panel-header,
+.widget-header {
+  background: var(--light-blue-100) !important;
+  color: var(--light-blue-800) !important;
+  border-bottom: 1px solid var(--light-blue-200) !important;
+  font-weight: 600 !important;
+  padding: 16px 20px !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+/* محتوى البطاقات */
+.card-content,
+.panel-content,
+.widget-content {
+  padding: 20px !important;
+  color: var(--text-on-light) !important;
+}
+
+/* أذيال البطاقات */
+.card-footer,
+.panel-footer,
+.widget-footer {
+  background: var(--bg-secondary) !important;
+  border-top: 1px solid var(--light-blue-200) !important;
+  padding: 12px 20px !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+/* ============================================
+   النماذج والحقول
+   ============================================ */
+
+/* الحقول الأساسية */
+input,
+textarea,
+select,
+.form-control,
+.input-field {
+  background: white !important;
+  border: 2px solid var(--light-blue-200) !important;
+  border-radius: 8px !important;
+  color: var(--text-on-light) !important;
+  transition: all 0.3s ease !important;
+  padding: 10px 12px !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.input-field:focus {
+  border-color: var(--light-blue-500) !important;
+  box-shadow: 0 0 0 3px var(--light-blue-200) !important;
+  outline: none !important;
+}
+
+/* تسميات الحقول */
+label,
+.form-label,
+.field-label {
+  color: var(--light-blue-700) !important;
+  font-weight: 600 !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* رسائل الخطأ والنجاح */
+.error-message,
+.field-error {
+  color: var(--error-light) !important;
+  font-size: 14px !important;
+  margin-top: 4px !important;
+}
+
+.success-message,
+.field-success {
+  color: var(--success-light) !important;
+  font-size: 14px !important;
+  margin-top: 4px !important;
+}
+
+/* ============================================
+   الجداول
+   ============================================ */
+
+/* الجداول الأساسية */
+table,
+.table,
+.data-table {
+  background: white !important;
+  border: 1px solid var(--light-blue-200) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* رؤوس الجداول */
+thead,
+.table-header {
+  background: var(--light-blue-100) !important;
+}
+
+th,
+.table-head-cell {
+  background: var(--light-blue-100) !important;
+  color: var(--light-blue-800) !important;
+  font-weight: 700 !important;
+  padding: 16px 12px !important;
+  border-bottom: 2px solid var(--light-blue-200) !important;
+}
+
+/* خلايا الجداول */
+td,
+.table-cell {
+  padding: 12px !important;
+  border-bottom: 1px solid var(--light-blue-100) !important;
+  color: var(--text-on-light) !important;
+}
+
+/* الصفوف البديلة */
+tbody tr:nth-child(even),
+.table-row:nth-child(even) {
+  background: var(--light-blue-50) !important;
+}
+
+tbody tr:hover,
+.table-row:hover {
+  background: var(--light-blue-100) !important;
+  transform: scale(1.01) !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* ============================================
+   التنبيهات والرسائل
+   ============================================ */
+
+/* التنبيهات الأساسية */
+.alert,
+.notification,
+.message {
+  border-radius: 10px !important;
+  padding: 16px 20px !important;
+  margin: 10px 0 !important;
+  border-left: 4px solid !important;
+  background: var(--bg-primary) !important;
+  box-shadow: var(--shadow-light) !important;
+}
+
+/* تنبيهات المعلومات */
+.alert-info,
+.notification-info,
+.message-info {
+  border-left-color: var(--info-light) !important;
+  background: var(--light-blue-50) !important;
+  color: var(--light-blue-800) !important;
+}
+
+/* تنبيهات النجاح */
+.alert-success,
+.notification-success,
+.message-success {
+  border-left-color: var(--success-light) !important;
+  background: hsl(142 71% 95%) !important;
+  color: hsl(142 71% 25%) !important;
+}
+
+/* تنبيهات التحذير */
+.alert-warning,
+.notification-warning,
+.message-warning {
+  border-left-color: var(--warning-light) !important;
+  background: hsl(45 93% 95%) !important;
+  color: hsl(45 93% 25%) !important;
+}
+
+/* تنبيهات الخطأ */
+.alert-error,
+.notification-error,
+.message-error,
+.alert-danger,
+.notification-danger,
+.message-danger {
+  border-left-color: var(--error-light) !important;
+  background: hsl(0 84% 95%) !important;
+  color: hsl(0 84% 25%) !important;
+}
+
+/* ============================================
+   الشريط العلوي والتذييل
+   ============================================ */
+
+/* الشريط العلوي */
+header,
+.header,
+.top-bar,
+.navbar {
+  background: var(--light-blue-100) !important;
+  border-bottom: 2px solid var(--light-blue-200) !important;
+  box-shadow: var(--shadow-light) !important;
+  padding: 12px 0 !important;
+}
+
+/* شعار وعنوان الموقع */
+.logo,
+.site-title,
+.brand {
+  color: var(--light-blue-800) !important;
+  font-weight: 700 !important;
+}
+
+/* قائمة المستخدم */
+.user-menu,
+.profile-menu,
+.account-menu {
+  background: white !important;
+  border: 1px solid var(--light-blue-200) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* التذييل */
+footer,
+.footer {
+  background: var(--bg-secondary) !important;
+  border-top: 1px solid var(--light-blue-200) !important;
+  color: var(--text-on-light) !important;
+  padding: 20px 0 !important;
+}
+
+/* ============================================
+   تحسينات إضافية للوضع المظلم
+   ============================================ */
+
+.dark .card,
+.dark .panel,
+.dark .widget {
+  background: var(--bg-primary) !important;
+  border-color: var(--light-blue-200) !important;
+}
+
+.dark .card-header,
+.dark .panel-header,
+.dark .widget-header {
+  background: var(--light-blue-100) !important;
+  color: var(--text-on-dark) !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background: var(--bg-primary) !important;
+  color: var(--text-on-light) !important;
+  border-color: var(--light-blue-200) !important;
+}
+
+.dark table,
+.dark .table {
+  background: var(--bg-primary) !important;
+}
+
+.dark th {
+  background: var(--light-blue-100) !important;
+  color: var(--text-on-dark) !important;
+}
+
+.dark td {
+  color: var(--text-on-light) !important;
+}
+
+/* ============================================
+   تخصيصات خاصة للتطبيق
+   ============================================ */
+
+/* الشريط الجانبي للتطبيق */
+.app-sidebar,
+.main-sidebar,
+aside {
+  background: linear-gradient(180deg, var(--light-blue-100), var(--light-blue-50)) !important;
+  border-right: 2px solid var(--light-blue-200) !important;
+}
+
+/* شريط التنقل العلوي */
+.app-header,
+.main-header {
+  background: linear-gradient(90deg, var(--light-blue-500), var(--light-blue-400)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* محتوى الصفحة الرئيسي */
+.main-content,
+.page-content {
+  background: var(--bg-primary) !important;
+  min-height: 100vh !important;
+  padding: 20px !important;
+}
+
+/* عناصر التحكم في الجداول */
+.table-controls,
+.data-controls {
+  background: var(--light-blue-50) !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  margin-bottom: 16px !important;
+  border: 1px solid var(--light-blue-200) !important;
+}
+
+/* مؤشرات التحميل */
+.loading,
+.spinner,
+.loader {
+  color: var(--light-blue-500) !important;
+}
+
+/* تبويبات */
+.tabs,
+.tab-nav {
+  border-bottom: 2px solid var(--light-blue-200) !important;
+}
+
+.tab,
+.tab-item {
+  color: var(--light-blue-600) !important;
+  border-bottom: 2px solid transparent !important;
+  padding: 12px 20px !important;
+  transition: all 0.3s ease !important;
+}
+
+.tab:hover,
+.tab-item:hover {
+  color: var(--light-blue-700) !important;
+  background: var(--light-blue-50) !important;
+}
+
+.tab.active,
+.tab-item.active {
+  color: var(--light-blue-800) !important;
+  border-bottom-color: var(--light-blue-500) !important;
+  background: var(--light-blue-100) !important;
+  font-weight: 600 !important;
+}
+
+/* أشرطة التقدم */
+.progress,
+.progress-bar {
+  background: var(--light-blue-100) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+.progress-fill,
+.progress-value {
+  background: linear-gradient(90deg, var(--light-blue-500), var(--light-blue-400)) !important;
+  transition: width 0.3s ease !important;
+}
+
+/* نوافذ الحوار */
+.modal,
+.dialog,
+.popup {
+  background: white !important;
+  border: 2px solid var(--light-blue-200) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-heavy) !important;
+}
+
+.modal-header,
+.dialog-header {
+  background: var(--light-blue-100) !important;
+  color: var(--light-blue-800) !important;
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--light-blue-200) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+
+.modal-content,
+.dialog-content {
+  padding: 24px !important;
+  color: var(--text-on-light) !important;
+}
+
+.modal-footer,
+.dialog-footer {
+  background: var(--bg-secondary) !important;
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--light-blue-200) !important;
+  border-radius: 0 0 16px 16px !important;
+  text-align: right !important;
+}
+
+/* ============================================
+   انتقالات وحركات سلسة
+   ============================================ */
+
+/* حركات دخول العناصر */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out !important;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s ease-out !important;
+}
+
+/* حركات التحويم المتقدمة */
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: var(--shadow-heavy) !important;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px var(--light-blue-400) !important;
+}
+
+/* ============================================
+   نقاط الكسر المتجاوبة
+   ============================================ */
+
+@media (max-width: 1200px) {
+  .app-sidebar {
+    width: 250px !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-sidebar {
+    position: fixed !important;
+    z-index: 1000 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+  }
+  
+  .app-sidebar.open {
+    transform: translateX(0) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .card,
+  .panel,
+  .widget {
+    margin: 8px !important;
+    border-radius: 8px !important;
+  }
+  
+  .card-header,
+  .panel-header,
+  .widget-header {
+    padding: 12px 16px !important;
+  }
+  
+  .card-content,
+  .panel-content,
+  .widget-content {
+    padding: 16px !important;
+  }
+  
+  button,
+  .btn {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+  }
+  
+  .modal,
+  .dialog {
+    margin: 20px !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card,
+  .panel,
+  .widget {
+    margin: 4px !important;
+    border-radius: 6px !important;
+  }
+  
+  table,
+  .table {
+    font-size: 12px !important;
+  }
+  
+  th,
+  td {
+    padding: 8px !important;
+  }
+  
+  .main-content {
+    padding: 12px !important;
+  }
+  
+  .modal,
+  .dialog {
+    margin: 10px !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* ============================================
+   تحسينات الأداء والسلاسة
+   ============================================ */
+
+/* تحسين الرسوم المتحركة */
+*,
+*::before,
+*::after {
+  will-change: auto !important;
+}
+
+.card,
+.panel,
+.widget,
+button,
+.btn {
+  will-change: transform, box-shadow !important;
+}
+
+/* تحسين التمرير */
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* تحسين الخطوط */
+body {
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}

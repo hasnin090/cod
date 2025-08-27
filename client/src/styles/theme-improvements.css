@@ -1,103 +1,123 @@
-/* تحسينات التصميم والألوان المطلوبة من المستخدم */
-
 /* ============================================
-   متغيرات الألوان المحدثة حسب طلب المستخدم
+   نظام ألوان أزرق فاتح موحد ومتطور
    ============================================ */
 
 :root {
-  /* الوضع الفاتح - أبيض رمادي بدلاً من الأبيض الناصع */
-  --background: 220 14% 96%;
-  --foreground: 220 8.9% 46.1%;
-  --card: 220 14% 95%;
-  --card-foreground: 220 8.9% 46.1%;
-  --popover: 220 14% 95%;
-  --popover-foreground: 220 8.9% 46.1%;
+  /* متغيرات الألوان الأساسية - أزرق فاتح موحد */
+  --light-blue-50: hsl(210 100% 98%);
+  --light-blue-100: hsl(210 100% 95%);
+  --light-blue-200: hsl(210 100% 88%);
+  --light-blue-300: hsl(210 100% 80%);
+  --light-blue-400: hsl(210 100% 70%);
+  --light-blue-500: hsl(210 100% 60%);
+  --light-blue-600: hsl(210 100% 50%);
+  --light-blue-700: hsl(210 100% 40%);
+  --light-blue-800: hsl(210 100% 30%);
+  --light-blue-900: hsl(210 100% 20%);
   
-  /* الألوان الأساسية - الأزرق الفاتح */
-  --primary: 214 95% 93%;
-  --primary-foreground: 214 100% 27%;
-  --secondary: 220 14% 95%;
-  --secondary-foreground: 220 8.9% 46.1%;
-  --muted: 220 14% 95%;
-  --muted-foreground: 220 8.9% 46.1%;
-  --accent: 214 95% 93%;
-  --accent-foreground: 214 100% 27%;
+  /* ألوان النصوص والخلفيات */
+  --text-on-light: hsl(215 100% 25%);
+  --text-on-dark: hsl(210 40% 95%);
+  --bg-primary: hsl(210 100% 95%);
+  --bg-secondary: hsl(215 100% 97%);
+  --bg-accent: hsl(210 100% 88%);
   
-  /* ألوان الحدود والحقول */
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 214 100% 27%;
+  /* ألوان الحالات */
+  --success-light: hsl(142 71% 45%);
+  --warning-light: hsl(45 93% 47%);
+  --error-light: hsl(0 84% 60%);
+  --info-light: hsl(210 100% 60%);
   
-  /* متغيرات جديدة للأزرق الفاتح */
-  --light-blue: 214 100% 85%;
-  --light-blue-hover: 214 100% 80%;
-  --light-blue-text: 214 100% 27%;
+  /* ظلال وتأثيرات */
+  --shadow-light: 0 4px 20px -2px hsl(210 100% 75% / 0.15);
+  --shadow-medium: 0 8px 30px -4px hsl(210 100% 70% / 0.25);
+  --shadow-heavy: 0 16px 40px -8px hsl(210 100% 65% / 0.35);
 }
 
 .dark {
-  /* الوضع المظلم - رمادي أسود بدلاً من الأسود الناصع */
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --card: 224 71% 6%;
-  --card-foreground: 213 31% 91%;
-  --popover: 224 71% 6%;
-  --popover-foreground: 213 31% 91%;
+  /* متغيرات للوضع المظلم */
+  --light-blue-50: hsl(225 25% 15%);
+  --light-blue-100: hsl(225 25% 20%);
+  --light-blue-200: hsl(225 25% 30%);
+  --light-blue-300: hsl(210 80% 60%);
+  --light-blue-400: hsl(210 90% 70%);
+  --light-blue-500: hsl(210 100% 75%);
+  --light-blue-600: hsl(210 100% 80%);
+  --light-blue-700: hsl(210 100% 85%);
+  --light-blue-800: hsl(210 100% 90%);
+  --light-blue-900: hsl(210 100% 95%);
   
-  /* الألوان الأساسية في الوضع المظلم */
-  --primary: 214 95% 85%;
-  --primary-foreground: 224 71% 4%;
-  --secondary: 215 27.9% 16.9%;
-  --secondary-foreground: 213 31% 91%;
-  --muted: 215 27.9% 16.9%;
-  --muted-foreground: 217.9 10.6% 64.9%;
-  --accent: 215 27.9% 16.9%;
-  --accent-foreground: 213 31% 91%;
+  /* ألوان النصوص والخلفيات */
+  --text-on-light: hsl(210 40% 90%);
+  --text-on-dark: hsl(225 30% 8%);
+  --bg-primary: hsl(225 25% 12%);
+  --bg-secondary: hsl(225 25% 15%);
+  --bg-accent: hsl(225 25% 20%);
   
-  /* ألوان الحدود والحقول */
-  --border: 215 27.9% 16.9%;
-  --input: 215 27.9% 16.9%;
-  --ring: 214 95% 85%;
+  /* ألوان الحالات */
+  --success-light: hsl(142 71% 55%);
+  --warning-light: hsl(45 93% 57%);
+  --error-light: hsl(0 75% 55%);
+  --info-light: hsl(210 100% 75%);
   
-  /* متغيرات جديدة للأزرق الفاتح في الوضع المظلم */
-  --light-blue: 214 95% 85%;
-  --light-blue-hover: 214 95% 90%;
-  --light-blue-text: 214 95% 85%;
+  /* ظلال وتأثيرات */
+  --shadow-light: 0 4px 20px -2px hsl(225 25% 5% / 0.3);
+  --shadow-medium: 0 8px 30px -4px hsl(225 25% 5% / 0.4);
+  --shadow-heavy: 0 16px 40px -8px hsl(225 25% 5% / 0.5);
 }
 
 /* ============================================
-   توحيد ألوان الأزرار - أزرق فاتح
+   أزرار موحدة بالأزرق الفاتح
    ============================================ */
 
 /* الأزرار الأساسية */
 .btn-primary,
-button[class*="bg-blue"],
-button[class*="bg-gradient"]:not([class*="red"]):not([class*="green"]):not([class*="amber"]),
-.primary-button {
-  background: linear-gradient(135deg, hsl(var(--light-blue)) 0%, hsl(214 100% 75%) 100%) !important;
-  color: hsl(var(--light-blue-text)) !important;
-  border-color: hsl(var(--light-blue)) !important;
+button[class*="bg-blue"]:not([class*="red"]):not([class*="green"]),
+button[class*="primary"],
+.primary-button,
+button.bg-gradient-to-r {
+  background: linear-gradient(135deg, var(--light-blue-500), var(--light-blue-400)) !important;
+  color: white !important;
+  border: 2px solid var(--light-blue-500) !important;
+  box-shadow: var(--shadow-light) !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
   text-shadow: none !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 .btn-primary:hover,
-button[class*="bg-blue"]:hover,
-button[class*="bg-gradient"]:not([class*="red"]):not([class*="green"]):not([class*="amber"]):hover,
-.primary-button:hover {
-  background: linear-gradient(135deg, hsl(var(--light-blue-hover)) 0%, hsl(214 100% 70%) 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 25px -5px hsl(214 100% 75% / 0.4) !important;
+button[class*="bg-blue"]:hover:not([class*="red"]):not([class*="green"]),
+button[class*="primary"]:hover,
+.primary-button:hover,
+button.bg-gradient-to-r:hover {
+  background: linear-gradient(135deg, var(--light-blue-600), var(--light-blue-500)) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-medium) !important;
+  border-color: var(--light-blue-600) !important;
+}
+
+.btn-primary:active,
+button[class*="bg-blue"]:active:not([class*="red"]):not([class*="green"]),
+button[class*="primary"]:active,
+.primary-button:active,
+button.bg-gradient-to-r:active {
+  transform: translateY(0px) !important;
+  box-shadow: var(--shadow-light) !important;
 }
 
 /* الأزرار الثانوية */
 .btn-secondary,
 button[class*="outline"],
+button[class*="secondary"],
 .secondary-button {
   background: transparent !important;
-  color: hsl(var(--light-blue-text)) !important;
-  border: 2px solid hsl(var(--light-blue)) !important;
+  color: var(--light-blue-700) !important;
+  border: 2px solid var(--light-blue-400) !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
 }
-
-.btn-secondary:hover,
 button[class*="outline"]:hover,
 .secondary-button:hover {
   background: hsl(var(--light-blue) / 0.1) !important;

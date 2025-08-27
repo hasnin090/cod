@@ -6,51 +6,87 @@
 
 /* استيراد تحسينات التصميم والألوان */
 @import './styles/theme-improvements.css';
+@import './styles/blue-theme-unified.css';
+@import './styles/icons-unified.css';
+@import './styles/final-unified-theme.css';
 
 @layer base {
   :root {
-    --background: 220 14% 96%;
-    --foreground: 220 8.9% 46.1%;
-    --card: 220 14% 95%;
-    --card-foreground: 220 8.9% 46.1%;
-    --popover: 220 14% 95%;
-    --popover-foreground: 220 8.9% 46.1%;
-    --primary: 214 95% 93%;
-    --primary-foreground: 214 100% 27%;
-    --secondary: 220 14% 95%;
-    --secondary-foreground: 220 8.9% 46.1%;
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 214 95% 93%;
-    --accent-foreground: 214 100% 27%;
+    /* نظام ألوان أزرق فاتح موحد */
+    --background: 218 100% 98%;
+    --foreground: 215 16% 47%;
+    --card: 217 100% 97%;
+    --card-foreground: 215 16% 47%;
+    --popover: 217 100% 97%;
+    --popover-foreground: 215 16% 47%;
+    
+    /* الألوان الأساسية - أزرق فاتح موحد */
+    --primary: 210 100% 88%;
+    --primary-foreground: 215 100% 25%;
+    --secondary: 215 100% 95%;
+    --secondary-foreground: 215 60% 35%;
+    --muted: 215 100% 96%;
+    --muted-foreground: 215 30% 55%;
+    --accent: 210 100% 90%;
+    --accent-foreground: 215 100% 30%;
+    
+    /* ألوان التحكم والحدود */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 214 100% 27%;
+    --border: 215 100% 90%;
+    --input: 215 100% 92%;
+    --ring: 210 100% 60%;
+    
+    /* متغيرات إضافية للتصميم */
+    --success: 142 71% 45%;
+    --warning: 45 93% 47%;
+    --info: 210 100% 70%;
+    --light-blue-bg: 210 100% 95%;
+    --light-blue-hover: 210 100% 85%;
+    --text-primary: 215 100% 25%;
+    --text-secondary: 215 40% 45%;
+    --sidebar-bg: 215 100% 97%;
+    --header-bg: 210 100% 94%;
+    
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
-    --popover: 224 71% 6%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 214 95% 85%;
-    --primary-foreground: 224 71% 4%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 213 31% 91%;
+    /* نظام ألوان الوضع المظلم - متوازن ومريح للعين */
+    --background: 225 30% 8%;
+    --foreground: 210 40% 85%;
+    --card: 225 25% 12%;
+    --card-foreground: 210 40% 85%;
+    --popover: 225 25% 12%;
+    --popover-foreground: 210 40% 85%;
+    
+    /* الألوان الأساسية في الوضع المظلم */
+    --primary: 210 100% 75%;
+    --primary-foreground: 225 30% 8%;
+    --secondary: 225 20% 20%;
+    --secondary-foreground: 210 40% 85%;
+    --muted: 225 20% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 210 100% 70%;
+    --accent-foreground: 225 30% 8%;
+    
+    /* ألوان التحكم والحدود */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 214 95% 85%;
+    --border: 225 20% 25%;
+    --input: 225 20% 20%;
+    --ring: 210 100% 70%;
+    
+    /* متغيرات إضافية للوضع المظلم */
+    --success: 142 71% 55%;
+    --warning: 45 93% 57%;
+    --info: 210 100% 80%;
+    --light-blue-bg: 225 25% 15%;
+    --light-blue-hover: 225 25% 25%;
+    --text-primary: 210 40% 90%;
+    --text-secondary: 215 20% 70%;
+    --sidebar-bg: 225 25% 10%;
+    --header-bg: 225 25% 12%;
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import { logger } from '../shared/logger';
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -88,7 +89,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Health endpoint (outside auth) to confirm function is alive
   app.get('/api/health', (_req: Request, res: Response) => {
-    res.status(200).json({ ok: true, ts: Date.now() });
+    try {
+      // اختبار الاتصال بقاعدة البيانات إذا كان متاحاً
+      let dbStatus = 'unknown';
+      try {
+        if (typeof db !== 'undefined' && db !== null) {
+          dbStatus = 'connected';
+        } else {
+          dbStatus = 'disconnected';
+        }
+      } catch (e) {
+        dbStatus = 'error';
+      }
+      
+      res.status(200).json({ 
+        ok: true, 
+        ts: Date.now(),
+        dbStatus,
+        storageType: (storage as any).__proto__?.constructor?.name || 'unknown'
+      });
+    } catch (error) {
+      logger.error('Health check error:', error);
+      res.status(500).json({ ok: false, ts: Date.now(), error: 'Health check failed' });
+    }
   });
 
   // Simple diagnostics: which storage backend is active
@@ -129,12 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin endpoint: setup/migrate database and seed admin if needed
   app.post('/api/admin/db/setup', authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
+      logger.log('Starting database setup...');
       const { setupDatabase } = await import('./db-setup');
       const ok = await setupDatabase();
-      if (ok) return res.json({ success: true });
+      if (ok) {
+        logger.log('Database setup completed successfully');
+        return res.json({ success: true });
+      }
+      logger.error('Database setup failed');
       return res.status(500).json({ success: false, message: 'فشل إعداد قاعدة البيانات' });
     } catch (err: any) {
-      console.error('DB setup error:', err);
+      logger.error('DB setup error:', err);
       return res.status(500).json({ success: false, message: err?.message || 'DB setup error' });
     }
   });
