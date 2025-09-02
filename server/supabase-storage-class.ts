@@ -1563,13 +1563,23 @@ export class SupabaseStorage {
   async createEmployee(employee: InsertEmployee, createdBy: number): Promise<Employee> {
     this.checkConnection();
     try {
-      const employeeToInsert = {
-        ...employee,
-        createdBy,
+      // Map to snake_case for Supabase / PostgREST
+      const payload: any = {
+        name: employee.name,
+        salary: employee.salary ?? 0,
+        current_balance: employee.currentBalance ?? 0,
+        total_paid: employee.totalPaid ?? 0,
+        last_salary_reset: employee.lastSalaryReset ?? null,
+        assigned_project_id: employee.assignedProjectId ?? null,
+        active: employee.active ?? true,
+        hire_date: employee.hireDate ?? null,
+        notes: employee.notes ?? null,
+        created_by: createdBy,
       };
+
       const { data, error } = await this.supabase
         .from('employees')
-        .insert([employeeToInsert])
+        .insert([payload])
         .select()
         .single();
 
@@ -1577,7 +1587,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error creating employee:', error);
         throw new Error(`Failed to create employee: ${error.message}`);
       }
-      return data as Employee;
+      return this.mapEmployee(data);
     } catch (error) {
       console.error('SupabaseStorage: Exception creating employee:', error);
       throw error;
@@ -1587,9 +1597,22 @@ export class SupabaseStorage {
   async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee> {
     this.checkConnection();
     try {
+      // Only send columns that exist and map to snake_case
+      const updates: any = {};
+      if (employee.name !== undefined) updates.name = employee.name;
+      if (employee.salary !== undefined) updates.salary = employee.salary as any;
+      if (employee.currentBalance !== undefined) updates.current_balance = employee.currentBalance as any;
+      if (employee.totalPaid !== undefined) updates.total_paid = employee.totalPaid as any;
+      if (employee.lastSalaryReset !== undefined) updates.last_salary_reset = employee.lastSalaryReset as any;
+      if (employee.assignedProjectId !== undefined) updates.assigned_project_id = employee.assignedProjectId as any;
+      if (employee.active !== undefined) updates.active = employee.active as any;
+      if (employee.hireDate !== undefined) updates.hire_date = employee.hireDate as any;
+      if (employee.notes !== undefined) updates.notes = employee.notes as any;
+      updates.updated_at = new Date().toISOString();
+
       const { data, error } = await this.supabase
         .from('employees')
-        .update(employee)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
@@ -1598,7 +1621,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error updating employee:', error);
         throw error;
       }
-      return data as Employee;
+      return this.mapEmployee(data);
     } catch (error) {
       console.error('SupabaseStorage: Exception updating employee:', error);
       throw error as any;
