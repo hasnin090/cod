@@ -2268,7 +2268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error.message && error.message.includes('UNIQUE constraint failed')) {
         return res.status(409).json({ message: "اسم الموظف موجود بالفعل" });
       }
-      res.status(500).json({ message: "خطأ في إضافة الموظف" });
+      res.status(500).json({ message: "خطأ في إضافة الموظف", error: error.message });
     }
   });
 
