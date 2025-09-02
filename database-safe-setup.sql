@@ -424,15 +424,28 @@ INSERT INTO funds (name, balance, type, owner_id)
 SELECT 'صندوق المدير الرئيسي', 1000000, 'admin', 1
 WHERE NOT EXISTS (SELECT 1 FROM funds WHERE name = 'صندوق المدير الرئيسي');
 
--- إنشاء أنواع المصروفات الافتراضية
-INSERT INTO expense_types (name, description, is_active) VALUES 
-('راتب', 'مصروفات الرواتب والأجور', true),
-('مواد بناء', 'مواد البناء والإنشاء', true),
-('نقل ومواصلات', 'مصروفات النقل والمواصلات', true),
-('أدوات ومعدات', 'الأدوات والمعدات المختلفة', true),
-('خدمات عامة', 'الخدمات العامة والاستشارات', true),
-('صيانة', 'أعمال الصيانة والإصلاح', true)
-ON CONFLICT (name, project_id) DO NOTHING;
+-- حذف أنواع المصروفات المكررة أولاً
+DELETE FROM expense_types a USING expense_types b 
+WHERE a.id < b.id 
+AND a.name = b.name 
+AND (a.project_id IS NULL AND b.project_id IS NULL 
+     OR a.project_id = b.project_id);
+
+-- إنشاء أنواع المصروفات الافتراضية (مع تجنب التكرار)
+INSERT INTO expense_types (name, description, is_active) 
+SELECT name, description, is_active FROM (VALUES 
+    ('راتب', 'مصروفات الرواتب والأجور', true),
+    ('مواد بناء', 'مواد البناء والإنشاء', true),
+    ('نقل ومواصلات', 'مصروفات النقل والمواصلات', true),
+    ('أدوات ومعدات', 'الأدوات والمعدات المختلفة', true),
+    ('خدمات عامة', 'الخدمات العامة والاستشارات', true),
+    ('صيانة', 'أعمال الصيانة والإصلاح', true)
+) AS new_data(name, description, is_active)
+WHERE NOT EXISTS (
+    SELECT 1 FROM expense_types 
+    WHERE expense_types.name = new_data.name 
+    AND expense_types.project_id IS NULL
+);
 
 -- إنشاء تصنيفات الحسابات الافتراضية
 INSERT INTO account_categories (name, description, created_by) 
