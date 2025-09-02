@@ -2246,12 +2246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // إضافة موظف
   app.post("/api/employees", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
-      const employeeData = {
-        ...req.body,
-        createdBy: (req as any).user.id as number
-      };
-      
-      const employee = await storage.createEmployee(employeeData);
+      const employeeData: InsertEmployee = req.body;
+      const employee = await storage.createEmployee(employeeData, (req as any).user.id);
 
       await storage.createActivityLog({
         action: "create_employee",

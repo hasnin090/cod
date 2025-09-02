@@ -1560,12 +1560,16 @@ export class SupabaseStorage {
     }
   }
 
-  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+  async createEmployee(employee: InsertEmployee, createdBy: number): Promise<Employee> {
     this.checkConnection();
     try {
+      const employeeToInsert = {
+        ...employee,
+        createdBy,
+      };
       const { data, error } = await this.supabase
         .from('employees')
-        .insert([employee])
+        .insert([employeeToInsert])
         .select()
         .single();
 
