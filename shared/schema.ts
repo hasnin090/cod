@@ -440,6 +440,7 @@ export const insertDeferredPaymentSchema = createInsertSchema(deferredPayments)
     beneficiaryName: z.string().min(1, "اسم المستفيد مطلوب"),
     remainingAmount: z.number().optional(),
     dueDate: z.union([z.string(), z.date()]).optional().nullable(),
+    userId: z.number().optional(),
   });
 
 export const insertCompletedWorkSchema = createInsertSchema(completedWorks)

@@ -1658,7 +1658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const deferredPaymentData = {
         ...req.body,
-        createdBy: (req as any).user.id as number
+        userId: (req as any).user.id as number
       };
       
       const deferredPayment = await storage.createDeferredPayment(deferredPaymentData);
