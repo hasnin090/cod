@@ -1577,25 +1577,38 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Deferred payments route - Project-based access control
   app.get("/api/deferred-payments", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id as number;
-      const user = await storage.getUser(userId);
-      
-      let deferredPayments;
-      
-      if (user?.role === 'admin') {
-        // Admin sees all deferred payments
-        deferredPayments = await storage.listDeferredPayments();
-        console.log(`Admin ${user.username} retrieved ${deferredPayments.length} total deferred payments`);
+      const userFromToken = (req as any).user as { id: number; role?: string; username?: string };
+      const userId = Number(userFromToken?.id);
+      const role = userFromToken?.role;
+
+      let deferredPayments: any[] = [];
+
+      // Use role from JWT to avoid DB calls when the DB is down
+      if (role === 'admin') {
+        try {
+          deferredPayments = await storage.listDeferredPayments();
+          console.log(`Admin ${userFromToken?.username || userId} retrieved ${deferredPayments.length} total deferred payments`);
+        } catch (innerErr) {
+          console.warn('Deferred payments (admin) fallback due to storage error:', innerErr);
+          res.setHeader('x-degraded-mode', 'true');
+          return res.status(200).json([]);
+        }
       } else {
-        // Regular users see only deferred payments for their assigned projects
-        deferredPayments = await storage.getDeferredPaymentsForUserProjects(userId);
-        console.log(`User ${user?.username} retrieved ${deferredPayments.length} deferred payments for their projects`);
+        try {
+          deferredPayments = await storage.getDeferredPaymentsForUserProjects(userId);
+          console.log(`User ${userFromToken?.username || userId} retrieved ${deferredPayments.length} deferred payments for their projects`);
+        } catch (innerErr) {
+          console.warn('Deferred payments (user) fallback due to storage error:', innerErr);
+          res.setHeader('x-degraded-mode', 'true');
+          return res.status(200).json([]);
+        }
       }
 
       return res.status(200).json(deferredPayments || []);
     } catch (error) {
-      console.error('Deferred payments error:', error);
+      console.error('Deferred payments error:', error instanceof Error ? error.stack || error.message : error);
       // Return empty array instead of 500 error when database is unavailable
+      res.setHeader('x-degraded-mode', 'true');
       return res.status(200).json([]);
     }
   });  // Get deferred payment details
