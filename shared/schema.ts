@@ -64,7 +64,7 @@ export const employees = pgTable("employees", {
   lastSalaryReset: timestamp("last_salary_reset").defaultNow(),
   assignedProjectId: integer("assigned_project_id").references(() => projects.id, { onDelete: 'set null', onUpdate: 'cascade' }),
   active: boolean("active").notNull().default(true),
-  hireDate: timestamp("hire_date").notNull().defaultNow(),
+  hireDate: timestamp("hire_date").defaultNow(),
   notes: text("notes"),
   createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -386,7 +386,8 @@ export const insertProjectSchema = createInsertSchema(projects)
 export const insertEmployeeSchema = createInsertSchema(employees)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
-    hireDate: z.coerce.date().optional(),
+    hireDate: z.coerce.date().optional().default(() => new Date()),
+    createdBy: z.number().optional(),
   });
 export type Employee = typeof employees.$inferSelect;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;

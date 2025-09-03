@@ -1572,7 +1572,7 @@ export class SupabaseStorage {
         last_salary_reset: employee.lastSalaryReset ?? null,
         assigned_project_id: employee.assignedProjectId ?? null,
         active: employee.active ?? true,
-        hire_date: employee.hireDate ?? null,
+        hire_date: employee.hireDate ?? new Date(),
         notes: employee.notes ?? null,
         created_by: createdBy,
       };
