@@ -140,26 +140,14 @@ app.use(
   },
 );
 
-// تشغيل الواجهة: تطوير vs إنتاج
-const PORT = Number(process.env.PORT || (process.env.NODE_ENV === "production" ? 5173 : 3000));
+  // تشغيل الواجهة: تطوير vs إنتاج
+  const PORT = Number(process.env.PORT || 3001);
 
-if (process.env.NODE_ENV === "production") {
-  serveStatic(app);
-  server.listen(PORT, () =>
-    log(`Server running at http://localhost:${PORT}`, "server"),
-  );
-} else {
-  setupVite(app, server)
-    .then(() => {
-      server.listen(PORT, () =>
-        log(`Dev server running at http://localhost:${PORT}`, "server"),
-      );
-    })
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    });
-  }
+  // تشغيل الخادم بشكل مباشر للاختبار
+  server.listen(PORT, () => {
+    console.log(`✅ Server successfully listening on port ${PORT}`);
+    console.log(`🌐 Server running at http://localhost:${PORT}`);
+  });
 }
 
 // تشغيل الخادم
