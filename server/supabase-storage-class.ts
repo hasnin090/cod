@@ -76,6 +76,63 @@ export class SupabaseStorage {
     } as ExpenseType;
   }
 
+  // Deferred payments mappers
+  private mapDeferredPayment(row: any): DeferredPayment {
+    return {
+      id: row.id,
+      beneficiaryName: row.beneficiary_name ?? row.beneficiaryName,
+      totalAmount: row.total_amount ?? row.totalAmount,
+      paidAmount: row.paid_amount ?? row.paidAmount ?? 0,
+      remainingAmount: row.remaining_amount ?? row.remainingAmount,
+      projectId: row.project_id ?? row.projectId ?? null,
+      userId: row.user_id ?? row.userId,
+      status: row.status ?? 'pending',
+      description: row.description ?? null,
+      dueDate: row.due_date ?? row.dueDate ?? null,
+      installments: row.installments ?? 1,
+      paymentFrequency: row.payment_frequency ?? row.paymentFrequency ?? 'monthly',
+      notes: row.notes ?? null,
+      completedAt: row.completed_at ?? row.completedAt ?? null,
+      createdAt: row.created_at ?? row.createdAt ?? null,
+      updatedAt: row.updated_at ?? row.updatedAt ?? null,
+    } as unknown as DeferredPayment;
+  }
+
+  private toDeferredPaymentInsert(payment: InsertDeferredPayment): Record<string, any> {
+    return {
+      beneficiary_name: (payment as any).beneficiaryName ?? (payment as any).beneficiary_name,
+      total_amount: (payment as any).totalAmount ?? (payment as any).total_amount,
+      paid_amount: (payment as any).paidAmount ?? (payment as any).paid_amount ?? 0,
+      remaining_amount: (payment as any).remainingAmount ?? (payment as any).remaining_amount,
+      project_id: (payment as any).projectId ?? (payment as any).project_id ?? null,
+      user_id: (payment as any).userId ?? (payment as any).user_id,
+      status: (payment as any).status ?? 'pending',
+      description: (payment as any).description ?? null,
+      due_date: (payment as any).dueDate ?? (payment as any).due_date ?? null,
+      installments: (payment as any).installments ?? 1,
+      payment_frequency: (payment as any).paymentFrequency ?? (payment as any).payment_frequency ?? 'monthly',
+      notes: (payment as any).notes ?? null,
+    };
+  }
+
+  private toDeferredPaymentUpdate(payment: Partial<DeferredPayment>): Record<string, any> {
+    const out: Record<string, any> = {};
+    if ('beneficiaryName' in payment) out.beneficiary_name = (payment as any).beneficiaryName;
+    if ('totalAmount' in payment) out.total_amount = (payment as any).totalAmount;
+    if ('paidAmount' in payment) out.paid_amount = (payment as any).paidAmount;
+    if ('remainingAmount' in payment) out.remaining_amount = (payment as any).remainingAmount;
+    if ('projectId' in payment) out.project_id = (payment as any).projectId;
+    if ('userId' in payment) out.user_id = (payment as any).userId;
+    if ('status' in payment) out.status = (payment as any).status;
+    if ('description' in payment) out.description = (payment as any).description;
+    if ('dueDate' in payment) out.due_date = (payment as any).dueDate;
+    if ('installments' in payment) out.installments = (payment as any).installments;
+    if ('paymentFrequency' in payment) out.payment_frequency = (payment as any).paymentFrequency;
+    if ('notes' in payment) out.notes = (payment as any).notes;
+    if ('completedAt' in payment) out.completed_at = (payment as any).completedAt;
+    return out;
+  }
+
   private mapEmployee(row: any): Employee {
     return {
       id: row.id,
@@ -1306,7 +1363,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error getting deferred payments:', error);
         return [];
       }
-      return data as DeferredPayment[];
+  return (data || []).map((row: any) => this.mapDeferredPayment(row));
     } catch (error) {
       console.error('SupabaseStorage: Exception getting deferred payments:', error);
       return [];
@@ -1332,7 +1389,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error getting deferred payment:', error);
         return undefined;
       }
-      return data as DeferredPayment;
+  return data ? this.mapDeferredPayment(data) : undefined;
     } catch (error) {
       console.error('SupabaseStorage: Exception getting deferred payment:', error);
       return undefined;
@@ -1342,9 +1399,10 @@ export class SupabaseStorage {
   async createDeferredPayment(payment: InsertDeferredPayment): Promise<DeferredPayment> {
     this.checkConnection();
     try {
+      const payload = this.toDeferredPaymentInsert(payment);
       const { data, error } = await this.supabase
         .from('deferred_payments')
-        .insert([payment])
+        .insert([payload])
         .select()
         .single();
 
@@ -1352,7 +1410,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error creating deferred payment:', error);
         throw new Error(`Failed to create deferred payment: ${error.message}`);
       }
-      return data as DeferredPayment;
+      return this.mapDeferredPayment(data);
     } catch (error) {
       console.error('SupabaseStorage: Exception creating deferred payment:', error);
       throw error;
@@ -1362,9 +1420,10 @@ export class SupabaseStorage {
   async updateDeferredPayment(id: number, payment: Partial<DeferredPayment>): Promise<DeferredPayment | undefined> {
     this.checkConnection();
     try {
+      const updatePayload = this.toDeferredPaymentUpdate(payment);
       const { data, error } = await this.supabase
         .from('deferred_payments')
-        .update(payment)
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
@@ -1373,7 +1432,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error updating deferred payment:', error);
         return undefined;
       }
-      return data as DeferredPayment;
+      return data ? this.mapDeferredPayment(data) : undefined;
     } catch (error) {
       console.error('SupabaseStorage: Exception updating deferred payment:', error);
       return undefined;
@@ -1417,7 +1476,7 @@ export class SupabaseStorage {
       if (!upRows || upRows.length === 0) return [];
       const projectIds = (upRows as any[]).map(r => r.project_id);
 
-      const { data, error } = await this.supabase
+  const { data, error } = await this.supabase
         .from('deferred_payments')
         .select('*')
         .in('project_id', projectIds);
@@ -1426,7 +1485,7 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error getting deferred payments for user projects:', error);
         return [];
       }
-      return (data || []) as DeferredPayment[];
+  return (data || []).map((row: any) => this.mapDeferredPayment(row));
     } catch (error) {
       console.error('SupabaseStorage: Exception getting deferred payments for user projects:', error);
       return [];
