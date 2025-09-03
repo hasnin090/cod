@@ -402,9 +402,9 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const users = await storage.listUsers();
       
-      // المديرون يمكنهم رؤية كلمات المرور الأصلية
-      const currentUser = await storage.getUser((req as any).user.id as number);
-      if (currentUser?.role === 'admin') {
+  // المديرون يمكنهم رؤية كلمات المرور الأصلية (نعتمد على دور التوكن لتجنّب نداء DB إضافي)
+  const isAdmin = ((req as any).user?.role === 'admin');
+  if (isAdmin) {
         // إرسال البيانات مع كلمة المرور الأصلية بدلاً من المشفرة
         const usersWithPlainPassword = users.map(user => {
           const plainPassword = (user as any).plain_password;
@@ -623,18 +623,16 @@ export async function registerRoutes(app: Express): Promise<void> {
       if (!uid || Number.isNaN(uid)) {
         return res.status(401).json({ message: "غير مصرح" });
       }
-      const user = await storage.getUser(uid);
-      if (!user) {
-        return res.status(401).json({ message: "غير مصرح" });
-      }
+      const role = (req as any)?.user?.role as string | undefined;
 
       // المشرفون يرون جميع المعاملات
-      if (user.role === 'admin') {
+      if (role === 'admin') {
         try {
           const transactions = await storage.listTransactions();
           return res.status(200).json(transactions);
         } catch (innerErr) {
           console.error('GET /api/transactions admin path error, returning []', innerErr);
+          res.setHeader('x-degraded-mode', 'true');
           return res.status(200).json([]);
         }
       }
@@ -645,6 +643,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(200).json(transactions);
       } catch (innerErr) {
         console.error('GET /api/transactions user path error, returning []', innerErr, { uid });
+        res.setHeader('x-degraded-mode', 'true');
         return res.status(200).json([]);
       }
     } catch (error) {
@@ -718,8 +717,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post('/api/transactions/export/excel', authenticate, async (req: Request, res: Response) => {
     try {
       const uid = (req as any).user.id as number;
-      const user = await storage.getUser(uid);
-      if (!user) return res.status(401).json({ message: 'غير مصرح' });
+      const role = (req as any).user.role as string | undefined;
 
       const body = req.body as any;
       const filters = {
@@ -730,14 +728,20 @@ export async function registerRoutes(app: Express): Promise<void> {
       };
 
       let list: any[];
-      if (user.role === 'admin') {
-        if (filters.projectId) {
-          list = await storage.getTransactionsByProject(filters.projectId);
+      try {
+        if (role === 'admin') {
+          if (filters.projectId) {
+            list = await storage.getTransactionsByProject(filters.projectId);
+          } else {
+            list = await storage.listTransactions();
+          }
         } else {
-          list = await storage.listTransactions();
+          list = await storage.getTransactionsForUserProjects(uid);
         }
-      } else {
-        list = await storage.getTransactionsForUserProjects(uid);
+      } catch (innerErr) {
+        console.warn('Export excel degraded mode, returning empty CSV:', innerErr);
+        list = [];
+        res.setHeader('x-degraded-mode', 'true');
       }
 
       // تطبيق الفلاتر الباقية
@@ -907,32 +911,40 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.get("/api/expense-types", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id as number;
+      const role = (req as any).user.role as string | undefined;
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       
-      // Get user to check role
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "المستخدم غير موجود" });
-      }
-      
       let expenseTypes;
-      if (user.role === 'admin') {
+      if (role === 'admin') {
         // المدير يرى جميع أنواع المصروفات أو حسب المشروع المحدد
-        expenseTypes = await storage.listExpenseTypes(projectId);
+        try {
+          expenseTypes = await storage.listExpenseTypes(projectId);
+        } catch (innerErr) {
+          console.warn('Expense-types degraded (admin):', innerErr);
+          res.setHeader('x-degraded-mode', 'true');
+          return res.status(200).json([]);
+        }
       } else {
         // المستخدمون العاديون يرون فقط أنواع مصروفات مشاريعهم
         // If projectId is provided, filter by it, otherwise get all for user
-        if (projectId) {
-          const userExpenseTypes = await storage.listExpenseTypesForUser(userId);
-          expenseTypes = userExpenseTypes.filter(et => et.projectId === projectId);
-        } else {
-          expenseTypes = await storage.listExpenseTypesForUser(userId);
+        try {
+          if (projectId) {
+            const userExpenseTypes = await storage.listExpenseTypesForUser(userId);
+            expenseTypes = userExpenseTypes.filter(et => et.projectId === projectId);
+          } else {
+            expenseTypes = await storage.listExpenseTypesForUser(userId);
+          }
+        } catch (innerErr) {
+          console.warn('Expense-types degraded (user):', innerErr);
+          res.setHeader('x-degraded-mode', 'true');
+          return res.status(200).json([]);
         }
       }
       
       return res.status(200).json(expenseTypes);
     } catch (error) {
       console.error("Error fetching expense types:", error);
+      res.setHeader('x-degraded-mode', 'true');
       return res.status(200).json([]);
     }
   });
