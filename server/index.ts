@@ -25,29 +25,30 @@ initializeSupabaseStorage().then(success => {
   console.error('❌ Error during Supabate Storage initialization:', error);
 });
 
-// إنشاء التطبيق والخادم
-const app = express();
-const server = http.createServer(app);
+async function startServer() {
+  // إنشاء التطبيق والخادم
+  const app = express();
+  const server = http.createServer(app);
 
-// الثقة بالـ proxy (مطلوب خلف Nginx/Render/Heroku)
-app.set("trust proxy", 1);
+  // الثقة بالـ proxy (مطلوب خلف Nginx/Render/Heroku)
+  app.set("trust proxy", 1);
 
-// أمان وأداء
-app.use(helmet());
-app.use(compression());
+  // أمان وأداء
+  app.use(helmet());
+  app.use(compression());
 
-// بارس للطلبات
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: false }));
+  // بارس للطلبات
+  app.use(express.json({ limit: "1mb" }));
+  app.use(express.urlencoded({ extended: false }));
 
-// ملاحظة: تهيئة الجلسات تتم داخل registerRoutes لضمان اتساق الإعدادات عبر البيئات.
+  // ملاحظة: تهيئة الجلسات تتم داخل registerRoutes لضمان اتساق الإعدادات عبر البيئات.
 
-// خدمة مجلد الرفع
-const uploadsDir = path.resolve(process.env.UPLOADS_DIR || "uploads");
-app.use("/uploads", express.static(uploadsDir));
+  // خدمة مجلد الرفع
+  const uploadsDir = path.resolve(process.env.UPLOADS_DIR || "uploads");
+  app.use("/uploads", express.static(uploadsDir));
 
-// تسجيل الراوترات أولاً (يتضمن تهيئة الجلسات داخلياً)
-registerRoutes(app);
+  // تسجيل الراوترات أولاً (يتضمن تهيئة الجلسات داخلياً)
+  await registerRoutes(app);
 
 // مسار إنشاء المعاملة - يُسجل بعد الراوترات الافتراضية ليكون هو المُقدّم
 app.post(
@@ -158,4 +159,11 @@ if (process.env.NODE_ENV === "production") {
       console.error(e);
       process.exit(1);
     });
+  }
 }
+
+// تشغيل الخادم
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
