@@ -1,7 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { logger } from '../shared/logger';
 import express from "express";
-import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   loginSchema, 
@@ -15,7 +14,8 @@ import {
   insertDeferredPaymentSchema,
   funds,
   employees,
-  type Transaction
+  type Transaction,
+  type InsertEmployee
 } from "../shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -50,7 +50,9 @@ const __dirname = process.cwd();
 import { documentUpload, transactionUpload, completedWorksUpload, completedWorksDocsUpload } from './multer-config';
 import { createClient } from '@supabase/supabase-js';
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
+  try {
+    console.log('Starting registerRoutes...');
   // Ensure Express is aware it's behind a proxy (Netlify) so secure cookies work
   app.set('trust proxy', 1);
   // إعدادات البيئة و JWT
@@ -2256,7 +2258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/employees", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
       const employeeData: InsertEmployee = req.body;
-      const employee = await storage.createEmployee(employeeData, (req as any).user.id);
+      const employee = await storage.createEmployee(employeeData);
 
       await storage.createActivityLog({
         action: "create_employee",
@@ -2498,6 +2500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadDate: new Date(),
         projectId: transaction.projectId,
         uploadedBy: (req as any).user.id as number,
+        isManagerDocument: false,
         category: source || 'linked',
         tags: [source || 'system', 'transaction-linked'],
       };
@@ -2743,6 +2746,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
   });
 
-  const server = createServer(app);
-  return server;
+  // تسجيل routes فقط، بدون إنشاء server جديد
+  console.log('registerRoutes completed successfully');
+  } catch (error) {
+    console.error('Error in registerRoutes:', error);
+    throw error;
+  }
 }
