@@ -1,3 +1,4 @@
+import { getApiBase } from '@/lib/api';
 // مكون رفع المجلدات بكميات كبيرة
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -145,7 +146,7 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           formData.append('projectId', projectId.toString());
         }
 
-        const response = await fetch('/api/upload-document', {
+  const response = await fetch(`${getApiBase()}/upload-document`, {
           method: 'POST',
           body: formData,
           credentials: 'include',

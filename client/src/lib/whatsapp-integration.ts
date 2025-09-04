@@ -1,3 +1,5 @@
+import { getApiBase } from "@/lib/api";
+
 /**
  * WhatsApp Integration Utilities
  * يوفر وظائف أساسية للتكامل مع واتساب لاستقبال الملفات وربطها بالمعاملات
@@ -161,7 +163,7 @@ async function downloadWhatsAppMedia(mediaUrl: string, filename: string): Promis
     formData.append('file', fileBlob, filename);
     formData.append('source', 'whatsapp');
 
-    const uploadResponse = await fetch('/api/upload-whatsapp-file', {
+    const uploadResponse = await fetch(`${getApiBase()}/upload-whatsapp-file`, {
       method: 'POST',
       body: formData,
       credentials: 'include',
@@ -188,7 +190,7 @@ async function linkFileToTransaction(fileUrl: string, transactionId: number): Pr
   error?: string;
 }> {
   try {
-    const response = await fetch('/api/transactions/link-document', {
+    const response = await fetch(`${getApiBase()}/transactions/link-document`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,7 +229,7 @@ async function createGeneralDocument(docData: {
   error?: string;
 }> {
   try {
-    const response = await fetch('/api/documents', {
+    const response = await fetch(`${getApiBase()}/documents`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

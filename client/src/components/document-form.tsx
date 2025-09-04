@@ -1,3 +1,4 @@
+import { getApiBase } from '@/lib/api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -245,7 +246,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           // استخدام Fetch API بدلاً من Firebase Storage مباشرة
 
           
-          const response = await fetch('/api/upload-document', {
+          const response = await fetch(`${getApiBase()}/upload-document`, {
             method: 'POST',
             body: formData,
             credentials: 'include',
