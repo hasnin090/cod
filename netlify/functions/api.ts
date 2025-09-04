@@ -56,7 +56,13 @@ async function buildHandler() {
 
   serverlessHandler = serverless(app as any, {
     basePath: '/.netlify/functions',
-    binary: ['*/*'], // التصرّف كثنائي لكل الأنواع لتفادي مشاكل multipart
+    // دعم multipart بشكل صريح
+    binary: ['multipart/form-data', 'application/octet-stream', 'image/*', '*/*'],
+    request: {
+      binary: {
+        contentTypes: ['multipart/form-data', 'application/octet-stream', 'image/*']
+      }
+    }
   } as any);
   return serverlessHandler;
 }
