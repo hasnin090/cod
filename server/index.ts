@@ -1,6 +1,18 @@
 import dotenv from "dotenv";
 // Load environment variables from .env and force override to prefer repo settings
 dotenv.config({ override: true });
+
+// Prevent unexpected process exits due to unhandled errors (log and continue)
+process.on('unhandledRejection', (reason) => {
+  try {
+    console.error('[unhandledRejection]', reason);
+  } catch {}
+});
+process.on('uncaughtException', (err) => {
+  try {
+    console.error('[uncaughtException]', err);
+  } catch {}
+});
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import path from "path";
