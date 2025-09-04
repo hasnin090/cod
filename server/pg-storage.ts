@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import postgres from 'postgres';
 import bcrypt from 'bcryptjs';
 import {
   users, type User, type InsertUser,
@@ -21,7 +21,7 @@ import {
 import { IStorage } from './storage';
 
 export class PgStorage implements IStorage {
-  private sql: ReturnType<typeof neon> | null = null;
+  private sql: ReturnType<typeof postgres> | null = null;
   private connectionRetries = 0;
   private maxRetries = 5;
   private retryDelay = 1000; // 1 second
@@ -38,7 +38,10 @@ export class PgStorage implements IStorage {
     }
 
     try {
-      this.sql = neon(url);
+      // Use postgres.js for direct connection to Supabase Postgres with TLS
+      this.sql = postgres(url, {
+        ssl: 'require'
+      });
       this.initializeConnection();
       // Start periodic connection health check
       this.startHealthCheck();

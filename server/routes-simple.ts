@@ -1699,8 +1699,13 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       res.status(201).json(deferredPayment);
     } catch (error: any) {
-      console.error("Error creating deferred payment:", error);
-      res.status(500).json({ message: "خطأ في إضافة المستحق" });
+      console.warn("Create deferred payment failed, degraded mode response:", error?.message || error);
+      // هبوط سلس: نُرجع 202 مع رسالة بدل 500 حتى لا يتعطل الواجهة
+      res.setHeader('x-degraded-mode', 'true');
+      return res.status(202).json({
+        success: false,
+        message: "تعذر حفظ المستحق حالياً بسبب الاتصال. تم تجاهل العملية مؤقتاً.",
+      });
     }
   });
 

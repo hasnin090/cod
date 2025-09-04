@@ -1,6 +1,6 @@
 // استيراد المكتبات اللازمة
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from '../shared/schema';
 import { logger } from '../shared/logger';
 
@@ -15,30 +15,20 @@ function createDatabaseConnection() {
   
   try {
     // طباعة معلومات الاتصال للتصحيح (مع إخفاء البيانات الحساسة)
-    const maskedUrl = url.replace(/:[^:]*@/, '****@' );
-    logger.log(`Connecting to database... URL format: ${maskedUrl.substring(0, 50)}...`);
-    
-    const sql = neon(url);
-    const db = drizzle(sql, { 
-      schema,
-      logger: {
-        query: (query, params) => {
-          logger.log(`Executing query: ${query} with params:`, params);
-        },
-        error: (error) => {
-          logger.error(`Database error:`, error);
-        }
-      }
-    });
-    
+    const maskedUrl = url.replace(/:[^:]*@/, ':****@');
+    logger.log(`Connecting to database (direct)… URL: ${maskedUrl.substring(0, 60)}...`);
+
+    const sql = postgres(url, { ssl: 'require' });
+    const db = drizzle(sql, { schema });
+
     // اختبار الاتصال
-    sql`SELECT 1;`.then(() => {
-      logger.log('Database connection successful');
+    sql`SELECT 1`.then(() => {
+      logger.log('Direct database connection successful');
     }).catch(err => {
-      logger.error('Database connection test failed:', err);
+      logger.error('Direct database connection test failed:', err);
     });
-    
-    return db;
+
+    return db as any;
   } catch (error) {
     logger.error('Failed to create database connection:', error);
     return null;

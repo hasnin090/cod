@@ -1216,8 +1216,21 @@ function createStorage(): IStorage {
 
   const hasSupabaseEnv = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
   const hasDatabaseUrl = !!process.env.DATABASE_URL && !!process.env.DATABASE_URL.trim();
+  const preferDirectDb = (process.env.USE_DIRECT_DB || '').toLowerCase() === 'true';
 
-  // 1) Supabase (PostgREST) storage
+  // 1) Direct Postgres storage via DATABASE_URL (when explicitly preferred)
+  if (preferDirectDb && hasDatabaseUrl) {
+    try {
+      logger.log('USE_DIRECT_DB=true: Initializing PgStorage (direct DB)');
+      _storage = new PgStorage();
+      _storageType = 'PostgreSQL';
+      return _storage as IStorage;
+    } catch (error) {
+      logger.error('❌ Failed to initialize PgStorage (direct). Falling back...', error);
+    }
+  }
+
+  // 2) Supabase (PostgREST) storage
   if (hasSupabaseEnv) {
     try {
       logger.log('Attempting to initialize SupabaseStorage...');
@@ -1230,7 +1243,7 @@ function createStorage(): IStorage {
     }
   }
 
-  // 2) Direct Postgres storage via DATABASE_URL
+  // 3) Direct Postgres storage via DATABASE_URL
   if (hasDatabaseUrl) {
     try {
       logger.log('Attempting to initialize PgStorage with database connection...');
@@ -1243,7 +1256,7 @@ function createStorage(): IStorage {
     }
   }
 
-  // 3) Fallback to in-memory (non-persistent)
+  // 4) Fallback to in-memory (non-persistent)
   const warningMsg = 'No persistent storage configured (missing SUPABASE_* or DATABASE_URL). Using MemStorage (ephemeral). Data will be lost on server restart.';
   logger.warn(`⚠️ ${warningMsg}`);
   _storage = new MemStorage();
