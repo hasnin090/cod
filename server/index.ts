@@ -1,4 +1,6 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+// Load environment variables from .env and force override to prefer repo settings
+dotenv.config({ override: true });
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import path from "path";

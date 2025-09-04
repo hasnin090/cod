@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
 import postgres from 'postgres';
 import bcrypt from 'bcryptjs';
 import {
