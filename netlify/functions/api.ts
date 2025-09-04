@@ -1,6 +1,7 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import { registerRoutes } from './server/routes-simple';
+// Use the app's server routes directly
+import { registerRoutes } from '../../server/routes-simple';
 
 let serverlessHandler: any | null = null;
 
@@ -40,6 +41,18 @@ async function buildHandler() {
   app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', platform: 'netlify', ts: new Date().toISOString() });
   });
+
+  // Optional: allow unauth upload in serverless by forwarding to route if a special header is set
+  // This avoids 502 from auth on Netlify proxies if cookies are stripped. Keep disabled unless needed.
+  /*
+  app.post('/api/upload-document', async (req, res, next) => {
+    if (req.headers['x-netlify-bypass-auth'] === '1') {
+      // trust upstream to have authenticated; continue to registered handler
+      return next();
+    }
+    return next();
+  });
+  */
 
   serverlessHandler = serverless(app as any, {
     basePath: '/.netlify/functions',
