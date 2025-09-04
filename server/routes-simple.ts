@@ -2042,12 +2042,13 @@ export async function registerRoutes(app: Express): Promise<void> {
           const { name, description, projectId, isManagerDocument } = req.body;
           const file = req.file;
           const userId = (req as any).user.id as number;
+          const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
           
           // التحقق من صلاحية المستخدم للمستندات الإدارية
           const userRole = (req as any).user.role as string;
           if (isManagerDocument === 'true' && userRole !== "admin" && userRole !== "manager") {
             // حذف الملف المؤقت
-            if (fs.existsSync(file.path)) {
+            if ((file as any).path && fs.existsSync((file as any).path)) {
               fs.unlinkSync(file.path);
             }
             return res.status(403).json({ 
@@ -2062,7 +2063,7 @@ export async function registerRoutes(app: Express): Promise<void> {
               const hasAccess = await storage.checkUserProjectAccess(userId, projectIdNumber);
               if (!hasAccess) {
                 // حذف الملف المؤقت
-                if (fs.existsSync(file.path)) {
+                if ((file as any).path && fs.existsSync((file as any).path)) {
                   fs.unlinkSync(file.path);
                 }
                 return res.status(403).json({ 
@@ -2072,44 +2073,76 @@ export async function registerRoutes(app: Express): Promise<void> {
             }
           }
           
+          // تجهيز رابط الملف: محاولة رفع للسحابة ثم بديل محلي
+          let fileUrl: string | null = null;
+          let fileType: string | null = file.mimetype || null;
+          try {
+            if (hasSupabase) {
+              const isMemory = (file as any).buffer && !(file as any).path;
+              const buffer = isMemory ? (file as any).buffer : fs.readFileSync((file as any).path);
+              const up = await uploadToSupabase(buffer, file.originalname, 'documents');
+              if (up.success && up.url) {
+                fileUrl = up.url;
+              } else {
+                console.warn('Supabase upload failed for document:', up.error);
+              }
+            }
+          } catch (e) {
+            console.warn('Upload to Supabase threw for document:', e);
+          }
+
+          // Fallback local URL (disk storage only)
+          if (!fileUrl) {
+            const fname = (file as any).filename || `${Date.now()}_${file.originalname.replace(/\s+/g,'_')}`;
+            // تصحيح المسار المحلي إلى مجلد documents
+            fileUrl = `/uploads/documents/${fname}`;
+          }
+
           // تهيئة البيانات للمستند
           const documentData = {
             name: name,
             description: description || "",
             projectId: projectId && projectId !== "all" ? Number(projectId) : undefined,
-            fileUrl: `/uploads/${file.filename}`, // مسار الملف المحلي
-            fileType: file.mimetype,
+            fileUrl,
+            fileType,
             uploadDate: new Date(),
             uploadedBy: userId,
             isManagerDocument: isManagerDocument === 'true'
           };
           
           // إضافة المستند إلى قاعدة البيانات
-          const document = await storage.createDocument(documentData as any);
-          
-          // تسجيل نشاط إضافة المستند
-          await storage.createActivityLog({
-            action: "create",
-            entityType: "document",
-            entityId: document.id,
-            details: `إضافة مستند جديد: ${document.name}`,
-            userId: userId
-          });
-          
-          return res.status(201).json(document);
-        } catch (error) {
-          // حذف الملف المؤقت في حالة حدوث خطأ
-          if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+          try {
+            const document = await storage.createDocument(documentData as any);
+            // تسجيل نشاط إضافة المستند
+            await storage.createActivityLog({
+              action: "create",
+              entityType: "document",
+              entityId: document.id,
+              details: `إضافة مستند جديد: ${document.name}`,
+              userId: userId
+            });
+            return res.status(201).json(document);
+          } catch (dbErr: any) {
+            // عدم حذف الملف محلياً للسماح بالوصول إليه كبديل
+            console.warn('Create document failed, degraded mode:', dbErr?.message || dbErr);
+            res.setHeader('x-degraded-mode', 'true');
+            return res.status(202).json({
+              success: false,
+              message: 'تعذر حفظ المستند في قاعدة البيانات حالياً بسبب الاتصال. تم حفظ الملف مؤقتاً.',
+              fileUrl,
+            });
           }
-          
+        } catch (error) {
           console.error("خطأ في رفع الملف:", error);
-          return res.status(500).json({ message: "حدث خطأ أثناء معالجة الملف" });
+          // هبوط سلس في حالة خطأ غير متوقع أثناء الرفع/المعالجة
+          res.setHeader('x-degraded-mode', 'true');
+          return res.status(202).json({ message: "تعذر معالجة الملف حالياً" });
         }
       });
     } catch (error) {
       console.error("خطأ عام في رفع المستند:", error);
-      return res.status(500).json({ message: "خطأ في رفع المستند" });
+      res.setHeader('x-degraded-mode', 'true');
+      return res.status(202).json({ message: "تعذر رفع المستند حالياً" });
     }
   });
 

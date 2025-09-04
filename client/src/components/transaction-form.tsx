@@ -303,6 +303,7 @@ export function TransactionForm({ projects, onSubmit, isLoading }: TransactionFo
         return fetch('/api/transactions', {
           method: 'POST',
           body: formData,
+          credentials: 'include',
         }).then(async res => {
           if (!res.ok) {
             const errorData = await res.json().catch(() => ({ message: 'خطأ غير معروف' }));

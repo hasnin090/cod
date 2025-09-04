@@ -164,6 +164,7 @@ async function downloadWhatsAppMedia(mediaUrl: string, filename: string): Promis
     const uploadResponse = await fetch('/api/upload-whatsapp-file', {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     });
 
     if (uploadResponse.ok) {

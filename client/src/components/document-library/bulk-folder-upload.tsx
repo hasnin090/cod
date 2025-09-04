@@ -147,7 +147,8 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
 
         const response = await fetch('/api/upload-document', {
           method: 'POST',
-          body: formData
+          body: formData,
+          credentials: 'include',
         });
 
         if (response.ok) {

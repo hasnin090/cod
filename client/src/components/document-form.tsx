@@ -248,6 +248,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           const response = await fetch('/api/upload-document', {
             method: 'POST',
             body: formData,
+            credentials: 'include',
             // لا تضع headers هنا، دع المتصفح يحددها تلقائيًا مع FormData
           });
           
