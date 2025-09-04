@@ -10,6 +10,8 @@
   # Increase resources for uploads
   external_node_modules = ["@supabase/supabase-js", "multer"]
   included_files = ["server/**", "shared/**", "netlify/functions/**"]
+
+[functions."api"]
   timeout = 26
   memory = 1024
 
