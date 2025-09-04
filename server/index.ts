@@ -141,7 +141,8 @@ app.use(
 );
 
   // تشغيل الواجهة: تطوير vs إنتاج
-  const PORT = Number(process.env.PORT || 3001);
+  // ملاحظة: نجعل المنفذ الافتراضي 3000 ليتماشى مع إعداد proxy في Vite
+  const PORT = Number(process.env.PORT || 3000);
 
   // تشغيل الخادم بشكل مباشر للاختبار
   server.listen(PORT, () => {
