@@ -448,6 +448,111 @@ export async function registerRoutes(app: Express): Promise<void> {
       return res.status(200).json([]);
     }
   });  // Delete user endpoint
+  // Create user endpoint
+  app.post("/api/users", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      const data = insertUserSchema.parse(req.body);
+      // إنشاء المستخدم عبر طبقة التخزين (يقوم بعمل التجزئة وغيرها)
+      const user = await storage.createUser(data);
+
+      await storage.createActivityLog({
+        action: "create_user",
+        entityType: "user",
+        entityId: user.id,
+        details: `إنشاء مستخدم: ${user.name} (${user.username})`,
+        userId: (req as any).user.id as number
+      });
+
+      return res.status(201).json(user);
+    } catch (error: any) {
+      console.error('خطأ في إنشاء المستخدم:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors?.[0]?.message || 'بيانات غير صالحة' });
+      }
+      const msg = (error?.message || '').toLowerCase();
+      if (msg.includes('unique') || msg.includes('duplicate')) {
+        return res.status(409).json({ message: 'اسم المستخدم موجود بالفعل' });
+      }
+      return res.status(500).json({ message: 'خطأ في إنشاء المستخدم' });
+    }
+  });
+  
+  // Assign user to project
+  app.post("/api/users/:userId/assign-project", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { projectId } = req.body as { projectId?: number };
+      if (!userId || !projectId) {
+        return res.status(400).json({ message: "userId و projectId مطلوبان" });
+      }
+
+      const assignment = await storage.assignUserToProject({
+        userId,
+        projectId,
+        assignedBy: (req as any).user.id as number,
+      } as any);
+
+      await storage.createActivityLog({
+        action: "assign_user_to_project",
+        entityType: "user_project",
+        entityId: assignment.id,
+        details: `تم ربط المستخدم ${userId} بالمشروع ${projectId}`,
+        userId: (req as any).user.id as number
+      });
+
+      return res.status(201).json(assignment);
+    } catch (error: any) {
+      console.error('خطأ في ربط المستخدم بالمشروع:', error);
+      const msg = (error?.message || '').toLowerCase();
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        return res.status(409).json({ message: 'المستخدم مرتبط بالفعل بهذا المشروع' });
+      }
+      return res.status(500).json({ message: 'خطأ في ربط المستخدم بالمشروع' });
+    }
+  });
+
+  // Remove user from project
+  app.delete("/api/users/:userId/remove-project/:projectId", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const projectId = parseInt(req.params.projectId);
+      if (!userId || !projectId) {
+        return res.status(400).json({ message: "userId و projectId مطلوبان" });
+      }
+      const success = await storage.removeUserFromProject(userId, projectId);
+      if (!success) {
+        return res.status(404).json({ message: 'لا يوجد ربط لهذا المستخدم مع المشروع' });
+      }
+
+      await storage.createActivityLog({
+        action: "remove_user_from_project",
+        entityType: "user_project",
+        entityId: projectId,
+        details: `تم إزالة ربط المستخدم ${userId} من المشروع ${projectId}`,
+        userId: (req as any).user.id as number
+      });
+
+      return res.status(200).json({ message: 'تمت إزالة الربط بنجاح' });
+    } catch (error: any) {
+      console.error('خطأ في إزالة ربط المستخدم من المشروع:', error);
+      return res.status(500).json({ message: 'خطأ في إزالة الربط' });
+    }
+  });
+
+  // Get projects for a specific user (for admin tools)
+  app.get("/api/users/:userId/projects", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (!userId) {
+        return res.status(400).json({ message: "userId غير صحيح" });
+      }
+      const projects = await storage.getUserProjects(userId);
+      return res.status(200).json(projects);
+    } catch (error: any) {
+      console.error('خطأ في جلب مشاريع المستخدم المحدد:', error);
+      return res.status(500).json({ message: 'خطأ في جلب المشاريع' });
+    }
+  });
   app.delete("/api/users/:id", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
