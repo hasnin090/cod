@@ -26,6 +26,7 @@ import path from "path";
 import fs from "fs";
 import { dirname } from 'path';
 import jwt from 'jsonwebtoken';
+import postgres from 'postgres';
 // @ts-ignore - Types provided via middleware/auth.d.ts
 import commonAuthenticate from '../middleware/auth.js';
 import { 
@@ -61,10 +62,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   const isProduction = (process.env.NODE_ENV === 'production' && !isNetlifyLocal) || (isNetlify && !isNetlifyLocal);
   const SESSION_SECRET = process.env.SESSION_SECRET || "accounting-app-secret-key-2025";
 
-  function signJwt(payload: object, opts?: jwt.SignOptions) {
-    return jwt.sign(payload as any, SESSION_SECRET, { expiresIn: '7d', ...(opts || {}) });
-  }
-  function setAuthCookie(res: Response, token: string) {
+  const signJwt = (payload: object, opts?: jwt.SignOptions) =>
+    jwt.sign(payload as any, SESSION_SECRET, { expiresIn: '7d', ...(opts || {}) });
+  const setAuthCookie = (res: Response, token: string) => {
     res.cookie('token', token, {
       httpOnly: true,
       sameSite: 'lax',
@@ -72,8 +72,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     } as any);
-  }
-  function clearAuthCookie(res: Response) {
+  };
+  const clearAuthCookie = (res: Response) => {
     res.clearCookie('token', {
       path: '/',
       sameSite: 'lax',
@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       sameSite: 'lax',
       secure: !isNetlifyLocal && (process.env.URL?.startsWith('https://') ? true : isProduction),
     } as any);
-  }
+  };
   // Use shared auth middleware
   
   // لا حاجة لأي middleware جلسات بعد اعتماد JWT
@@ -113,6 +113,26 @@ export async function registerRoutes(app: Express): Promise<void> {
     } catch (error) {
       logger.error('Health check error:', error);
       res.status(500).json({ ok: false, ts: Date.now(), error: 'Health check failed' });
+    }
+  });
+
+  // Lightweight DB ping to verify DATABASE_URL connectivity from server environment
+  app.get('/api/db/ping', async (_req: Request, res: Response) => {
+    const url = process.env.DATABASE_URL;
+    if (!url || !url.trim()) {
+      return res.status(200).json({ ok: false, hasDatabaseUrl: false, message: 'DATABASE_URL not set' });
+    }
+    let sql: any;
+    try {
+      // Prefer TLS; small pool and short timeout for serverless
+      sql = postgres(url, { ssl: 'require', max: 1, connect_timeout: 10 });
+      const result = await sql`SELECT NOW() as now`;
+      const now = (result && result[0]?.now) || null;
+      await sql.end();
+      return res.status(200).json({ ok: true, now });
+    } catch (e: any) {
+      try { if (sql) await sql.end(); } catch {}
+      return res.status(200).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -2312,7 +2332,11 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/employees", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
     try {
       const employeeData: InsertEmployee = req.body;
-      const employee = await storage.createEmployee(employeeData);
+      const createdBy = (req as any).user?.id as number | undefined;
+      if (!createdBy) {
+        return res.status(401).json({ message: "غير مصرح" });
+      }
+      const employee = await storage.createEmployee({ ...employeeData, createdBy });
 
       await storage.createActivityLog({
         action: "create_employee",
