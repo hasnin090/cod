@@ -2149,6 +2149,19 @@ export async function registerRoutes(app: Express): Promise<void> {
   // مسار تحميل المستندات مع FormData
   app.post("/api/upload-document", authenticate, async (req: Request, res: Response) => {
     try {
+      // Debug: سجل بداية الطلب قبل معالجة multer (قد يفيد عند حدوث 502 مبكر)
+      try {
+        console.log('[upload-document] incoming request', {
+          ts: Date.now(),
+          headers: {
+            'content-type': req.headers['content-type'],
+            'content-length': req.headers['content-length'],
+            'user-agent': req.headers['user-agent'],
+          },
+          query: req.query,
+        });
+      } catch {}
+
       // استخدام multer يدوياً مع معالجة أفضل للأخطاء في Netlify
       documentUpload.single('file')(req, res, async (uploadError: any) => {
         if (uploadError) {
@@ -2160,6 +2173,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
 
         if (!req.file) {
+          console.warn('[upload-document] no file received');
           return res.status(400).json({ message: "لم يتم تقديم ملف للتحميل" });
         }
 
@@ -2168,6 +2182,17 @@ export async function registerRoutes(app: Express): Promise<void> {
           const file = req.file;
           const userId = (req as any).user.id as number;
           const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+          // Log basic file info (لا تسجل بيانات حساسة)
+          try {
+            console.log('[upload-document] file received', {
+              originalname: file.originalname,
+              mimetype: file.mimetype,
+              size: (file as any).size,
+              memory: !!(file as any).buffer && !(file as any).path,
+              hasSupabase,
+            });
+          } catch {}
           
           // التحقق من صلاحية المستخدم للمستندات الإدارية
           const userRole = (req as any).user.role as string;
@@ -2213,7 +2238,7 @@ export async function registerRoutes(app: Express): Promise<void> {
               }
             }
           } catch (e) {
-            console.warn('Upload to Supabase threw for document:', e);
+            console.warn('Upload to Supabase threw for document:', (e as any)?.message || e);
           }
 
           // Fallback local URL (disk storage only)
@@ -2246,6 +2271,7 @@ export async function registerRoutes(app: Express): Promise<void> {
               details: `إضافة مستند جديد: ${document.name}`,
               userId: userId
             });
+            try { console.log('[upload-document] success', { id: document.id, fileUrl }); } catch {}
             return res.status(201).json(document);
           } catch (dbErr: any) {
             // عدم حذف الملف محلياً للسماح بالوصول إليه كبديل
