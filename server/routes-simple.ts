@@ -2204,6 +2204,16 @@ export async function registerRoutes(app: Express): Promise<void> {
             });
           } catch {}
 
+          // وضع إقرار سريع اختياري لتجنب أي عمليات قد تسبب timeout في Netlify (تشخيص)
+          if (process.env.QUICK_UPLOAD_ACK === '1') {
+            return res.status(201).json({
+              quickAck: true,
+              name: name || file.originalname,
+              size: (file as any).size,
+              note: 'تم الاستلام بنجاح (QUICK_UPLOAD_ACK مفعّل) ولم يتم الرفع للسحابة بعد.'
+            });
+          }
+
           // نمط رفع سريع لتعطيل رفع السحابة لتشخيص 502 (اضبط FAST_UPLOAD_MODE=1 في البيئة)
           if (process.env.FAST_UPLOAD_MODE === '1') {
             const fname = (file as any).originalname;
