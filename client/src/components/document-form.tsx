@@ -243,42 +243,66 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
         const stopSimulation = simulateProgress();
         
         try {
-          // استخدام Fetch API بدلاً من Firebase Storage مباشرة
-
+          // الطريقة الجديدة: رفع مباشر إلى Supabase بدون مرور عبر Netlify
+          setUploadProgress(10);
           
-          const uploadUrl = `${getApiBase()}/upload-document-fast`;
-          console.log('[DEBUG] Upload URL:', uploadUrl);
-          
-          const response = await fetch(uploadUrl, {
+          // 1. الحصول على رابط رفع موقّع
+          const urlResponse = await fetch(`${getApiBase()}/get-upload-url`, {
             method: 'POST',
-            body: formData,
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            // لا تضع headers هنا، دع المتصفح يحددها تلقائيًا مع FormData
+            body: JSON.stringify({
+              fileName: file.name,
+              fileType: file.type
+            })
           });
           
-          // إيقاف محاكاة التقدم
-          stopSimulation();
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'فشل في رفع الملف' }));
-            throw new Error(errorData.message || 'فشل في رفع الملف');
+          if (!urlResponse.ok) {
+            throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          // تحديث التقدم إلى 95%
-          setUploadProgress(95);
+          const { uploadUrl, filePath, directUpload } = await urlResponse.json();
+          setUploadProgress(20);
           
-          // الحصول على البيانات الناتجة
-          const result = await response.json();
-
+          // 2. رفع الملف مباشرة إلى Supabase
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', file);
           
-          // تحديث التقدم إلى 100% للتأكد من اكتمال العملية
+          const uploadResponse = await fetch(uploadUrl, {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error('فشل في رفع الملف');
+          }
+          
+          setUploadProgress(80);
+          
+          // 3. تأكيد الرفع وحفظ المعلومات
+          const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              filePath,
+              name: data.name,
+              description: data.description,
+              projectId: data.projectId,
+              isManagerDocument,
+              fileSize: file.size,
+              fileType: file.type
+            })
+          });
+          
+          if (!confirmResponse.ok) {
+            const errorData = await confirmResponse.json().catch(() => ({ message: 'فشل في تأكيد الرفع' }));
+            throw new Error(errorData.message || 'فشل في تأكيد الرفع');
+          }
+          
+          const result = await confirmResponse.json();
           setUploadProgress(100);
-
           
-          // مهلة قصيرة للتأكد من أن المستخدم يرى نسبة التقدم 100%
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // نعيد البيانات التي تم استلامها من الخادم
           return result;
         } catch (error) {
           // إيقاف محاكاة التقدم في حالة حدوث خطأ

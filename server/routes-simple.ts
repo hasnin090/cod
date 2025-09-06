@@ -2156,6 +2156,116 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // مسار للحصول على رابط رفع موقّع إلى Supabase (تجاوز كامل لمعالجة Netlify)
+  app.post("/api/get-upload-url", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { fileName, fileType } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      if (!fileName) {
+        return res.status(400).json({ message: "اسم الملف مطلوب" });
+      }
+      
+      // إنشاء اسم ملف فريد
+      const timestamp = Date.now();
+      const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `documents/${uniqueFileName}`;
+      
+      // التحقق من وجود Supabase
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(503).json({ 
+          message: "خدمة التخزين غير متاحة حالياً",
+          fallbackMode: true 
+        });
+      }
+      
+      try {
+        // إنشاء رابط رفع موقّع
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const { data, error } = await supabase.storage
+          .from('uploads')
+          .createSignedUploadUrl(filePath);
+          
+        if (error) {
+          console.error('Supabase signed URL error:', error);
+          return res.status(500).json({ message: "فشل في إنشاء رابط الرفع" });
+        }
+        
+        return res.status(200).json({
+          uploadUrl: data.signedUrl,
+          filePath,
+          token: data.token,
+          expiresIn: 3600, // ساعة واحدة
+          directUpload: true
+        });
+        
+      } catch (supabaseError) {
+        console.error('Supabase client error:', supabaseError);
+        return res.status(500).json({ message: "خطأ في خدمة التخزين" });
+      }
+      
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      return res.status(500).json({ message: "خطأ في إنشاء رابط الرفع" });
+    }
+  });
+
+  // مسار لتأكيد الرفع وحفظ معلومات المستند
+  app.post("/api/confirm-upload", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { filePath, name, description, projectId, isManagerDocument, fileSize, fileType } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      if (!filePath || !name) {
+        return res.status(400).json({ message: "مسار الملف والاسم مطلوبان" });
+      }
+      
+      // إنشاء URL العام للملف
+      const fileUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/uploads/${filePath}`;
+      
+      const documentData = {
+        name,
+        description: description || "",
+        projectId: projectId && projectId !== "all" ? Number(projectId) : undefined,
+        fileUrl,
+        fileType: fileType || 'application/octet-stream',
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true'
+      };
+      
+      try {
+        const document = await storage.createDocument(documentData as any);
+        await storage.createActivityLog({
+          action: "create",
+          entityType: "document",
+          entityId: document.id,
+          details: `إضافة مستند جديد: ${document.name}`,
+          userId: userId
+        });
+        
+        return res.status(201).json({
+          ...document,
+          directUpload: true,
+          message: 'تم رفع المستند بنجاح'
+        });
+        
+      } catch (dbError) {
+        console.error('Database save error:', dbError);
+        // حتى لو فشل حفظ قاعدة البيانات، الملف موجود في التخزين
+        return res.status(202).json({
+          message: 'تم رفع الملف لكن فشل في حفظ السجل',
+          fileUrl,
+          degraded: true
+        });
+      }
+      
+    } catch (error) {
+      console.error("Error confirming upload:", error);
+      return res.status(500).json({ message: "خطأ في تأكيد الرفع" });
+    }
+  });
+
   // مسار رفع سريع جديد يرجع 202 فوراً ويُنجز المعالجة لاحقاً
   app.post("/api/upload-document-fast", authenticate, async (req: Request, res: Response) => {
     try {
