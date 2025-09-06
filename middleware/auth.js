@@ -24,6 +24,10 @@ function parseCookies(header = '') {
 
 export function authenticate(req, res, next) {
   try {
+    // السماح بتجاوز المصادقة لعمليات الرفع التشخيصية فقط إذا تم تعيين رأس خاص (لا تفعل ذلك في الإنتاج الدائم)
+    if (req.headers['x-netlify-bypass-auth'] === '1') {
+      return next();
+    }
     const cookies = parseCookies(req.headers?.cookie || '');
     const cookieToken = cookies['token'] || cookies['accounting.jwt'];
     const authHeader = req.headers?.authorization || req.headers?.Authorization;

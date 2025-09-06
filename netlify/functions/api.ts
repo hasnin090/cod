@@ -8,6 +8,11 @@ let serverlessHandler: any | null = null;
 async function buildHandler() {
   const app = express();
 
+  // نقطة اختبار مبكرة قبل تحميل كل المسارات - تشخيص 502
+  app.post('/upload-echo', (req, res) => {
+    res.status(200).json({ ok: true, path: req.path, ts: Date.now() });
+  });
+
   // إعادة كتابة بعض المسارات عند الاستدعاء بدون /api لحل مشكلة 502 في Netlify
   app.use((req, _res, next) => {
     // Netlify يستدعي الوظيفة على /.netlify/functions/api/.. فيظهر المسار هنا بدون هذا الجزء
