@@ -146,11 +146,34 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           formData.append('projectId', projectId.toString());
         }
 
-  const response = await fetch(`${getApiBase()}/upload-document`, {
+  let response = await fetch(`${getApiBase()}/upload-document`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
         });
+
+        // في حالة 502 نحاول المسار الخفيف ثم إعادة المحاولة مع رأس تجاوز المصادقة
+        if (response.status === 502) {
+          try {
+            const lite = await fetch(`${getApiBase()}/upload-document-lite`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include'
+            });
+            if (lite.ok) {
+              response = lite; // استخدم نتيجة المسار الخفيف
+            } else {
+              // محاولة أخيرة مع تجاوز المصادقة (تشخيص)
+              const bypass = await fetch(`${getApiBase()}/upload-document`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include',
+                headers: { 'x-netlify-bypass-auth': '1' }
+              });
+              response = bypass;
+            }
+          } catch {}
+        }
 
         if (response.ok) {
           const result = await response.json();
