@@ -2357,6 +2357,33 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // مسار خام بدون مصادقة أو أي منطق لتشخيص 502 المباشر (لا تحفظ أي شيء)
+  app.post('/api/__raw-upload-diagnostic', (req: Request, res: Response) => {
+    try {
+      // نستخدم multer في الذاكرة مباشرة (memoryStorage) عبر documentUpload (Netlify يجعلها ذاكرة)
+      documentUpload.single('file')(req, res, (err: any) => {
+        if (err) {
+          console.error('[__raw-upload-diagnostic] multer error', err);
+          return res.status(500).json({ ok: false, stage: 'multer', error: err.message });
+        }
+        if (!(req as any).file) {
+          return res.status(400).json({ ok: false, message: 'no file' });
+        }
+        return res.status(200).json({
+          ok: true,
+          diagnostic: true,
+          size: (req as any).file.size,
+          mimetype: (req as any).file.mimetype,
+          originalname: (req as any).file.originalname,
+          ts: Date.now()
+        });
+      });
+    } catch (e: any) {
+      console.error('[__raw-upload-diagnostic] unexpected', e);
+      return res.status(500).json({ ok: false, error: e?.message || 'unexpected' });
+    }
+  });
+
   // Simple health check
   // إنشاء نسخة احتياطية قبل الانتقال
   app.post("/api/migration/backup", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
