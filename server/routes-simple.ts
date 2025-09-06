@@ -2193,6 +2193,19 @@ export async function registerRoutes(app: Express): Promise<void> {
               hasSupabase,
             });
           } catch {}
+
+          // نمط رفع سريع لتعطيل رفع السحابة لتشخيص 502 (اضبط FAST_UPLOAD_MODE=1 في البيئة)
+          if (process.env.FAST_UPLOAD_MODE === '1') {
+            const fname = (file as any).originalname;
+            console.log('[upload-document][fast-mode] skipping cloud + db write, returning 202');
+            return res.status(202).json({
+              success: true,
+              fastMode: true,
+              message: 'تم استلام الملف (وضع التشخيص السريع فعال)',
+              originalName: fname,
+              size: (file as any).size,
+            });
+          }
           
           // التحقق من صلاحية المستخدم للمستندات الإدارية
           const userRole = (req as any).user.role as string;
@@ -2294,6 +2307,33 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.error("خطأ عام في رفع المستند:", error);
       res.setHeader('x-degraded-mode', 'true');
       return res.status(202).json({ message: "تعذر رفع المستند حالياً" });
+    }
+  });
+
+  // مسار خفيف للتشخيص دون أي منطق قاعدة بيانات / تخزين
+  app.post('/api/upload-document-lite', authenticate, (req: Request, res: Response) => {
+    try {
+      documentUpload.single('file')(req, res, (err: any) => {
+        if (err) {
+          console.error('[upload-document-lite] multer error', err);
+          return res.status(500).json({ ok: false, stage: 'multer', error: err.message });
+        }
+        if (!req.file) {
+          return res.status(400).json({ ok: false, message: 'لم يتم إرسال ملف' });
+        }
+        return res.status(200).json({
+          ok: true,
+            diagnostic: true,
+            originalname: req.file.originalname,
+            size: (req.file as any).size,
+            mimetype: req.file.mimetype,
+            memory: !!(req.file as any).buffer && !(req.file as any).path,
+            ts: Date.now()
+        });
+      });
+    } catch (e: any) {
+      console.error('[upload-document-lite] unexpected', e);
+      return res.status(500).json({ ok: false, error: e?.message || 'unexpected' });
     }
   });
 
