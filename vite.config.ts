@@ -30,7 +30,8 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    // يجب أن يتطابق مع publish في netlify.toml (dist)
+    outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
   },
   server: {
