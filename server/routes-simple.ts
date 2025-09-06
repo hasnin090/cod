@@ -54,6 +54,16 @@ import { createClient } from '@supabase/supabase-js';
 export async function registerRoutes(app: Express): Promise<void> {
   try {
     console.log('Starting registerRoutes...');
+  // نقاط تشخيص مبكرة جداً قبل أي مصادقة أو تعامل مع قاعدة البيانات
+  app.get('/diag/ping', (_req: Request, res: Response) => {
+    res.status(200).json({ ok: true, ts: Date.now(), phase: 'pre-auth' });
+  });
+  app.post('/diag/echo', (req: Request, res: Response) => {
+    res.status(200).json({ ok: true, ts: Date.now(), path: req.path, headers: {
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length']
+    }});
+  });
   // Ensure Express is aware it's behind a proxy (Netlify) so secure cookies work
   app.set('trust proxy', 1);
   // إعدادات البيئة و JWT
