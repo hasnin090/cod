@@ -137,46 +137,61 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
       ));
 
       try {
-        const formData = new FormData();
-        formData.append('file', fileData.file);
-        formData.append('name', fileData.file.name.replace(/\.[^/.]+$/, "")); // إزالة الامتداد
-        formData.append('description', `تم الرفع من المجلد - ${new Date().toLocaleDateString('ar')}`);
+        const fileName = fileData.file.name.replace(/\.[^/.]+$/, ""); // إزالة الامتداد
+        const description = `تم الرفع من المجلد - ${new Date().toLocaleDateString('ar')}`;
         
-        if (projectId) {
-          formData.append('projectId', projectId.toString());
-        }
-
-  let response = await fetch(`${getApiBase()}/upload-document-fast`, {
+        // المرحلة الأولى: الحصول على رابط الرفع الموقّع
+        const urlResponse = await fetch(`${getApiBase()}/get-upload-url`, {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json',
+          },
           credentials: 'include',
+          body: JSON.stringify({
+            fileName: fileData.file.name,
+            fileSize: fileData.file.size,
+            fileType: fileData.file.type
+          })
         });
 
-        // في حالة 502 نحاول المسار الخفيف ثم إعادة المحاولة مع رأس تجاوز المصادقة
-        if (response.status === 502) {
-          try {
-            const lite = await fetch(`${getApiBase()}/upload-document-lite`, {
-              method: 'POST',
-              body: formData,
-              credentials: 'include'
-            });
-            if (lite.ok) {
-              response = lite; // استخدم نتيجة المسار الخفيف
-            } else {
-              // محاولة أخيرة مع تجاوز المصادقة (تشخيص)
-              const bypass = await fetch(`${getApiBase()}/upload-document`, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include',
-                headers: { 'x-netlify-bypass-auth': '1' }
-              });
-              response = bypass;
-            }
-          } catch {}
+        if (!urlResponse.ok) {
+          throw new Error(`فشل في الحصول على رابط الرفع: ${urlResponse.status}`);
         }
 
-        if (response.ok) {
-          const result = await response.json();
+        const { uploadUrl, filePath } = await urlResponse.json();
+
+        // المرحلة الثانية: رفع الملف مباشرة إلى Supabase
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: fileData.file,
+          headers: {
+            'Content-Type': fileData.file.type,
+          }
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`فشل في رفع الملف: ${uploadResponse.status}`);
+        }
+
+        // المرحلة الثالثة: تأكيد الرفع وحفظ المعلومات في قاعدة البيانات
+        const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            filePath,
+            name: fileName,
+            description,
+            projectId: projectId?.toString(),
+            fileSize: fileData.file.size,
+            fileType: fileData.file.type
+          })
+        });
+
+        if (confirmResponse.ok) {
+          const result = await confirmResponse.json();
           uploadedDocumentIds.push(result.id);
           
           // تحديث حالة الملف إلى "نجح"
@@ -184,16 +199,13 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
             index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
           ));
         } else {
-          const error = await response.text();
-          // تحديث حالة الملف إلى "فشل"
-          setFiles(prev => prev.map((f, index) => 
-            index === i ? { ...f, status: 'error', progress: 0, error } : f
-          ));
+          const error = await confirmResponse.text();
+          throw new Error(`فشل في تأكيد الرفع: ${error}`);
         }
       } catch (error) {
         // تحديث حالة الملف إلى "فشل"
         setFiles(prev => prev.map((f, index) => 
-          index === i ? { ...f, status: 'error', progress: 0, error: 'خطأ في الاتصال' } : f
+          index === i ? { ...f, status: 'error', progress: 0, error: error instanceof Error ? error.message : 'خطأ في الاتصال' } : f
         ));
       }
 
