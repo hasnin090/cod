@@ -8,6 +8,25 @@ let serverlessHandler: any | null = null;
 async function buildHandler() {
   const app = express();
 
+  // إعادة كتابة بعض المسارات عند الاستدعاء بدون /api لحل مشكلة 502 في Netlify
+  app.use((req, _res, next) => {
+    // Netlify يستدعي الوظيفة على /.netlify/functions/api/.. فيظهر المسار هنا بدون هذا الجزء
+    // إذا تم استدعاء /upload-document مباشرة فنضيف /api في البداية ليتطابق مع تعريف المسار الأصلي
+    const rewriteTargets = new Set([
+      '/upload-document',
+      '/upload-whatsapp-file',
+      '/transactions/link-document'
+    ]);
+    try {
+      if (!req.path.startsWith('/api/') && rewriteTargets.has(req.path)) {
+        const oldUrl = req.url;
+        req.url = '/api' + req.url; // مثال: /upload-document => /api/upload-document
+        console.log('[netlify-rewrite] path', oldUrl, '->', req.url);
+      }
+    } catch {}
+    next();
+  });
+
   // استخدم body parsers بشكل مشروط: فعّل JSON/x-www-form-urlencoded فقط عندما لا يكون multipart
   app.use((req, res, next) => {
     const ct = req.headers['content-type'] || '';
