@@ -246,7 +246,10 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           // استخدام Fetch API بدلاً من Firebase Storage مباشرة
 
           
-          const response = await fetch(`${getApiBase()}/upload-document`, {
+          const uploadUrl = `${getApiBase()}/upload-document`;
+          console.log('[DEBUG] Upload URL:', uploadUrl);
+          
+          const response = await fetch(uploadUrl, {
             method: 'POST',
             body: formData,
             credentials: 'include',
