@@ -2182,13 +2182,37 @@ export async function registerRoutes(app: Express): Promise<void> {
       try {
         // إنشاء رابط رفع موقّع
         const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        
+        // التحقق من وجود bucket أولاً
+        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        if (bucketsError) {
+          console.error('Error listing buckets:', bucketsError);
+          return res.status(500).json({ 
+            message: "خطأ في الوصول إلى خدمة التخزين",
+            error: bucketsError.message 
+          });
+        }
+        
+        const uploadsBucket = buckets?.find(bucket => bucket.name === 'uploads');
+        if (!uploadsBucket) {
+          console.error('Uploads bucket not found. Available buckets:', buckets?.map(b => b.name));
+          return res.status(500).json({ 
+            message: "مجلد التخزين غير موجود",
+            availableBuckets: buckets?.map(b => b.name),
+            error: "uploads bucket not found" 
+          });
+        }
+        
         const { data, error } = await supabase.storage
           .from('uploads')
           .createSignedUploadUrl(filePath);
           
         if (error) {
           console.error('Supabase signed URL error:', error);
-          return res.status(500).json({ message: "فشل في إنشاء رابط الرفع" });
+          return res.status(500).json({ 
+            message: "فشل في إنشاء رابط الرفع", 
+            error: error.message 
+          });
         }
         
         return res.status(200).json({
@@ -2199,14 +2223,55 @@ export async function registerRoutes(app: Express): Promise<void> {
           directUpload: true
         });
         
-      } catch (supabaseError) {
+      } catch (supabaseError: any) {
         console.error('Supabase client error:', supabaseError);
-        return res.status(500).json({ message: "خطأ في خدمة التخزين" });
+        return res.status(500).json({ 
+          message: "خطأ في خدمة التخزين", 
+          error: supabaseError.message || 'Unknown Supabase error',
+          details: supabaseError 
+        });
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating upload URL:", error);
-      return res.status(500).json({ message: "خطأ في إنشاء رابط الرفع" });
+      return res.status(500).json({ 
+        message: "خطأ في إنشاء رابط الرفع", 
+        error: error.message || 'Unknown error',
+        details: error
+      });
+    }
+  });
+
+  // نقطة تشخيص لاختبار اتصال Supabase Storage
+  app.get("/api/diag/supabase-storage", authenticate, async (req: Request, res: Response) => {
+    try {
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(503).json({ 
+          message: "متغيرات البيئة غير موجودة",
+          hasSupabaseUrl: !!process.env.SUPABASE_URL,
+          hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+        });
+      }
+
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      
+      // اختبار الاتصال بقائمة buckets
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      return res.status(200).json({
+        message: "اختبار اتصال Supabase Storage",
+        success: !bucketsError,
+        buckets: buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })),
+        error: bucketsError?.message,
+        supabaseUrl: process.env.SUPABASE_URL,
+        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: "خطأ في اختبار Supabase",
+        error: error.message,
+        details: error
+      });
     }
   });
 
