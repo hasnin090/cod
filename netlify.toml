@@ -2,7 +2,8 @@
 
 [build]
   command = "npm run build"
-  publish = "dist/public"
+  # Vite يضع index.html مباشرة داخل dist لذا يجب أن تكون مجلد النشر هو dist
+  publish = "dist"
 
 [functions]
   directory = "netlify/functions"
