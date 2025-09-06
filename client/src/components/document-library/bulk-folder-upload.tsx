@@ -146,7 +146,7 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           formData.append('projectId', projectId.toString());
         }
 
-  let response = await fetch(`${getApiBase()}/upload-document`, {
+  let response = await fetch(`${getApiBase()}/upload-document-fast`, {
           method: 'POST',
           body: formData,
           credentials: 'include',

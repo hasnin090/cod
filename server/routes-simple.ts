@@ -2156,6 +2156,104 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // مسار رفع سريع جديد يرجع 202 فوراً ويُنجز المعالجة لاحقاً
+  app.post("/api/upload-document-fast", authenticate, async (req: Request, res: Response) => {
+    try {
+      documentUpload.single('file')(req, res, async (uploadError: any) => {
+        if (uploadError) {
+          console.error("Multer upload error (fast):", uploadError);
+          return res.status(500).json({ 
+            message: "خطأ في تحميل الملف", 
+            error: uploadError.message 
+          });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ message: "لم يتم تقديم ملف للتحميل" });
+        }
+
+        try {
+          const { name, description, projectId, isManagerDocument } = req.body;
+          const file = req.file;
+          const userId = (req as any).user.id as number;
+          
+          // إرجاع 202 فوراً مع معلومات أساسية
+          const tempFileInfo = {
+            id: Date.now(), // معرف مؤقت
+            name: name || file.originalname,
+            size: (file as any).size,
+            mimetype: file.mimetype,
+            status: 'processing',
+            uploadedAt: new Date().toISOString()
+          };
+          
+          // إرجاع استجابة سريعة
+          res.status(202).json({
+            ...tempFileInfo,
+            message: 'تم استلام الملف وجاري المعالجة',
+            fastMode: true
+          });
+          
+          // معالجة خلفية (لا تنتظر)
+          setImmediate(async () => {
+            try {
+              const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+              let fileUrl: string | null = null;
+              
+              // محاولة رفع للسحابة
+              if (hasSupabase) {
+                const isMemory = (file as any).buffer && !(file as any).path;
+                const buffer = isMemory ? (file as any).buffer : fs.readFileSync((file as any).path);
+                const up = await uploadToSupabase(buffer, file.originalname, 'documents');
+                if (up.success && up.url) {
+                  fileUrl = up.url;
+                }
+              }
+              
+              // Fallback محلي
+              if (!fileUrl) {
+                const fname = (file as any).filename || `${Date.now()}_${file.originalname.replace(/\s+/g,'_')}`;
+                fileUrl = `/uploads/documents/${fname}`;
+              }
+              
+              // حفظ في قاعدة البيانات
+              const documentData = {
+                name: name || file.originalname,
+                description: description || "",
+                projectId: projectId && projectId !== "all" ? Number(projectId) : undefined,
+                fileUrl,
+                fileType: file.mimetype,
+                uploadDate: new Date(),
+                uploadedBy: userId,
+                isManagerDocument: isManagerDocument === 'true'
+              };
+              
+              await storage.createDocument(documentData as any);
+              await storage.createActivityLog({
+                action: "create",
+                entityType: "document",
+                entityId: tempFileInfo.id,
+                details: `إضافة مستند جديد: ${documentData.name}`,
+                userId: userId
+              });
+              
+              console.log(`[background] Document processed successfully: ${documentData.name}`);
+            } catch (bgError) {
+              console.error(`[background] Failed to process document:`, bgError);
+            }
+          });
+          
+        } catch (error) {
+          console.error("خطأ في رفع الملف السريع:", error);
+          return res.status(500).json({ message: "خطأ في معالجة الملف" });
+        }
+      });
+    } catch (error) {
+      console.error("خطأ عام في رفع المستند السريع:", error);
+      return res.status(500).json({ message: "تعذر رفع المستند" });
+    }
+  });
+
   // مسار تحميل المستندات مع FormData
   app.post("/api/upload-document", authenticate, async (req: Request, res: Response) => {
     try {
