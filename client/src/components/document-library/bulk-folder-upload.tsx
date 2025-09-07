@@ -158,12 +158,51 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           throw new Error(`فشل في الحصول على رابط الرفع: ${urlResponse.status}`);
         }
 
-        const { uploadUrl, filePath, method, headers, simplified, classic } = await urlResponse.json();
+        const { uploadUrl, filePath, method, headers, simplified, classic, base64 } = await urlResponse.json();
 
         // المرحلة الثانية: رفع الملف
         let uploadResponse;
         
-        if (classic) {
+        if (base64) {
+          // الطريقة الجديدة: رفع باستخدام base64
+          const reader = new FileReader();
+          const fileDataPromise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(fileData.file);
+          });
+          
+          const fileDataBase64 = await fileDataPromise;
+          
+          uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+            method: method || 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              fileData: fileDataBase64,
+              fileName: fileData.file.name,
+              fileType: fileData.file.type,
+              name: fileName,
+              description,
+              projectId: projectId?.toString() || '',
+              isManagerDocument: false
+            })
+          });
+          
+          if (uploadResponse.ok) {
+            const result = await uploadResponse.json();
+            uploadedDocumentIds.push(result.id);
+            
+            // تحديث حالة الملف إلى "نجح"
+            setFiles(prev => prev.map((f, index) => 
+              index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
+            ));
+          } else {
+            const error = await uploadResponse.text();
+            throw new Error(`فشل في رفع الملف: ${error}`);
+          }
+        } else if (classic) {
           // الطريقة الكلاسيكية: استخدام endpoint الموجود
           const uploadFormData = new FormData();
           uploadFormData.append('file', fileData.file);

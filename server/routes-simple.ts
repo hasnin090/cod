@@ -67,6 +67,20 @@ async function saveUploadedFile(file: Express.Multer.File, fileName: string): Pr
   return `/uploads/${fileName}`;
 }
 
+// دالة مساعدة لحفظ الملف من buffer
+async function saveUploadedFileFromBuffer(buffer: Buffer, fileName: string): Promise<string> {
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  const filePath = path.join(uploadsDir, fileName);
+  fs.writeFileSync(filePath, buffer);
+  
+  // إرجاع رابط الملف
+  return `/uploads/${fileName}`;
+}
+
 export async function registerRoutes(app: Express): Promise<void> {
   try {
     console.log('Starting registerRoutes...');
@@ -2186,18 +2200,19 @@ export async function registerRoutes(app: Express): Promise<void> {
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      // استخدام الطريقة الكلاسيكية التي نعرف أنها تعمل
-      const uploadEndpoint = `/upload-document`;
+      // استخدام طريقة base64 لتجنب مشاكل multipart
+      const uploadEndpoint = `/upload-document-base64`;
       
       return res.status(200).json({
         uploadUrl: uploadEndpoint,
         filePath: uniqueFileName,
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         },
-        directUpload: false, // نستخدم الطريقة الكلاسيكية
-        classic: true
+        directUpload: false,
+        classic: false,
+        base64: true // الطريقة الجديدة بـ base64
       });
       
     } catch (error: any) {
@@ -2205,6 +2220,66 @@ export async function registerRoutes(app: Express): Promise<void> {
       return res.status(500).json({ 
         message: "خطأ في إنشاء رابط الرفع", 
         error: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // مسار رفع الملفات باستخدام base64 (لتجنب مشاكل multipart)
+  app.post("/api/upload-document-base64", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { fileData, fileName, fileType, name, description, projectId, isManagerDocument } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      if (!fileData || !fileName) {
+        return res.status(400).json({ message: "بيانات الملف واسم الملف مطلوبان" });
+      }
+      
+      // تحويل base64 إلى Buffer
+      const base64Data = fileData.replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // إنشاء اسم ملف فريد
+      const timestamp = Date.now();
+      const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      // حفظ الملف
+      const fileUrl = await saveUploadedFileFromBuffer(buffer, uniqueFileName);
+      
+      // حفظ معلومات المستند في قاعدة البيانات
+      const documentData = {
+        name: name || fileName.replace(/\.[^/.]+$/, ""),
+        description: description || "",
+        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+        fileUrl,
+        fileType: fileType || 'application/octet-stream',
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+      };
+
+      const document = await storage.createDocument(documentData as any);
+      
+      // إنشاء سجل النشاط
+      await storage.createActivityLog({
+        action: "create",
+        entityType: "document",
+        entityId: document.id,
+        details: `إضافة مستند جديد: ${document.name}`,
+        userId: userId
+      });
+      
+      return res.status(201).json({
+        ...document,
+        success: true,
+        base64Upload: true,
+        message: "تم رفع المستند بنجاح"
+      });
+      
+    } catch (error: any) {
+      console.error("Error in base64 upload:", error);
+      return res.status(500).json({ 
+        message: "خطأ في رفع الملف", 
+        error: error.message 
       });
     }
   });

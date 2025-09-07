@@ -261,13 +261,44 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified, classic } = await urlResponse.json();
+          const { uploadUrl, filePath, method, headers, simplified, classic, base64 } = await urlResponse.json();
+          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, apiBase: getApiBase() });
           setUploadProgress(20);
           
           // 2. رفع الملف - طريقة مختلفة حسب النوع
           let uploadResponse;
           
-          if (classic) {
+          if (base64) {
+            // الطريقة الجديدة: رفع باستخدام base64
+            const reader = new FileReader();
+            const fileDataPromise = new Promise<string>((resolve) => {
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+            
+            const fileData = await fileDataPromise;
+            setUploadProgress(40);
+            
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] Base64 upload URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
+              method: method || 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                fileData,
+                fileName: file.name,
+                fileType: file.type,
+                name: data.name,
+                description: data.description || '',
+                projectId: data.projectId || '',
+                isManagerDocument
+              })
+            });
+          } else if (classic) {
             // الطريقة الكلاسيكية: استخدام endpoint الموجود
             const uploadFormData = new FormData();
             uploadFormData.append('file', file);
@@ -276,7 +307,10 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             uploadFormData.append('projectId', data.projectId || '');
             uploadFormData.append('isManagerDocument', isManagerDocument.toString());
             
-            uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] Final upload URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
               method: method || 'POST',
               body: uploadFormData,
               credentials: 'include'
@@ -315,7 +349,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           let result;
           
-          if (classic || simplified) {
+          if (base64 || classic || simplified) {
             // في الطرق المباشرة، الرفع مكتمل بالفعل
             result = await uploadResponse.json();
             setUploadProgress(100);
