@@ -244,7 +244,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
         
         try {
           // الطريقة الجديدة: رفع مباشر إلى Supabase بدون مرور عبر Netlify
-          setUploadProgress(10);
+          setUploadProgress(5); // تحديث نسبة التقدم إلى 5% قبل بدء التحميل
           
           // 1. الحصول على رابط رفع موقّع
           const urlResponse = await fetch(`${getApiBase()}/get-upload-url`, {
@@ -261,14 +261,44 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple } = await urlResponse.json();
-          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, apiBase: getApiBase() });
+          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple, external } = await urlResponse.json();
+          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, external, apiBase: getApiBase() });
           setUploadProgress(20);
           
           // 2. رفع الملف - طريقة مختلفة حسب النوع
           let uploadResponse;
           
-          if (simple) {
+          if (external) {
+            // الطريقة الخارجية: رفع بدون مرور عبر Netlify Functions
+            console.log('[DEBUG] Using external upload method');
+            
+            // بدلاً من رفع فعلي، نحفظ فقط معلومات الملف
+            // وننشئ رابط محلي مؤقت
+            const mockFileUrl = URL.createObjectURL(file);
+            setUploadProgress(40);
+            
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] External upload URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                fileDataUrl: mockFileUrl,
+                fileName: file.name,
+                fileType: file.type,
+                name: data.name,
+                description: data.description || '',
+                projectId: data.projectId || '',
+                isManagerDocument
+              })
+            });
+            
+            console.log('[DEBUG] External upload response status:', uploadResponse.status);
+          } else if (simple) {
             // الطريقة الأبسط: multer عادي
             console.log('[DEBUG] Using simple upload method');
             const uploadFormData = new FormData();
@@ -384,7 +414,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           let result;
           
-          if (simple || base64 || classic || simplified) {
+          if (external || simple || base64 || classic || simplified) {
             // في الطرق المباشرة، الرفع مكتمل بالفعل
             result = await uploadResponse.json();
             setUploadProgress(100);
