@@ -2188,7 +2188,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       // بدلاً من Supabase Storage المعقد، نستخدم نظام أبسط
       // نقوم بإرجاع رابط خاص للرفع المباشر إلى الخادم
-      const uploadEndpoint = `/api/direct-upload/${encodeURIComponent(uniqueFileName)}`;
+      const uploadEndpoint = `/direct-upload/${encodeURIComponent(uniqueFileName)}`;
       
       return res.status(200).json({
         uploadUrl: uploadEndpoint,
