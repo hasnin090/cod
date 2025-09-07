@@ -51,6 +51,22 @@ const __dirname = process.cwd();
 import { documentUpload, transactionUpload, completedWorksUpload, completedWorksDocsUpload } from './multer-config';
 import { createClient } from '@supabase/supabase-js';
 
+// دالة مساعدة لحفظ الملف
+async function saveUploadedFile(file: Express.Multer.File, fileName: string): Promise<string> {
+  // هنا يمكننا حفظ الملف في النظام المحلي أو رفعه إلى خدمة أخرى
+  // للبساطة، سنحفظه محلياً أولاً
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  const filePath = path.join(uploadsDir, fileName);
+  fs.writeFileSync(filePath, file.buffer);
+  
+  // إرجاع رابط الملف
+  return `/uploads/${fileName}`;
+}
+
 export async function registerRoutes(app: Express): Promise<void> {
   try {
     console.log('Starting registerRoutes...');
@@ -2156,10 +2172,10 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  // مسار للحصول على رابط رفع موقّع إلى Supabase (تجاوز كامل لمعالجة Netlify)
+  // مسار للحصول على رابط رفع موقّع (بديل مبسط لتجنب مشاكل bucket)
   app.post("/api/get-upload-url", authenticate, async (req: Request, res: Response) => {
     try {
-      const { fileName, fileType } = req.body;
+      const { fileName, fileType, fileSize } = req.body;
       const userId = (req as any).user.id as number;
       
       if (!fileName) {
@@ -2169,75 +2185,80 @@ export async function registerRoutes(app: Express): Promise<void> {
       // إنشاء اسم ملف فريد
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const filePath = `documents/${uniqueFileName}`;
       
-      // التحقق من وجود Supabase
-      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        return res.status(503).json({ 
-          message: "خدمة التخزين غير متاحة حالياً",
-          fallbackMode: true 
-        });
-      }
+      // بدلاً من Supabase Storage المعقد، نستخدم نظام أبسط
+      // نقوم بإرجاع رابط خاص للرفع المباشر إلى الخادم
+      const uploadEndpoint = `/api/direct-upload/${encodeURIComponent(uniqueFileName)}`;
       
-      try {
-        // إنشاء رابط رفع موقّع
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-        
-        // التحقق من وجود bucket أولاً
-        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-        if (bucketsError) {
-          console.error('Error listing buckets:', bucketsError);
-          return res.status(500).json({ 
-            message: "خطأ في الوصول إلى خدمة التخزين",
-            error: bucketsError.message 
-          });
-        }
-        
-        const uploadsBucket = buckets?.find(bucket => bucket.name === 'uploads');
-        if (!uploadsBucket) {
-          console.error('Uploads bucket not found. Available buckets:', buckets?.map(b => b.name));
-          return res.status(500).json({ 
-            message: "مجلد التخزين غير موجود",
-            availableBuckets: buckets?.map(b => b.name),
-            error: "uploads bucket not found" 
-          });
-        }
-        
-        const { data, error } = await supabase.storage
-          .from('uploads')
-          .createSignedUploadUrl(filePath);
-          
-        if (error) {
-          console.error('Supabase signed URL error:', error);
-          return res.status(500).json({ 
-            message: "فشل في إنشاء رابط الرفع", 
-            error: error.message 
-          });
-        }
-        
-        return res.status(200).json({
-          uploadUrl: data.signedUrl,
-          filePath,
-          token: data.token,
-          expiresIn: 3600, // ساعة واحدة
-          directUpload: true
-        });
-        
-      } catch (supabaseError: any) {
-        console.error('Supabase client error:', supabaseError);
-        return res.status(500).json({ 
-          message: "خطأ في خدمة التخزين", 
-          error: supabaseError.message || 'Unknown Supabase error',
-          details: supabaseError 
-        });
-      }
+      return res.status(200).json({
+        uploadUrl: uploadEndpoint,
+        filePath: uniqueFileName,
+        method: 'POST',
+        headers: {
+          'Content-Type': fileType || 'application/octet-stream'
+        },
+        directUpload: true,
+        simplified: true
+      });
       
     } catch (error: any) {
       console.error("Error generating upload URL:", error);
       return res.status(500).json({ 
         message: "خطأ في إنشاء رابط الرفع", 
-        error: error.message || 'Unknown error',
-        details: error
+        error: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // مسار الرفع المباشر المبسط
+  app.post("/api/direct-upload/:fileName", authenticate, documentUpload.single('file'), async (req: Request, res: Response) => {
+    try {
+      const { fileName } = req.params;
+      const { name, description, projectId, isManagerDocument } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "لم يتم رفع أي ملف" });
+      }
+
+      // حفظ الملف في النظام المحلي أو في الخدمة المناسبة
+      const fileUrl = await saveUploadedFile(req.file, fileName);
+      
+      // حفظ معلومات المستند في قاعدة البيانات
+      const documentData = {
+        name: name || fileName.replace(/\.[^/.]+$/, ""),
+        description: description || "",
+        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+        fileUrl,
+        fileType: req.file.mimetype || 'application/octet-stream',
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true'
+      };
+
+      const document = await storage.createDocument(documentData as any);
+      
+      // إنشاء سجل النشاط
+      await storage.createActivityLog({
+        action: "create",
+        entityType: "document",
+        entityId: document.id,
+        details: `إضافة مستند جديد: ${document.name}`,
+        userId: userId
+      });
+      
+      return res.status(201).json({
+        ...document,
+        success: true,
+        simplified: true,
+        message: "تم رفع المستند بنجاح"
+      });
+      
+    } catch (error: any) {
+      console.error("Error in direct upload:", error);
+      return res.status(500).json({ 
+        message: "خطأ في رفع الملف", 
+        error: error.message 
       });
     }
   });

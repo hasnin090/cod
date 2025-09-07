@@ -261,17 +261,37 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, directUpload } = await urlResponse.json();
+          const { uploadUrl, filePath, method, headers, simplified } = await urlResponse.json();
           setUploadProgress(20);
           
-          // 2. رفع الملف مباشرة إلى Supabase
-          const uploadFormData = new FormData();
-          uploadFormData.append('file', file);
+          // 2. رفع الملف - طريقة مختلفة حسب النوع
+          let uploadResponse;
           
-          const uploadResponse = await fetch(uploadUrl, {
-            method: 'POST',
-            body: uploadFormData,
-          });
+          if (simplified) {
+            // الطريقة المبسطة: رفع مباشر إلى الخادم
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            uploadFormData.append('name', data.name);
+            uploadFormData.append('description', data.description || '');
+            uploadFormData.append('projectId', data.projectId || '');
+            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
+            
+            uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+              method: method || 'POST',
+              body: uploadFormData,
+              credentials: 'include'
+            });
+          } else {
+            // الطريقة الأصلية: رفع إلى Supabase
+            uploadResponse = await fetch(uploadUrl, {
+              method: 'PUT',
+              body: file,
+              headers: {
+                'Content-Type': file.type,
+                ...headers
+              }
+            });
+          }
           
           if (!uploadResponse.ok) {
             throw new Error('فشل في رفع الملف');
@@ -279,29 +299,37 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           setUploadProgress(80);
           
-          // 3. تأكيد الرفع وحفظ المعلومات
-          const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              filePath,
-              name: data.name,
-              description: data.description,
-              projectId: data.projectId,
-              isManagerDocument,
-              fileSize: file.size,
-              fileType: file.type
-            })
-          });
+          let result;
           
-          if (!confirmResponse.ok) {
-            const errorData = await confirmResponse.json().catch(() => ({ message: 'فشل في تأكيد الرفع' }));
-            throw new Error(errorData.message || 'فشل في تأكيد الرفع');
+          if (simplified) {
+            // في الطريقة المبسطة، الرفع مكتمل بالفعل
+            result = await uploadResponse.json();
+            setUploadProgress(100);
+          } else {
+            // في الطريقة الأصلية، نحتاج خطوة التأكيد
+            const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                filePath,
+                name: data.name,
+                description: data.description,
+                projectId: data.projectId,
+                isManagerDocument,
+                fileSize: file.size,
+                fileType: file.type
+              })
+            });
+            
+            if (!confirmResponse.ok) {
+              const errorData = await confirmResponse.json().catch(() => ({ message: 'فشل في تأكيد الرفع' }));
+              throw new Error(errorData.message || 'فشل في تأكيد الرفع');
+            }
+            
+            result = await confirmResponse.json();
+            setUploadProgress(100);
           }
-          
-          const result = await confirmResponse.json();
-          setUploadProgress(100);
           
           return result;
         } catch (error) {

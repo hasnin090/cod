@@ -158,49 +158,82 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           throw new Error(`فشل في الحصول على رابط الرفع: ${urlResponse.status}`);
         }
 
-        const { uploadUrl, filePath } = await urlResponse.json();
+        const { uploadUrl, filePath, method, headers, simplified } = await urlResponse.json();
 
-        // المرحلة الثانية: رفع الملف مباشرة إلى Supabase
-        const uploadResponse = await fetch(uploadUrl, {
-          method: 'PUT',
-          body: fileData.file,
-          headers: {
-            'Content-Type': fileData.file.type,
-          }
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error(`فشل في رفع الملف: ${uploadResponse.status}`);
-        }
-
-        // المرحلة الثالثة: تأكيد الرفع وحفظ المعلومات في قاعدة البيانات
-        const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            filePath,
-            name: fileName,
-            description,
-            projectId: projectId?.toString(),
-            fileSize: fileData.file.size,
-            fileType: fileData.file.type
-          })
-        });
-
-        if (confirmResponse.ok) {
-          const result = await confirmResponse.json();
-          uploadedDocumentIds.push(result.id);
+        // المرحلة الثانية: رفع الملف
+        let uploadResponse;
+        
+        if (simplified) {
+          // الطريقة المبسطة: رفع مباشر إلى الخادم مع البيانات
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', fileData.file);
+          uploadFormData.append('name', fileName);
+          uploadFormData.append('description', description);
+          uploadFormData.append('projectId', projectId?.toString() || '');
+          uploadFormData.append('isManagerDocument', 'false');
           
-          // تحديث حالة الملف إلى "نجح"
-          setFiles(prev => prev.map((f, index) => 
-            index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
-          ));
+          uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+            method: method || 'POST',
+            body: uploadFormData,
+            credentials: 'include'
+          });
+          
+          if (uploadResponse.ok) {
+            const result = await uploadResponse.json();
+            uploadedDocumentIds.push(result.id);
+            
+            // تحديث حالة الملف إلى "نجح"
+            setFiles(prev => prev.map((f, index) => 
+              index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
+            ));
+          } else {
+            const error = await uploadResponse.text();
+            throw new Error(`فشل في رفع الملف: ${error}`);
+          }
         } else {
-          const error = await confirmResponse.text();
-          throw new Error(`فشل في تأكيد الرفع: ${error}`);
+          // الطريقة الأصلية: رفع إلى Supabase ثم تأكيد
+          uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: fileData.file,
+            headers: {
+              'Content-Type': fileData.file.type,
+              ...headers
+            }
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error(`فشل في رفع الملف: ${uploadResponse.status}`);
+          }
+
+          // المرحلة الثالثة: تأكيد الرفع وحفظ المعلومات في قاعدة البيانات
+          const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              filePath,
+              name: fileName,
+              description,
+              projectId: projectId?.toString(),
+              fileSize: fileData.file.size,
+              fileType: fileData.file.type
+            })
+          });
+
+          if (confirmResponse.ok) {
+            const result = await confirmResponse.json();
+            uploadedDocumentIds.push(result.id);
+            
+            // تحديث حالة الملف إلى "نجح"
+            setFiles(prev => prev.map((f, index) => 
+              index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
+            ));
+          } else {
+            const error = await confirmResponse.text();
+            throw new Error(`فشل في تأكيد الرفع: ${error}`);
+          }
         }
       } catch (error) {
         // تحديث حالة الملف إلى "فشل"
