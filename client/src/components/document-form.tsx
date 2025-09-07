@@ -261,14 +261,34 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified, classic, base64 } = await urlResponse.json();
-          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, apiBase: getApiBase() });
+          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple } = await urlResponse.json();
+          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, apiBase: getApiBase() });
           setUploadProgress(20);
           
           // 2. رفع الملف - طريقة مختلفة حسب النوع
           let uploadResponse;
           
-          if (base64) {
+          if (simple) {
+            // الطريقة الأبسط: multer عادي
+            console.log('[DEBUG] Using simple upload method');
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            uploadFormData.append('name', data.name);
+            uploadFormData.append('description', data.description || '');
+            uploadFormData.append('projectId', data.projectId || '');
+            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
+            
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] Simple upload URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
+              method: method || 'POST',
+              body: uploadFormData,
+              credentials: 'include'
+            });
+            
+            console.log('[DEBUG] Simple upload response status:', uploadResponse.status);
+          } else if (base64) {
             // الطريقة الجديدة: رفع باستخدام base64
             console.log('[DEBUG] Starting base64 upload, file size:', file.size);
             
@@ -364,7 +384,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           let result;
           
-          if (base64 || classic || simplified) {
+          if (simple || base64 || classic || simplified) {
             // في الطرق المباشرة، الرفع مكتمل بالفعل
             result = await uploadResponse.json();
             setUploadProgress(100);

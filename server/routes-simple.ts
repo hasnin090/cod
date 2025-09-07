@@ -2215,19 +2215,20 @@ export async function registerRoutes(app: Express): Promise<void> {
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      // استخدام طريقة base64 لتجنب مشاكل multipart
-      const uploadEndpoint = `/upload-document-base64`;
+      // استخدام نظام رفع مباشر وبسيط جداً بدون تعقيد
+      const uploadEndpoint = `/upload-simple`;
       
       return res.status(200).json({
         uploadUrl: uploadEndpoint,
         filePath: uniqueFileName,
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         },
         directUpload: false,
         classic: false,
-        base64: true // الطريقة الجديدة بـ base64
+        base64: false,
+        simple: true // الطريقة الأبسط على الإطلاق
       });
       
     } catch (error: any) {
@@ -2237,6 +2238,75 @@ export async function registerRoutes(app: Express): Promise<void> {
         error: error.message || 'Unknown error'
       });
     }
+  });
+
+  // أبسط طريقة ممكنة للرفع - بدون تعقيد
+  app.post("/api/upload-simple", authenticate, (req: Request, res: Response) => {
+    // استخدام multer العادي بأبسط طريقة
+    documentUpload.single('file')(req, res, async (err: any) => {
+      if (err) {
+        console.error('[ERROR] Multer error in simple upload:', err);
+        return res.status(500).json({ 
+          message: "خطأ في معالجة الملف",
+          error: err.message 
+        });
+      }
+
+      try {
+        console.log('[DEBUG] Simple upload started');
+        
+        const file = req.file;
+        const { name, description, projectId, isManagerDocument } = req.body;
+        const userId = (req as any).user.id as number;
+        
+        if (!file) {
+          console.log('[ERROR] No file received');
+          return res.status(400).json({ message: "لم يتم رفع أي ملف" });
+        }
+
+        console.log('[DEBUG] File received:', file.originalname, 'size:', file.size);
+
+        // حفظ معلومات المستند في قاعدة البيانات
+        const documentData = {
+          name: name || file.originalname.replace(/\.[^/.]+$/, ""),
+          description: description || "",
+          projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+          fileUrl: file.path || `/uploads/${file.filename}`,
+          fileType: file.mimetype || 'application/octet-stream',
+          uploadDate: new Date(),
+          uploadedBy: userId,
+          isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+        };
+
+        console.log('[DEBUG] Creating document with data:', documentData);
+        const document = await storage.createDocument(documentData as any);
+        console.log('[DEBUG] Document created:', document.id);
+        
+        // إنشاء سجل النشاط
+        await storage.createActivityLog({
+          action: "create",
+          entityType: "document",
+          entityId: document.id,
+          details: `إضافة مستند جديد: ${document.name}`,
+          userId: userId
+        });
+        
+        console.log('[DEBUG] Simple upload completed successfully');
+        return res.status(201).json({
+          ...document,
+          success: true,
+          simpleUpload: true,
+          message: "تم رفع المستند بنجاح"
+        });
+        
+      } catch (error: any) {
+        console.error('[ERROR] Simple upload failed:', error);
+        return res.status(500).json({ 
+          message: "خطأ في رفع الملف", 
+          error: error.message 
+        });
+      }
+    });
   });
 
   // نقطة تشخيص بسيطة لاختبار base64
