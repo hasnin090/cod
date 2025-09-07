@@ -261,13 +261,27 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified } = await urlResponse.json();
+          const { uploadUrl, filePath, method, headers, simplified, classic } = await urlResponse.json();
           setUploadProgress(20);
           
           // 2. رفع الملف - طريقة مختلفة حسب النوع
           let uploadResponse;
           
-          if (simplified) {
+          if (classic) {
+            // الطريقة الكلاسيكية: استخدام endpoint الموجود
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            uploadFormData.append('name', data.name);
+            uploadFormData.append('description', data.description || '');
+            uploadFormData.append('projectId', data.projectId || '');
+            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
+            
+            uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+              method: method || 'POST',
+              body: uploadFormData,
+              credentials: 'include'
+            });
+          } else if (simplified) {
             // الطريقة المبسطة: رفع مباشر إلى الخادم
             const uploadFormData = new FormData();
             uploadFormData.append('file', file);
@@ -301,8 +315,8 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           let result;
           
-          if (simplified) {
-            // في الطريقة المبسطة، الرفع مكتمل بالفعل
+          if (classic || simplified) {
+            // في الطرق المباشرة، الرفع مكتمل بالفعل
             result = await uploadResponse.json();
             setUploadProgress(100);
           } else {

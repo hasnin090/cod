@@ -2186,19 +2186,18 @@ export async function registerRoutes(app: Express): Promise<void> {
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      // بدلاً من Supabase Storage المعقد، نستخدم نظام أبسط
-      // نقوم بإرجاع رابط خاص للرفع المباشر إلى الخادم
-      const uploadEndpoint = `/direct-upload/${encodeURIComponent(uniqueFileName)}`;
+      // استخدام الطريقة الكلاسيكية التي نعرف أنها تعمل
+      const uploadEndpoint = `/upload-document`;
       
       return res.status(200).json({
         uploadUrl: uploadEndpoint,
         filePath: uniqueFileName,
         method: 'POST',
         headers: {
-          'Content-Type': fileType || 'application/octet-stream'
+          'Content-Type': 'multipart/form-data'
         },
-        directUpload: true,
-        simplified: true
+        directUpload: false, // نستخدم الطريقة الكلاسيكية
+        classic: true
       });
       
     } catch (error: any) {

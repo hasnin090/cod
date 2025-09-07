@@ -158,12 +158,39 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           throw new Error(`فشل في الحصول على رابط الرفع: ${urlResponse.status}`);
         }
 
-        const { uploadUrl, filePath, method, headers, simplified } = await urlResponse.json();
+        const { uploadUrl, filePath, method, headers, simplified, classic } = await urlResponse.json();
 
         // المرحلة الثانية: رفع الملف
         let uploadResponse;
         
-        if (simplified) {
+        if (classic) {
+          // الطريقة الكلاسيكية: استخدام endpoint الموجود
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', fileData.file);
+          uploadFormData.append('name', fileName);
+          uploadFormData.append('description', description);
+          uploadFormData.append('projectId', projectId?.toString() || '');
+          uploadFormData.append('isManagerDocument', 'false');
+          
+          uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
+            method: method || 'POST',
+            body: uploadFormData,
+            credentials: 'include'
+          });
+          
+          if (uploadResponse.ok) {
+            const result = await uploadResponse.json();
+            uploadedDocumentIds.push(result.id);
+            
+            // تحديث حالة الملف إلى "نجح"
+            setFiles(prev => prev.map((f, index) => 
+              index === i ? { ...f, status: 'success', progress: 100, documentId: result.id } : f
+            ));
+          } else {
+            const error = await uploadResponse.text();
+            throw new Error(`فشل في رفع الملف: ${error}`);
+          }
+        } else if (simplified) {
           // الطريقة المبسطة: رفع مباشر إلى الخادم مع البيانات
           const uploadFormData = new FormData();
           uploadFormData.append('file', fileData.file);
