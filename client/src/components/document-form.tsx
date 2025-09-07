@@ -270,6 +270,14 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           if (base64) {
             // الطريقة الجديدة: رفع باستخدام base64
+            console.log('[DEBUG] Starting base64 upload, file size:', file.size);
+            
+            // التحقق من حجم الملف (حد أقصى 10MB للـ base64)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+              throw new Error('حجم الملف كبير جداً للرفع بهذه الطريقة (الحد الأقصى 10MB)');
+            }
+            
             const reader = new FileReader();
             const fileDataPromise = new Promise<string>((resolve) => {
               reader.onload = () => resolve(reader.result as string);
@@ -277,10 +285,23 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             });
             
             const fileData = await fileDataPromise;
+            console.log('[DEBUG] Base64 conversion complete, data length:', fileData.length);
             setUploadProgress(40);
             
             const finalUrl = `${getApiBase()}${uploadUrl}`;
             console.log('[DEBUG] Base64 upload URL:', finalUrl);
+            
+            const payload = {
+              fileData,
+              fileName: file.name,
+              fileType: file.type,
+              name: data.name,
+              description: data.description || '',
+              projectId: data.projectId || '',
+              isManagerDocument
+            };
+            
+            console.log('[DEBUG] Payload prepared, size:', JSON.stringify(payload).length);
             
             uploadResponse = await fetch(finalUrl, {
               method: method || 'POST',
@@ -288,16 +309,10 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
                 'Content-Type': 'application/json',
               },
               credentials: 'include',
-              body: JSON.stringify({
-                fileData,
-                fileName: file.name,
-                fileType: file.type,
-                name: data.name,
-                description: data.description || '',
-                projectId: data.projectId || '',
-                isManagerDocument
-              })
+              body: JSON.stringify(payload)
             });
+            
+            console.log('[DEBUG] Upload response status:', uploadResponse.status);
           } else if (classic) {
             // الطريقة الكلاسيكية: استخدام endpoint الموجود
             const uploadFormData = new FormData();

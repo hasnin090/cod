@@ -69,16 +69,31 @@ async function saveUploadedFile(file: Express.Multer.File, fileName: string): Pr
 
 // دالة مساعدة لحفظ الملف من buffer
 async function saveUploadedFileFromBuffer(buffer: Buffer, fileName: string): Promise<string> {
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    console.log('[DEBUG] saveUploadedFileFromBuffer called, buffer size:', buffer.length, 'fileName:', fileName);
+    
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    console.log('[DEBUG] uploads directory:', uploadsDir);
+    
+    if (!fs.existsSync(uploadsDir)) {
+      console.log('[DEBUG] Creating uploads directory');
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    const filePath = path.join(uploadsDir, fileName);
+    console.log('[DEBUG] Full file path:', filePath);
+    
+    fs.writeFileSync(filePath, buffer);
+    console.log('[DEBUG] File written successfully');
+    
+    // إرجاع رابط الملف
+    const fileUrl = `/uploads/${fileName}`;
+    console.log('[DEBUG] Returning file URL:', fileUrl);
+    return fileUrl;
+  } catch (error: any) {
+    console.error('[ERROR] saveUploadedFileFromBuffer failed:', error);
+    throw error;
   }
-  
-  const filePath = path.join(uploadsDir, fileName);
-  fs.writeFileSync(filePath, buffer);
-  
-  // إرجاع رابط الملف
-  return `/uploads/${fileName}`;
 }
 
 export async function registerRoutes(app: Express): Promise<void> {
@@ -2224,26 +2239,68 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // نقطة تشخيص بسيطة لاختبار base64
+  app.post("/api/test-base64", authenticate, async (req: Request, res: Response) => {
+    try {
+      console.log('[DEBUG] Test base64 endpoint hit');
+      console.log('[DEBUG] Body:', req.body);
+      
+      const { testData } = req.body;
+      
+      return res.status(200).json({
+        success: true,
+        message: "Base64 test successful",
+        receivedDataLength: testData?.length || 0,
+        bodyKeys: Object.keys(req.body)
+      });
+    } catch (error: any) {
+      console.error('[ERROR] Test base64 failed:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
   // مسار رفع الملفات باستخدام base64 (لتجنب مشاكل multipart)
   app.post("/api/upload-document-base64", authenticate, async (req: Request, res: Response) => {
     try {
+      console.log('[DEBUG] Base64 upload started');
+      console.log('[DEBUG] Request headers:', req.headers);
+      console.log('[DEBUG] Body keys:', Object.keys(req.body));
+      
       const { fileData, fileName, fileType, name, description, projectId, isManagerDocument } = req.body;
       const userId = (req as any).user.id as number;
       
+      console.log('[DEBUG] Extracted data:', {
+        hasFileData: !!fileData,
+        fileDataLength: fileData?.length,
+        fileName,
+        fileType,
+        name,
+        userId
+      });
+      
       if (!fileData || !fileName) {
+        console.log('[ERROR] Missing fileData or fileName');
         return res.status(400).json({ message: "بيانات الملف واسم الملف مطلوبان" });
       }
       
       // تحويل base64 إلى Buffer
+      console.log('[DEBUG] Converting base64 to buffer...');
       const base64Data = fileData.replace(/^data:[^;]+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
+      console.log('[DEBUG] Buffer created, size:', buffer.length);
       
       // إنشاء اسم ملف فريد
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      console.log('[DEBUG] Unique filename:', uniqueFileName);
       
       // حفظ الملف
+      console.log('[DEBUG] Saving file...');
       const fileUrl = await saveUploadedFileFromBuffer(buffer, uniqueFileName);
+      console.log('[DEBUG] File saved, URL:', fileUrl);
       
       // حفظ معلومات المستند في قاعدة البيانات
       const documentData = {
@@ -2257,7 +2314,9 @@ export async function registerRoutes(app: Express): Promise<void> {
         isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
       };
 
+      console.log('[DEBUG] Creating document in database...');
       const document = await storage.createDocument(documentData as any);
+      console.log('[DEBUG] Document created:', document.id);
       
       // إنشاء سجل النشاط
       await storage.createActivityLog({
@@ -2268,6 +2327,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         userId: userId
       });
       
+      console.log('[DEBUG] Base64 upload completed successfully');
       return res.status(201).json({
         ...document,
         success: true,
@@ -2277,9 +2337,11 @@ export async function registerRoutes(app: Express): Promise<void> {
       
     } catch (error: any) {
       console.error("Error in base64 upload:", error);
+      console.error("Error stack:", error.stack);
       return res.status(500).json({ 
         message: "خطأ في رفع الملف", 
-        error: error.message 
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });
