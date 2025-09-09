@@ -2315,16 +2315,16 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('[DEBUG] Public URL generated:', publicUrl);
       
       // حفظ معلومات المستند في قاعدة البيانات
-      // استخدام أسماء الحقول المطابقة لما يتوقعه storage layer (camelCase)
+      // استخدام أسماء الحقول المطابقة لقاعدة البيانات (snake_case for Supabase)
       const documentData = {
         name: name || fileName.replace(/\.[^/.]+$/, ""),
         description: description || "",
-        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
-        fileUrl: publicUrl,  // camelCase كما يتوقعه storage layer
-        fileType: fileType || 'application/octet-stream',  // camelCase
-        uploadDate: new Date(),  // camelCase
-        uploadedBy: userId,  // camelCase
-        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true  // camelCase
+        project_id: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+        file_url: publicUrl,  // snake_case للتطابق مع أعمدة قاعدة البيانات
+        file_type: fileType || 'application/octet-stream',  // snake_case
+        upload_date: new Date(),  // snake_case
+        uploaded_by: userId,  // snake_case
+        is_manager_document: isManagerDocument === 'true' || isManagerDocument === true  // snake_case
       };
 
       console.log('[DEBUG] Creating document in database with data:', documentData);
@@ -2339,15 +2339,15 @@ export async function registerRoutes(app: Express): Promise<void> {
         // إذا كانت المشكلة في أعمدة معينة، جرب بالحد الأدنى من البيانات
         if (dbError.message?.includes('fileType') || dbError.message?.includes('file_type') || 
             dbError.message?.includes('fileUrl') || dbError.message?.includes('file_url')) {
-          console.log('[DEBUG] Retrying with minimal document data (camelCase)');
+          console.log('[DEBUG] Retrying with minimal document data (snake_case)');
           const documentDataMinimal = {
             name: name || fileName.replace(/\.[^/.]+$/, ""),
             description: description || "",
-            projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
-            fileUrl: publicUrl,
-            uploadDate: new Date(),
-            uploadedBy: userId,
-            isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+            project_id: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+            file_url: publicUrl,
+            upload_date: new Date(),
+            uploaded_by: userId,
+            is_manager_document: isManagerDocument === 'true' || isManagerDocument === true
           };
           document = await storage.createDocument(documentDataMinimal as any);
           console.log('[DEBUG] Document created with minimal data');
