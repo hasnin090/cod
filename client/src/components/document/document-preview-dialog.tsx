@@ -91,8 +91,8 @@ export const DocumentPreviewDialog = memo(({
   
   // Handle file download by creating a temporary anchor element
   const handleDownload = useCallback(() => {
-    // استخدام endpoint التحميل المخصص أو الرابط المباشر
-    const downloadUrl = document.fileUrl?.startsWith('http') ? document.fileUrl : `/api/download/${document.id}`;
+    // استخدام endpoint التحميل المخصص دائماً لضمان العمل الصحيح
+    const downloadUrl = `/api/download/${document.id}`;
     
     const a = window.document.createElement('a');
     a.href = downloadUrl;
@@ -102,7 +102,7 @@ export const DocumentPreviewDialog = memo(({
     window.document.body.appendChild(a);
     a.click();
     window.document.body.removeChild(a);
-  }, [document.fileUrl, document.name, document.id]);
+  }, [document.name, document.id]);
   
   // Open file in a new browser tab/window
   const handleOpenExternal = useCallback(() => {

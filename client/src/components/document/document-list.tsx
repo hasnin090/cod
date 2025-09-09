@@ -113,8 +113,8 @@ export function DocumentList({
       description: `جاري تنزيل ${doc.name}`,
     });
     
-    // استخدام endpoint التحميل المخصص أو الرابط المباشر
-    const downloadUrl = doc.fileUrl?.startsWith('http') ? doc.fileUrl : `/api/download/${doc.id}`;
+    // استخدام endpoint التحميل المخصص دائماً لضمان العمل الصحيح
+    const downloadUrl = `/api/download/${doc.id}`;
     
     const a = window.document.createElement('a');
     a.href = downloadUrl;

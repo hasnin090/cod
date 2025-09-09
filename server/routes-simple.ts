@@ -2459,8 +2459,46 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       console.log('[DEBUG] Document found:', document.name, 'URL:', document.fileUrl);
       
-      // إعادة توجيه إلى الرابط العام المباشر
-      return res.redirect(document.fileUrl);
+      // تحميل الملف من Supabase وإرساله مع headers صحيحة
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return res.redirect(document.fileUrl);
+      }
+      
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      
+      // استخراج مسار الملف من URL
+      const urlParts = document.fileUrl.split('/object/public/uploads/');
+      if (urlParts.length !== 2) {
+        console.log('[DEBUG] Invalid URL format, redirecting directly');
+        return res.redirect(document.fileUrl);
+      }
+      
+      const filePath = urlParts[1];
+      console.log('[DEBUG] Downloading from Supabase Storage:', filePath);
+      
+      // تحميل الملف من Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('uploads')
+        .download(filePath);
+      
+      if (error) {
+        console.error('[ERROR] Supabase download error:', error);
+        return res.redirect(document.fileUrl);
+      }
+      
+      // تحويل Blob إلى Buffer
+      const buffer = Buffer.from(await data.arrayBuffer());
+      
+      // تحديد نوع المحتوى
+      const contentType = document.fileType || 'application/octet-stream';
+      
+      // إعداد headers للتحميل
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.name)}"`);
+      res.setHeader('Content-Length', buffer.length);
+      
+      // إرسال الملف
+      return res.send(buffer);
       
     } catch (error: any) {
       console.error('[ERROR] Download failed:', error);
