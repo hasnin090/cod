@@ -2315,19 +2315,46 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('[DEBUG] Public URL generated:', publicUrl);
       
       // حفظ معلومات المستند في قاعدة البيانات
+      // استخدام أسماء الأعمدة المطابقة لـ schema
       const documentData = {
         name: name || fileName.replace(/\.[^/.]+$/, ""),
         description: description || "",
         projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
-        fileUrl: publicUrl,
-        fileType: fileType || 'application/octet-stream',
-        uploadDate: new Date(),
-        uploadedBy: userId,
-        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+        file_url: publicUrl,  // استخدام snake_case كما هو في قاعدة البيانات
+        file_type: fileType || 'application/octet-stream',  // استخدام snake_case
+        upload_date: new Date(),  // استخدام snake_case
+        uploaded_by: userId,  // استخدام snake_case
+        is_manager_document: isManagerDocument === 'true' || isManagerDocument === true  // استخدام snake_case
       };
 
-      console.log('[DEBUG] Creating document in database');
-      const document = await storage.createDocument(documentData as any);
+      console.log('[DEBUG] Creating document in database with data:', documentData);
+      
+      let document;
+      try {
+        document = await storage.createDocument(documentData as any);
+        console.log('[DEBUG] Document created successfully:', document);
+      } catch (dbError: any) {
+        console.error('[ERROR] Database error:', dbError);
+        
+        // إذا كانت المشكلة في أعمدة معينة، جرب بالحد الأدنى من البيانات
+        if (dbError.message?.includes('fileType') || dbError.message?.includes('file_type') || 
+            dbError.message?.includes('fileUrl') || dbError.message?.includes('file_url')) {
+          console.log('[DEBUG] Retrying with minimal document data');
+          const documentDataMinimal = {
+            name: name || fileName.replace(/\.[^/.]+$/, ""),
+            description: description || "",
+            project_id: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+            file_url: publicUrl,
+            upload_date: new Date(),
+            uploaded_by: userId,
+            is_manager_document: isManagerDocument === 'true' || isManagerDocument === true
+          };
+          document = await storage.createDocument(documentDataMinimal as any);
+          console.log('[DEBUG] Document created with minimal data');
+        } else {
+          throw dbError;
+        }
+      }
       
       // إنشاء سجل النشاط
       await storage.createActivityLog({
@@ -2351,6 +2378,66 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.error('[ERROR] Supabase upload failed:', error);
       return res.status(500).json({ 
         message: "خطأ في رفع الملف إلى Supabase", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Run database migration endpoint
+  app.post("/api/run-migration", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      console.log('[DEBUG] Running documents file_type migration');
+      
+      // تشغيل migration للتأكد من وجود عمود file_type
+      await db.execute(`
+        ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_type text NOT NULL DEFAULT 'application/octet-stream'
+      `);
+      
+      await db.execute(`
+        UPDATE documents SET file_type = 'application/octet-stream' WHERE file_type IS NULL OR file_type = ''
+      `);
+      
+      console.log('[DEBUG] Migration completed successfully');
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: "تم تشغيل migration بنجاح" 
+      });
+      
+    } catch (error: any) {
+      console.error('[ERROR] Migration failed:', error);
+      return res.status(500).json({ 
+        message: "فشل في تشغيل migration", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Check database schema endpoint
+  app.get("/api/check-schema", authenticate, authorize(["admin"]), async (req: Request, res: Response) => {
+    try {
+      console.log('[DEBUG] Checking documents table schema');
+      
+      // فحص schema جدول documents
+      const schemaResult = await db.execute(`
+        SELECT column_name, data_type, is_nullable, column_default 
+        FROM information_schema.columns 
+        WHERE table_name = 'documents' 
+        ORDER BY ordinal_position
+      `);
+      
+      console.log('[DEBUG] Documents schema:', schemaResult.rows);
+      
+      return res.status(200).json({ 
+        success: true, 
+        schema: schemaResult.rows,
+        message: "تم فحص schema بنجاح" 
+      });
+      
+    } catch (error: any) {
+      console.error('[ERROR] Schema check failed:', error);
+      return res.status(500).json({ 
+        message: "فشل في فحص schema", 
         error: error.message 
       });
     }
