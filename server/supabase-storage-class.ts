@@ -676,7 +676,23 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error creating document:', error);
         throw new Error(`Failed to create document: ${error.message}`);
       }
-      return data as Document;
+      
+      // تحويل البيانات من snake_case إلى camelCase للتوافق مع العميل
+      const convertedDoc = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        fileUrl: data.file_url,
+        fileType: data.file_type,
+        uploadDate: data.upload_date,
+        projectId: data.project_id,
+        uploadedBy: data.uploaded_by,
+        isManagerDocument: data.is_manager_document,
+        category: data.category,
+        tags: data.tags
+      };
+      
+      return convertedDoc as Document;
     } catch (error) {
       console.error('SupabaseStorage: Exception creating document:', error);
       throw error;
@@ -695,7 +711,23 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error getting documents by project:', error);
         return [];
       }
-      return data as Document[];
+      
+      // تحويل البيانات من snake_case إلى camelCase للتوافق مع العميل
+      const convertedData = data?.map((doc: any) => ({
+        id: doc.id,
+        name: doc.name,
+        description: doc.description,
+        fileUrl: doc.file_url,
+        fileType: doc.file_type,
+        uploadDate: doc.upload_date,
+        projectId: doc.project_id,
+        uploadedBy: doc.uploaded_by,
+        isManagerDocument: doc.is_manager_document,
+        category: doc.category,
+        tags: doc.tags
+      })) || [];
+      
+      return convertedData as Document[];
     } catch (error) {
       console.error('SupabaseStorage: Exception getting documents by project:', error);
       return [];
@@ -734,7 +766,23 @@ export class SupabaseStorage {
         console.error('SupabaseStorage: Error listing documents:', error);
         return [];
       }
-      return data as Document[];
+      
+      // تحويل البيانات من snake_case إلى camelCase للتوافق مع العميل
+      const convertedData = data?.map((doc: any) => ({
+        id: doc.id,
+        name: doc.name,
+        description: doc.description,
+        fileUrl: doc.file_url,
+        fileType: doc.file_type,
+        uploadDate: doc.upload_date,
+        projectId: doc.project_id,
+        uploadedBy: doc.uploaded_by,
+        isManagerDocument: doc.is_manager_document,
+        category: doc.category,
+        tags: doc.tags
+      })) || [];
+      
+      return convertedData as Document[];
     } catch (error) {
       console.error('SupabaseStorage: Exception listing documents:', error);
       return [];
