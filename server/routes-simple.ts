@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { logger } from '../shared/logger';
 import express from "express";
 import { storage } from "./storage";
+import { createClient } from '@supabase/supabase-js';
 import { 
   loginSchema, 
   insertUserSchema, 
@@ -2215,21 +2216,23 @@ export async function registerRoutes(app: Express): Promise<void> {
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${userId}_${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       
-      // استخدام خدمة رفع خارجية لتجاوز قيود Netlify تماماً
-      const uploadEndpoint = `/upload-external`;
+      // استخدام Supabase Storage الصحيح
+      const uploadEndpoint = `/upload-supabase-direct`;
       
       return res.status(200).json({
         uploadUrl: uploadEndpoint,
         filePath: uniqueFileName,
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         },
         directUpload: false,
         classic: false,
         base64: false,
         simple: false,
-        external: true // رفع خارجي لتجاوز كل المشاكل
+        external: false,
+        infoOnly: false,
+        supabase: true // استخدام Supabase Storage المباشر
       });
       
     } catch (error: any) {
@@ -2237,6 +2240,178 @@ export async function registerRoutes(app: Express): Promise<void> {
       return res.status(500).json({ 
         message: "خطأ في إنشاء رابط الرفع", 
         error: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // رفع مباشر إلى Supabase Storage
+  app.post("/api/upload-supabase-direct", authenticate, async (req: Request, res: Response) => {
+    try {
+      console.log('[DEBUG] Supabase direct upload started');
+      const { fileData, fileName, fileType, name, description, projectId, isManagerDocument } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      if (!fileData || !fileName) {
+        return res.status(400).json({ message: "بيانات الملف مطلوبة" });
+      }
+
+      // التحقق من وجود Supabase credentials
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.log('[ERROR] Missing Supabase credentials');
+        return res.status(503).json({ 
+          message: "إعدادات Supabase غير متوفرة",
+          hint: "تحقق من SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY"
+        });
+      }
+
+      console.log('[DEBUG] Supabase credentials found');
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      
+      // تحويل base64 إلى buffer
+      const base64Data = fileData.replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // إنشاء مسار فريد للملف
+      const timestamp = Date.now();
+      const uniqueFileName = `${timestamp}_${userId}_${fileName}`;
+      const filePath = `documents/${uniqueFileName}`;
+      
+      console.log('[DEBUG] Uploading to Supabase Storage:', filePath);
+      
+      // رفع الملف إلى Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(filePath, buffer, {
+          contentType: fileType || 'application/octet-stream',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('[ERROR] Supabase upload failed:', uploadError);
+        
+        // معلومات مفيدة للتشخيص
+        if (uploadError.message.includes('bucket')) {
+          return res.status(500).json({
+            message: "Bucket 'uploads' غير موجود في Supabase",
+            hint: "أنشئ bucket اسمه 'uploads' في Supabase Dashboard → Storage",
+            error: uploadError.message
+          });
+        }
+        
+        return res.status(500).json({
+          message: "فشل رفع الملف إلى Supabase",
+          error: uploadError.message,
+          hint: "تحقق من الصلاحيات والسياسات في Supabase"
+        });
+      }
+
+      console.log('[DEBUG] File uploaded successfully to Supabase');
+      
+      // الحصول على الرابط العام للملف
+      const { data: { publicUrl } } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(filePath);
+
+      console.log('[DEBUG] Public URL generated:', publicUrl);
+      
+      // حفظ معلومات المستند في قاعدة البيانات
+      const documentData = {
+        name: name || fileName.replace(/\.[^/.]+$/, ""),
+        description: description || "",
+        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+        fileUrl: publicUrl,
+        fileType: fileType || 'application/octet-stream',
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+      };
+
+      console.log('[DEBUG] Creating document in database');
+      const document = await storage.createDocument(documentData as any);
+      
+      // إنشاء سجل النشاط
+      await storage.createActivityLog({
+        action: "create",
+        entityType: "document",
+        entityId: document.id,
+        details: `إضافة مستند جديد: ${document.name}`,
+        userId: userId
+      });
+      
+      console.log('[DEBUG] Supabase upload completed successfully');
+      return res.status(201).json({
+        ...document,
+        success: true,
+        supabaseUpload: true,
+        fileUrl: publicUrl,
+        message: "تم رفع المستند بنجاح إلى Supabase Storage"
+      });
+      
+    } catch (error: any) {
+      console.error('[ERROR] Supabase upload failed:', error);
+      return res.status(500).json({ 
+        message: "خطأ في رفع الملف إلى Supabase", 
+        error: error.message 
+      });
+    }
+  });
+
+  // حل نهائي بسيط: حفظ معلومات المستند بدون ملفات
+  app.post("/api/save-document-info", authenticate, async (req: Request, res: Response) => {
+    try {
+      console.log('[DEBUG] Save document info started');
+      const { fileName, fileType, name, description, projectId, isManagerDocument, fileSize } = req.body;
+      const userId = (req as any).user.id as number;
+      
+      console.log('[DEBUG] Document info received:', { fileName, name, userId });
+      
+      if (!fileName || !name) {
+        return res.status(400).json({ message: "اسم الملف والمستند مطلوبان" });
+      }
+
+      // إنشاء رابط وهمي للملف (مؤقتاً)
+      const timestamp = Date.now();
+      const uniqueFileName = `${timestamp}_${userId}_${fileName}`;
+      const mockFileUrl = `/documents/placeholder/${uniqueFileName}`;
+      
+      // حفظ معلومات المستند في قاعدة البيانات
+      const documentData = {
+        name: name,
+        description: description || `ملف ${fileName} - تم الحفظ مؤقتاً`,
+        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
+        fileUrl: mockFileUrl,
+        fileType: fileType || 'application/octet-stream',
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
+      };
+
+      console.log('[DEBUG] Creating document in database');
+      const document = await storage.createDocument(documentData as any);
+      console.log('[DEBUG] Document created successfully:', document.id);
+      
+      // إنشاء سجل النشاط
+      await storage.createActivityLog({
+        action: "create",
+        entityType: "document",
+        entityId: document.id,
+        details: `إضافة مستند جديد: ${document.name} (معلومات فقط)`,
+        userId: userId
+      });
+      
+      return res.status(201).json({
+        ...document,
+        success: true,
+        infoOnly: true,
+        message: "تم حفظ معلومات المستند بنجاح",
+        note: "الملف محفوظ كمعلومات فقط - سيتم إضافة نظام الرفع لاحقاً"
+      });
+      
+    } catch (error: any) {
+      console.error('[ERROR] Save document info failed:', error);
+      return res.status(500).json({ 
+        message: "خطأ في حفظ معلومات المستند", 
+        error: error.message 
       });
     }
   });

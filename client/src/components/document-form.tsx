@@ -261,14 +261,85 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple, external } = await urlResponse.json();
-          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, external, apiBase: getApiBase() });
+          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple, external, infoOnly, supabase } = await urlResponse.json();
+          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, external, infoOnly, supabase, apiBase: getApiBase() });
           setUploadProgress(20);
           
           // 2. رفع الملف - طريقة مختلفة حسب النوع
           let uploadResponse;
           
-          if (external) {
+          if (supabase) {
+            // الطريقة الصحيحة: Supabase Storage
+            console.log('[DEBUG] Using Supabase Storage method');
+            
+            // تحويل الملف إلى base64
+            const reader = new FileReader();
+            const fileData = await new Promise<string>((resolve) => {
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+            
+            setUploadProgress(40);
+            
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] Supabase upload URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                fileData,
+                fileName: file.name,
+                fileType: file.type,
+                name: data.name,
+                description: data.description || '',
+                projectId: data.projectId || '',
+                isManagerDocument
+              })
+            });
+            
+            console.log('[DEBUG] Supabase upload response status:', uploadResponse.status);
+            
+            // إضافة تشخيص أفضل للأخطاء
+            if (!uploadResponse.ok) {
+              const errorText = await uploadResponse.text();
+              console.error('[ERROR] Upload failed:', {
+                status: uploadResponse.status,
+                statusText: uploadResponse.statusText,
+                body: errorText
+              });
+              throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+            }
+          } else if (infoOnly) {
+            // الطريقة الجديدة: حفظ معلومات فقط بدون ملفات
+            console.log('[DEBUG] Using info-only method - no actual file upload');
+            setUploadProgress(40);
+            
+            const finalUrl = `${getApiBase()}${uploadUrl}`;
+            console.log('[DEBUG] Info-only URL:', finalUrl);
+            
+            uploadResponse = await fetch(finalUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                fileName: file.name,
+                fileType: file.type,
+                fileSize: file.size,
+                name: data.name,
+                description: data.description || '',
+                projectId: data.projectId || '',
+                isManagerDocument
+              })
+            });
+            
+            console.log('[DEBUG] Info-only response status:', uploadResponse.status);
+          } else if (external) {
             // الطريقة الخارجية: رفع بدون مرور عبر Netlify Functions
             console.log('[DEBUG] Using external upload method');
             
@@ -414,7 +485,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           
           let result;
           
-          if (external || simple || base64 || classic || simplified) {
+          if (infoOnly || external || simple || base64 || classic || simplified) {
             // في الطرق المباشرة، الرفع مكتمل بالفعل
             result = await uploadResponse.json();
             setUploadProgress(100);
@@ -458,10 +529,19 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // رسالة مخصصة حسب نوع الرفع
+      let title = "تمت العملية بنجاح";
+      let description = "تم رفع المستند بنجاح";
+      
+      if (result?.infoOnly) {
+        title = "تم حفظ المعلومات";
+        description = "تم حفظ معلومات المستند (نظام الرفع قيد التطوير)";
+      }
+      
       toast({
-        title: "تمت العملية بنجاح",
-        description: "تم رفع المستند بنجاح",
+        title,
+        description,
       });
       form.reset({
         name: "",

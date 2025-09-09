@@ -158,12 +158,39 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
           throw new Error(`فشل في الحصول على رابط الرفع: ${urlResponse.status}`);
         }
 
-        const { uploadUrl, filePath, method, headers, simplified, classic, base64 } = await urlResponse.json();
+        const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple, external, infoOnly, supabase } = await urlResponse.json();
 
         // المرحلة الثانية: رفع الملف
         let uploadResponse;
         
-        if (base64) {
+        if (supabase) {
+          // الطريقة الصحيحة: Supabase Storage
+          const reader = new FileReader();
+          const fileData = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(fileData.file);
+          });
+          
+          const finalUrl = `${getApiBase()}${uploadUrl}`;
+          
+          uploadResponse = await fetch(finalUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              fileData,
+              fileName: fileData.file.name,
+              fileType: fileData.file.type,
+              name: fileName,
+              description,
+              projectId: projectId?.toString() || '',
+              isManagerDocument: false
+            })
+          });
+          
+        } else if (base64) {
           // الطريقة الجديدة: رفع باستخدام base64
           const reader = new FileReader();
           const fileDataPromise = new Promise<string>((resolve) => {
