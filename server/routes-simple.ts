@@ -2443,6 +2443,67 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Download file endpoint with proper headers
+  app.get("/api/download/:documentId", authenticate, async (req: Request, res: Response) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      console.log('[DEBUG] Download request for document:', documentId);
+      
+      // الحصول على بيانات المستند
+      const documents = await storage.listDocuments();
+      const document = documents.find(doc => doc.id === documentId);
+      
+      if (!document) {
+        return res.status(404).json({ message: "المستند غير موجود" });
+      }
+      
+      console.log('[DEBUG] Document found:', document.name, 'URL:', document.fileUrl);
+      
+      // إعادة توجيه إلى الرابط العام المباشر
+      return res.redirect(document.fileUrl);
+      
+    } catch (error: any) {
+      console.error('[ERROR] Download failed:', error);
+      return res.status(500).json({ 
+        message: "فشل في تحميل الملف", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Test Supabase public URL endpoint
+  app.get("/api/test-supabase-url/:documentId", authenticate, async (req: Request, res: Response) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      
+      // الحصول على بيانات المستند
+      const documents = await storage.listDocuments();
+      const document = documents.find(doc => doc.id === documentId);
+      
+      if (!document) {
+        return res.status(404).json({ message: "المستند غير موجود" });
+      }
+      
+      // اختبار الوصول للرابط
+      const testResponse = await fetch(document.fileUrl);
+      
+      return res.status(200).json({
+        document: document.name,
+        fileUrl: document.fileUrl,
+        urlStatus: testResponse.status,
+        urlStatusText: testResponse.statusText,
+        accessible: testResponse.ok
+      });
+      
+    } catch (error: any) {
+      console.error('[ERROR] URL test failed:', error);
+      return res.status(500).json({ 
+        message: "فشل في اختبار الرابط", 
+        error: error.message 
+      });
+    }
+  });
+
   // حل نهائي بسيط: حفظ معلومات المستند بدون ملفات
   app.post("/api/save-document-info", authenticate, async (req: Request, res: Response) => {
     try {
