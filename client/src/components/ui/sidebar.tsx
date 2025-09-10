@@ -268,7 +268,7 @@ function CompanyName() {
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                   <i className="fas fa-layer-group text-white text-xs"></i>
                 </div>
-                <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">القائمة الرئيسية</h3>
+                <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">القائمة الرئيسية</h3>
               </div>
             </div>
             <nav className="p-3 space-y-2">
@@ -410,7 +410,7 @@ function CompanyName() {
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center">
                   <i className="fas fa-chart-bar text-white text-xs"></i>
                 </div>
-                <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">التقارير والإحصائيات</h3>
+                <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">التقارير والإحصائيات</h3>
               </div>
             </div>
             <nav className="p-3 space-y-2">
@@ -444,7 +444,7 @@ function CompanyName() {
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
                   <i className="fas fa-users text-white text-xs"></i>
                 </div>
-                <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">العمليات والموظفين</h3>
+                <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">العمليات والموظفين</h3>
               </div>
             </div>
             <nav className="p-3 space-y-2">
@@ -545,7 +545,7 @@ function CompanyName() {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                     <i className="fas fa-folder-open text-white text-xs"></i>
                   </div>
-                  <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">مشاريعي</h3>
+                  <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">مشاريعي</h3>
                 </div>
               </div>
               <nav className="p-3">
@@ -614,7 +614,7 @@ function CompanyName() {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                     <i className="fas fa-users-cog text-white text-xs"></i>
                   </div>
-                  <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">الإدارة والمستخدمين</h3>
+                  <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">الإدارة والمستخدمين</h3>
                 </div>
               </div>
               <nav className="p-3 space-y-2">
@@ -673,7 +673,7 @@ function CompanyName() {
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                     <i className="fas fa-cogs text-white text-xs"></i>
                   </div>
-                  <h3 className="text-slate-700 dark:text-slate-200 font-semibold text-sm tracking-wide">إعدادات النظام</h3>
+                  <h3 className="text-slate-900 dark:text-slate-200 font-bold text-[15px] tracking-wide">إعدادات النظام</h3>
                 </div>
               </div>
               <nav className="p-3 space-y-2">
