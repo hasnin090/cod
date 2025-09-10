@@ -48,23 +48,39 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [displayMode, setDisplayMode] = useState<'admin' | 'projects'>('admin');
-  
-  useEffect(() => {
-    const userString = localStorage.getItem("auth_user");
-    if (!userString) return;
-    
+  // تهيئة متزامنة لمنع وميض اختفاء/ظهور زر التبديل عند تحميل الصفحة
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
+      const userString = localStorage.getItem('auth_user');
+      if (!userString) return false;
       const user = JSON.parse(userString);
-      const isAdminUser = user.role === 'admin';
-      
-      setIsAdmin(isAdminUser);
-      const mode = isAdminUser ? 'admin' : 'projects';
-      setDisplayMode(mode);
-    } catch (e) {
-      setIsAdmin(false);
-      setDisplayMode('projects');
+      return user?.role === 'admin';
+    } catch {
+      return false;
+    }
+  });
+  const [displayMode, setDisplayMode] = useState<'admin' | 'projects'>(() => {
+    try {
+      const userString = localStorage.getItem('auth_user');
+      if (!userString) return 'projects';
+      const user = JSON.parse(userString);
+      return user?.role === 'admin' ? 'admin' : 'projects';
+    } catch {
+      return 'projects';
+    }
+  });
+  
+  // مزامنة لاحقة في حال تغيّر localStorage لاحقًا (اختياري)
+  useEffect(() => {
+    try {
+      const userString = localStorage.getItem('auth_user');
+      if (!userString) return;
+      const user = JSON.parse(userString);
+      const admin = user?.role === 'admin';
+      setIsAdmin(admin);
+      setDisplayMode(admin ? 'admin' : 'projects');
+    } catch {
+      // تجاهل
     }
   }, []);
 
@@ -145,14 +161,15 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 lg:gap-6 w-full xl:w-auto">
               {/* Mode Toggle for Admins */}
               {isAdmin && (
-                <div className="bg-white/80 dark:bg-gray-700/80 backdrop-blur-lg rounded-xl shadow-lg p-1 flex items-center border border-gray-200/50 dark:border-gray-600/50 w-full sm:w-auto">
+                <div className="bg-white/80 dark:bg-gray-700/80 backdrop-blur-lg rounded-xl shadow-lg p-1 flex items-center border border-gray-200/50 dark:border-gray-600/50 w-full sm:w-auto min-h-11">
                   <button
                     onClick={() => setDisplayMode('admin')}
-                    className={`px-2 sm:px-3 lg:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center ${
+                    className={`px-2 sm:px-3 lg:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center min-w-[128px] ${
                       displayMode === 'admin'
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
                     }`}
+                    aria-pressed={displayMode === 'admin'}
                   >
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -162,11 +179,12 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => setDisplayMode('projects')}
-                    className={`px-2 sm:px-3 lg:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center ${
+                    className={`px-2 sm:px-3 lg:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center min-w-[128px] ${
                       displayMode === 'projects'
                         ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
                     }`}
+                    aria-pressed={displayMode === 'projects'}
                   >
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
