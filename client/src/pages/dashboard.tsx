@@ -135,9 +135,9 @@ export default function Dashboard() {
   const filteredTransactions = getFilteredTransactions();
 
   return (
-    <div className="dashboard-container p-3 sm:p-6 lg:p-8 xl:p-10 space-y-6 sm:space-y-8 lg:space-y-10">
+    <div className="page-container space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Header Section */}
-  <div className="app-window p-3 sm:p-4 lg:p-5 xl:p-6">
+  <div className="page-header-compact">
         <div className="max-w-full mx-auto">
           <div className="flex flex-col xl:flex-row justify-between items-center gap-3 lg:gap-4 xl:gap-6">
             {/* Logo and Title Section */}

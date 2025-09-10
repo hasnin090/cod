@@ -1,14 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* استيراد تحسينات التصميم والألوان (بعد طبقات Tailwind لضمان التخصيص) */
+/* ملاحظة: يجب أن تسبق أوامر @import جميع التعليمات الأخرى لتجنب تحذيرات PostCSS */
 @import './styles/theme-improvements.css';
 @import './styles/blue-theme-unified.css';
 @import './styles/icons-unified.css';
 @import './styles/final-unified-theme.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -111,6 +110,29 @@
   /* نافذة موحدة للتراكيب المنبثقة واللوحات */
   .app-window {
     @apply rounded-2xl border border-border bg-card shadow-2xl;
+  }
+  /* حاوية قياسية لصفحات التطبيق */
+  .page-container {
+    @apply p-3 sm:p-6 lg:p-8 xl:p-10;
+  }
+  /* رأس صفحة مدمج وموحد */
+  .page-header-compact {
+    @apply app-window p-3 sm:p-4 lg:p-5 flex flex-col xl:flex-row items-center justify-between gap-3 lg:gap-4;
+  }
+  /* كتلة قسم موحدة */
+  .section-block {
+    @apply app-window p-4 sm:p-6 lg:p-8;
+  }
+  /* عناوين وأوصاف الأقسام */
+  .section-title {
+    @apply text-xl sm:text-2xl font-bold text-foreground;
+  }
+  .section-subtitle {
+    @apply text-sm sm:text-base text-muted-foreground;
+  }
+  /* شريط أدوات قياسي */
+  .toolbar {
+    @apply flex items-center gap-2;
   }
   .glass-effect {
     @apply backdrop-blur-sm bg-white/80 border border-white/20 shadow-lg;
