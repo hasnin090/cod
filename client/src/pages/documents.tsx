@@ -1590,7 +1590,7 @@ export default function Documents() {
       
       {/* نافذة منبثقة لرفع مستند جديد */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto p-3 xs:p-4 sm:p-5 md:p-6 overflow-hidden">
+        <DialogContent className="app-window max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto p-3 xs:p-4 sm:p-5 md:p-6 overflow-hidden">
           <DialogHeader className="space-y-1 sm:space-y-2">
             <DialogTitle className="text-base xs:text-lg sm:text-xl text-[hsl(var(--primary))] font-bold flex items-center">
               <Upload className="ml-1.5 xs:ml-2 h-4 w-4 xs:h-5 xs:w-5" />
@@ -1617,7 +1617,7 @@ export default function Documents() {
       
       {/* نافذة حوار إعادة رفع المستند المرفق */}
       <Dialog open={showReuploadDialog} onOpenChange={(open) => !open && resetReuploadState()}>
-        <DialogContent className="sm:max-w-md">
+  <DialogContent className="app-window sm:max-w-md">
           <DialogHeader>
             <DialogTitle>إعادة رفع مستند مرفق</DialogTitle>
             <DialogDescription>

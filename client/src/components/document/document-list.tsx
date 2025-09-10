@@ -303,7 +303,7 @@ export function DocumentList({
             <AlertDialogCancel className="h-8 xs:h-9 text-xs xs:text-sm mt-0">إلغاء</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 xs:h-9 text-xs xs:text-sm mt-0"
+              className="h-8 xs:h-9 text-xs xs:text-sm mt-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />

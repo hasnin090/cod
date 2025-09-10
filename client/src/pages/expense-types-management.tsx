@@ -160,7 +160,7 @@ export default function ExpenseTypesManagementPage() {
               إضافة نوع مصروف
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="app-window sm:max-w-md">
             <DialogHeader>
               <DialogTitle>إضافة نوع مصروف جديد</DialogTitle>
               <DialogDescription>
@@ -227,7 +227,7 @@ export default function ExpenseTypesManagementPage() {
                   )}
                 />
                 
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 mt-2">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -321,7 +321,7 @@ export default function ExpenseTypesManagementPage() {
 
       {/* مربع حوار تحرير نوع المصروف */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="app-window sm:max-w-md">
           <DialogHeader>
             <DialogTitle>تحرير نوع المصروف</DialogTitle>
             <DialogDescription>
@@ -388,7 +388,7 @@ export default function ExpenseTypesManagementPage() {
                 )}
               />
               
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 mt-2">
                 <Button 
                   type="button" 
                   variant="outline" 

@@ -801,7 +801,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           <div className="text-center pt-2">
             <Button 
               type="submit" 
-              className="w-full xs:w-auto h-9 xs:h-10 text-xs xs:text-sm px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 bg-gradient-to-r from-primary to-primary-light text-white font-medium rounded-lg hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full xs:w-auto h-9 xs:h-10 text-xs xs:text-sm px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2"
               disabled={isLoading || mutation.isPending || !file}
             >
               {mutation.isPending ? (
