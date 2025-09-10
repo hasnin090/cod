@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* استيراد تحسينات التصميم والألوان */
+/* استيراد تحسينات التصميم والألوان (بعد طبقات Tailwind لضمان التخصيص) */
 @import './styles/theme-improvements.css';
 @import './styles/blue-theme-unified.css';
 @import './styles/icons-unified.css';
@@ -108,6 +108,10 @@
 }
 
 @layer components {
+  /* نافذة موحدة للتراكيب المنبثقة واللوحات */
+  .app-window {
+    @apply rounded-2xl border border-border bg-card shadow-2xl;
+  }
   .glass-effect {
     @apply backdrop-blur-sm bg-white/80 border border-white/20 shadow-lg;
   }
