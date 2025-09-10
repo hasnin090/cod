@@ -5,6 +5,7 @@ import { StatisticsCards } from '@/components/statistics-cards';
 import { Charts } from '@/components/charts';
 import Chart from 'chart.js/auto';
 import { formatCurrency } from '@/lib/chart-utils';
+import { Button } from '@/components/ui/button';
 
 interface Transaction {
   id: number;
@@ -136,7 +137,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-container p-3 sm:p-6 lg:p-8 xl:p-10 space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Header Section */}
-      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-4 sm:p-6 lg:p-8 xl:p-10">
+  <div className="app-window p-4 sm:p-6 lg:p-8 xl:p-10">
         <div className="max-w-full mx-auto">
           <div className="flex flex-col xl:flex-row justify-between items-center gap-6 lg:gap-8 xl:gap-10">
             {/* Logo and Title Section */}
@@ -262,7 +263,7 @@ export default function Dashboard() {
             </section>
             
             {/* Enhanced Charts Section */}
-            <section className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/60 dark:border-gray-700/60 p-6 sm:p-8 lg:p-10 xl:p-12 max-w-full overflow-hidden">
+            <section className="app-window p-6 sm:p-8 lg:p-10 xl:p-12 max-w-full overflow-hidden">
               <div className="mb-8 text-center">
                 <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">
                   المخططات البيانية
@@ -280,7 +281,7 @@ export default function Dashboard() {
             </section>
             
             {/* Enhanced Recent Transactions */}
-            <section className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/60 dark:border-gray-700/60 p-6 sm:p-8 lg:p-10 xl:p-12 max-w-full overflow-hidden">
+            <section className="app-window p-6 sm:p-8 lg:p-10 xl:p-12 max-w-full overflow-hidden">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
                 <div className="space-y-2">
                   <h3 className={`text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r ${
@@ -295,15 +296,14 @@ export default function Dashboard() {
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 text-base lg:text-lg">عرض أحدث 10 معاملات مالية بالتفصيل</p>
                 </div>
-                <Link 
-                  href="/transactions" 
-                  className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600 hover:from-sky-500 hover:via-blue-600 hover:to-indigo-700 text-white px-5 py-3 rounded-xl text-sm lg:text-base font-semibold shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 border border-sky-300/30"
-                >
-                  <span>عرض جميع المعاملات</span>
-                  <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+                <Button asChild size="sm" className="px-5 py-3 text-sm lg:text-base">
+                  <Link href="/transactions" className="flex items-center gap-2">
+                    <span>عرض جميع المعاملات</span>
+                    <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </Button>
               </div>
               
               {/* Desktop Table */}
@@ -330,11 +330,7 @@ export default function Dashboard() {
                       filteredTransactions.slice(0, 10).map((transaction, index) => (
                         <tr 
                           key={transaction.id} 
-                          className={`hover:bg-gradient-to-r transition-all duration-300 transform hover:scale-[1.01] ${
-                            displayMode === 'admin' 
-                              ? 'hover:from-blue-50/70 hover:via-indigo-50/70 hover:to-purple-50/70 dark:hover:from-blue-900/25 dark:hover:via-indigo-900/25 dark:hover:to-purple-900/25' 
-                              : 'hover:from-emerald-50/70 hover:via-green-50/70 hover:to-teal-50/70 dark:hover:from-emerald-900/25 dark:hover:via-green-900/25 dark:hover:to-teal-900/25'
-                          } hover:shadow-md`}
+                          className="transition-colors duration-200 hover:bg-muted/40"
                         >
                           <td className="px-5 py-4 text-sm lg:text-base text-gray-900 dark:text-gray-100 font-medium">
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -377,15 +373,17 @@ export default function Dashboard() {
                           </td>
                           <td className="px-5 py-4 text-center">
                             {transaction.fileUrl ? (
-                              <button 
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
                                 onClick={() => window.open(transaction.fileUrl, '_blank')}
-                                className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white px-3 py-2 rounded-xl text-xs lg:text-sm font-medium hover:from-blue-600 hover:via-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:scale-105 transform"
                                 title="عرض المرفق"
+                                className="px-3"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                 </svg>
-                              </button>
+                              </Button>
                             ) : (
                               <span className="text-gray-400 dark:text-gray-500 text-lg">-</span>
                             )}
@@ -420,11 +418,7 @@ export default function Dashboard() {
                   filteredTransactions.slice(0, 8).map((transaction, index) => (
                     <div 
                       key={transaction.id} 
-                      className={`bg-gradient-to-r p-6 rounded-2xl shadow-xl border transform hover:scale-105 transition-all duration-300 ${
-                        displayMode === 'admin' 
-                          ? 'from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200/50 dark:border-blue-700/50' 
-                          : 'from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200/50 dark:border-green-700/50'
-                      }`}
+                      className="app-window p-5 border"
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
@@ -455,15 +449,17 @@ export default function Dashboard() {
                         </span>
                         
                         {transaction.fileUrl && (
-                          <button 
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
                             onClick={() => window.open(transaction.fileUrl, '_blank')}
-                            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-md hover:scale-105 flex items-center gap-1"
+                            className="flex items-center gap-1"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                             </svg>
                             <span>مرفق</span>
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
