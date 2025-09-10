@@ -212,12 +212,12 @@ function CompanyName() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))/80] flex items-center justify-center shadow-lg relative group overflow-hidden">
-                <i className="fas fa-shield-alt text-xl text-white z-10 transform transition-transform duration-300 group-hover:scale-110"></i>
+                <i className="fas fa-shield-alt text-xl text-slate-800 dark:text-white z-10 transform transition-transform duration-300 group-hover:scale-110"></i>
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/0 via-blue-600/40 to-blue-600/0 opacity-0 group-hover:opacity-100 animate-shimmer"></div>
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-l from-[hsl(var(--primary))] to-[hsl(var(--primary))/70]">{user ? <CompanyName /> : "نظام المحاسبة"}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-l dark:from-[hsl(var(--primary))] dark:to-[hsl(var(--primary))/70]">{user ? <CompanyName /> : "نظام المحاسبة"}</h1>
                 <p className="text-xs text-blue-500/80 dark:text-blue-400/80 mt-0.5 hidden sm:inline-block">الإصدار 1.0.2</p>
               </div>
             </div>
@@ -233,7 +233,7 @@ function CompanyName() {
               {/* معلومات المستخدم */}
               <div className="flex items-center space-x-4 space-x-reverse relative z-10">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))/70] flex items-center justify-center shadow-md">
-                  <i className="fas fa-user-circle text-lg sm:text-xl text-white"></i>
+                  <i className="fas fa-user-circle text-lg sm:text-xl text-slate-700 dark:text-white"></i>
                 </div>
                 <div>
                   <div className="text-[hsl(var(--primary))] dark:text-white font-medium text-base sm:text-lg"><CompanyName /></div>
@@ -362,7 +362,7 @@ function CompanyName() {
                   href="/projects"
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/projects" 
-                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/25" 
+                      ? "bg-gradient-to-r from-amber-600 to-orange-700 dark:from-amber-500 dark:to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/25" 
                       : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
                   }`}
                 >
@@ -453,7 +453,7 @@ function CompanyName() {
                 href="/employees"
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/employees" 
-                    ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold shadow-lg shadow-orange-500/25" 
+                    ? "bg-gradient-to-r from-orange-600 to-amber-700 dark:from-orange-500 dark:to-amber-600 text-white font-semibold shadow-lg shadow-orange-500/25" 
                     : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
                 }`}
               >
@@ -475,7 +475,7 @@ function CompanyName() {
                 href="/deferred-payments"
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/deferred-payments" 
-                    ? "bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-semibold shadow-lg shadow-yellow-500/25" 
+                    ? "bg-gradient-to-r from-yellow-600 to-orange-700 dark:from-yellow-500 dark:to-orange-600 text-white font-semibold shadow-lg shadow-yellow-500/25" 
                     : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
                 }`}
               >

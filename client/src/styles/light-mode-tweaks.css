@@ -1,0 +1,93 @@
+/* Light mode refinements to soften colors, reduce motion, and improve contrast */
+
+html:not(.dark) {
+  /* Calmer light-blue scale */
+  --light-blue-50: hsl(210 100% 98%);
+  --light-blue-100: hsl(210 90% 96%);
+  --light-blue-200: hsl(210 85% 90%);
+  --light-blue-300: hsl(210 80% 82%);
+  --light-blue-400: hsl(210 70% 66%);
+  --light-blue-500: hsl(210 65% 56%);
+  --light-blue-600: hsl(210 60% 46%);
+  --light-blue-700: hsl(210 55% 38%);
+  --light-blue-800: hsl(210 50% 30%);
+  --light-blue-900: hsl(210 45% 22%);
+
+  /* Softer surface palette used by unified theme */
+  --bg-primary: hsl(210 40% 98%);
+  --bg-secondary: hsl(215 45% 97%);
+  --bg-accent: hsl(210 60% 92%);
+  --text-on-light: hsl(215 40% 28%);
+}
+
+/* Softer app surfaces and reduced elevation */
+html:not(.dark) .app-window {
+  box-shadow: 0 8px 24px -8px rgb(16 24 40 / 0.08) !important;
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Icons: neutral tone in light mode */
+html:not(.dark) svg,
+html:not(.dark) i[class*="icon"],
+html:not(.dark) i[class*="fa"],
+html:not(.dark) .icon,
+html:not(.dark) nav svg,
+html:not(.dark) .sidebar svg,
+html:not(.dark) .navigation svg,
+html:not(.dark) .menu svg {
+  color: hsl(var(--text-secondary)) !important;
+  transition: color .2s ease !important;
+}
+
+html:not(.dark) nav button:hover svg,
+html:not(.dark) .sidebar button:hover svg,
+html:not(.dark) .navigation button:hover svg,
+html:not(.dark) .menu button:hover svg {
+  color: hsl(var(--text-primary)) !important;
+  transform: none !important;
+}
+
+/* Sidebar/nav hover: subtle background, no motion */
+html:not(.dark) .sidebar-item:hover,
+html:not(.dark) .nav-item:hover,
+html:not(.dark) .menu-item:hover,
+html:not(.dark) nav a:hover,
+html:not(.dark) .sidebar a:hover {
+  background: var(--light-blue-50) !important;
+  color: hsl(var(--text-primary)) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Tables: calm hover without scale */
+html:not(.dark) tbody tr:hover,
+html:not(.dark) .table-row:hover {
+  background: var(--light-blue-50) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Cards/panels: remove hover move */
+html:not(.dark) .card:hover,
+html:not(.dark) .panel:hover,
+html:not(.dark) .widget:hover {
+  transform: none !important;
+  box-shadow: 0 8px 24px -8px rgb(16 24 40 / 0.08) !important;
+  border-color: var(--light-blue-200) !important;
+}
+
+/* Buttons: keep gradients but tone down shadows in light */
+html:not(.dark) .btn-primary,
+html:not(.dark) button.bg-gradient-to-r,
+html:not(.dark) .primary-button {
+  box-shadow: 0 6px 16px -6px rgb(16 24 40 / 0.15) !important;
+}
+
+/* Remove global translate effects on hover for layout stability */
+html:not(.dark) .card:hover,
+html:not(.dark) .sidebar-item:hover,
+html:not(.dark) nav a:hover,
+html:not(.dark) tbody tr:hover {
+  translate: none !important;
+}
