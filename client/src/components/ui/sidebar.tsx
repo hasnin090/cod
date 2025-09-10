@@ -236,7 +236,7 @@ function CompanyName() {
                   <i className="fas fa-user-circle text-lg sm:text-xl text-slate-700 dark:text-white"></i>
                 </div>
                 <div>
-                  <div className="text-[hsl(var(--primary))] dark:text-white font-medium text-base sm:text-lg"><CompanyName /></div>
+                  <div className="text-slate-800 dark:text-white font-medium text-base sm:text-lg"><CompanyName /></div>
                   <div className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] dark:text-gray-300 mt-1 flex items-center">
                     <i className="fas fa-circle text-[6px] mr-2 text-[hsl(var(--primary))]"></i>
                     <span className="font-bold">  {user.name}</span>
@@ -287,7 +287,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-chart-line text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">لوحة التحكم</span>
+                <span className={`text-sm font-medium ${location === "/" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>لوحة التحكم</span>
                 {location === "/" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -311,7 +311,7 @@ function CompanyName() {
                     }`}>
                       <i className="fas fa-wallet text-lg"></i>
                     </div>
-                    <span className="text-sm font-medium">الحسابات</span>
+                    <span className={`text-sm font-medium ${(location === "/transactions" || location === "/receivables") ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الحسابات</span>
                   </div>
                   <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 ${
                     isAccountsOpen ? 'rotate-180' : ''
@@ -373,7 +373,7 @@ function CompanyName() {
                   }`}>
                     <i className="fas fa-project-diagram text-lg"></i>
                   </div>
-                  <span className="text-sm font-medium">المشاريع</span>
+                  <span className={`text-sm font-medium ${location === "/projects" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>المشاريع</span>
                   {location === "/projects" && (
                     <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                   )}
@@ -395,7 +395,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-file-alt text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">الوثائق</span>
+                <span className={`text-sm font-medium ${location === "/documents" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الوثائق</span>
                 {location === "/documents" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -429,7 +429,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-chart-pie text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">التقارير</span>
+                <span className={`text-sm font-medium ${location === "/reports" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>التقارير</span>
                 {location === "/reports" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -464,7 +464,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-id-badge text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">الموظفين</span>
+                <span className={`text-sm font-medium ${location === "/employees" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الموظفين</span>
                 {location === "/employees" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -486,7 +486,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-clock text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">الدفعات المؤجلة</span>
+                <span className={`text-sm font-medium ${location === "/deferred-payments" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الدفعات المؤجلة</span>
                 {location === "/deferred-payments" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -508,7 +508,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-check-circle text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">الأعمال المكتملة</span>
+                <span className={`text-sm font-medium ${location === "/completed-works" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الأعمال المكتملة</span>
                 {location === "/completed-works" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -530,7 +530,7 @@ function CompanyName() {
                 }`}>
                   <i className="fas fa-archive text-lg"></i>
                 </div>
-                <span className="text-sm font-medium">الأرشيف</span>
+                <span className={`text-sm font-medium ${location === "/archive" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الأرشيف</span>
                 {location === "/archive" && (
                   <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                 )}
@@ -634,7 +634,7 @@ function CompanyName() {
                   }`}>
                     <i className="fas fa-users-cog text-lg"></i>
                   </div>
-                  <span className="text-sm font-medium">إدارة المستخدمين</span>
+                  <span className={`text-sm font-medium ${location === "/users" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>إدارة المستخدمين</span>
                   {location === "/users" && (
                     <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                   )}
@@ -656,7 +656,7 @@ function CompanyName() {
                   }`}>
                     <i className="fas fa-history text-lg"></i>
                   </div>
-                  <span className="text-sm font-medium">سجل النشاطات</span>
+                  <span className={`text-sm font-medium ${location === "/activities" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>سجل النشاطات</span>
                   {location === "/activities" && (
                     <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                   )}
@@ -693,7 +693,7 @@ function CompanyName() {
                   }`}>
                     <i className="fas fa-cog text-sm"></i>
                   </div>
-                  <span className="text-sm font-medium">الإعدادات العامة</span>
+                  <span className={`text-sm font-medium ${location === "/settings" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>الإعدادات العامة</span>
                   {location === "/settings" && (
                     <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                   )}
@@ -715,7 +715,7 @@ function CompanyName() {
                   }`}>
                     <i className="fas fa-database text-sm"></i>
                   </div>
-                  <span className="text-sm font-medium">إدارة قواعد البيانات</span>
+                  <span className={`text-sm font-medium ${location === "/database-management" ? "text-white" : "text-slate-800 dark:text-slate-200"}`}>إدارة قواعد البيانات</span>
                   {location === "/database-management" && (
                     <div className="ml-auto w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
                   )}
