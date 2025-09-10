@@ -137,42 +137,42 @@ export default function Dashboard() {
   return (
     <div className="dashboard-container p-3 sm:p-6 lg:p-8 xl:p-10 space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Header Section */}
-  <div className="app-window p-4 sm:p-6 lg:p-8 xl:p-10">
+  <div className="app-window p-3 sm:p-4 lg:p-5 xl:p-6">
         <div className="max-w-full mx-auto">
-          <div className="flex flex-col xl:flex-row justify-between items-center gap-6 lg:gap-8 xl:gap-10">
+          <div className="flex flex-col xl:flex-row justify-between items-center gap-3 lg:gap-4 xl:gap-6">
             {/* Logo and Title Section */}
             <div className="flex items-center space-x-4 sm:space-x-6 rtl:space-x-reverse">
               <div className="relative group">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl transform group-hover:scale-105 transition-all duration-300 border border-sky-300/40">
-                  <svg className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 xl:w-10 xl:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg border border-sky-300/30">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 xl:w-9 xl:h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full shadow-lg animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full shadow-md animate-pulse" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r from-sky-600 via-blue-700 to-indigo-800 dark:from-sky-400 dark:via-blue-500 dark:to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-sky-600 via-blue-700 to-indigo-800 dark:from-sky-400 dark:via-blue-500 dark:to-indigo-600 bg-clip-text text-transparent">
                   لوحة التحكم المالية
                 </h1>
-                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base lg:text-lg font-medium hidden sm:block">نظرة شاملة على الأداء والإحصائيات المالية للمؤسسة</p>
+                <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm lg:text-base font-medium hidden sm:block">نظرة شاملة على الأداء والإحصائيات المالية للمؤسسة</p>
               </div>
             </div>
             
             {/* Controls Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 lg:gap-6 xl:gap-8 w-full xl:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-3 lg:gap-4 xl:gap-5 w-full xl:w-auto">
               {/* Mode Toggle for Admins */}
               {isAdmin && (
-                <div className="bg-white/90 dark:bg-gray-700/90 backdrop-blur-lg rounded-2xl shadow-xl p-2 flex items-center border border-gray-200/60 dark:border-gray-600/60 w-full sm:w-auto min-h-12">
+                <div className="bg-white/85 dark:bg-gray-700/85 backdrop-blur rounded-xl shadow-md p-1.5 flex items-center border border-gray-200/60 dark:border-gray-600/60 w-full sm:w-auto">
                   <button
                     onClick={() => setDisplayMode('admin')}
-                    className={`px-3 sm:px-4 lg:px-5 py-2.5 rounded-xl text-xs sm:text-sm lg:text-base font-semibold flex items-center gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center min-w-[140px] ${
+                    className={`px-2.5 sm:px-3 lg:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm lg:text-sm font-semibold flex items-center gap-2 transition-colors duration-200 flex-1 sm:flex-none justify-center min-w-[110px] ${
                       displayMode === 'admin'
-                        ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg transform scale-105'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 hover:scale-102'
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
                     }`}
                     aria-pressed={displayMode === 'admin'}
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span className="hidden sm:inline">الصندوق الرئيسي</span>
@@ -180,14 +180,14 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => setDisplayMode('projects')}
-                    className={`px-3 sm:px-4 lg:px-5 py-2.5 rounded-xl text-xs sm:text-sm lg:text-base font-semibold flex items-center gap-2 transition-all duration-300 flex-1 sm:flex-none justify-center min-w-[140px] ${
+                    className={`px-2.5 sm:px-3 lg:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm lg:text-sm font-semibold flex items-center gap-2 transition-colors duration-200 flex-1 sm:flex-none justify-center min-w-[110px] ${
                       displayMode === 'projects'
-                        ? 'bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 text-white shadow-lg transform scale-105'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 hover:scale-102'
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300'
                     }`}
                     aria-pressed={displayMode === 'projects'}
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                     المشاريع
@@ -196,10 +196,10 @@ export default function Dashboard() {
               )}
 
               {/* Date Display */}
-              <div className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600 px-4 sm:px-5 lg:px-7 py-3 sm:py-4 rounded-2xl shadow-xl text-white relative overflow-hidden w-full sm:w-auto border border-sky-300/30">
-                <div className="relative text-center">
-                  <div className="text-xs sm:text-sm lg:text-base font-medium opacity-90 mb-1">التاريخ اليوم</div>
-                  <div className="font-bold text-sm sm:text-base lg:text-lg">
+              <div className="app-window px-3 sm:px-3.5 lg:px-4 py-2 sm:py-2 rounded-xl shadow-md relative w-full sm:w-auto">
+                <div className="relative text-center text-foreground">
+                  <div className="text-[11px] sm:text-xs lg:text-sm font-medium opacity-80 mb-0.5">التاريخ اليوم</div>
+                  <div className="font-semibold text-xs sm:text-sm lg:text-base">
                     {new Date().toLocaleDateString('ar-SA', { 
                       weekday: 'short', 
                       day: 'numeric', 
@@ -208,8 +208,7 @@ export default function Dashboard() {
                     })}
                   </div>
                 </div>
-                <div className="absolute top-2 right-2 w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-md"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform skew-x-12 -translate-x-full animate-pulse"></div>
+                <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow"></div>
               </div>
             </div>
           </div>
