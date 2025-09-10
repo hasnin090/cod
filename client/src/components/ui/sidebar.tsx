@@ -336,7 +336,7 @@ function CompanyName() {
                       <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
                         <i className="fas fa-exchange-alt text-xs"></i>
                       </div>
-                      <span className="text-xs font-medium">المعاملات</span>
+                      <span className={`font-medium text-[13px] sm:text-sm ${location === "/transactions" ? "text-emerald-700 dark:text-emerald-300" : "text-slate-800 dark:text-slate-300"}`}>المعاملات</span>
                     </Link>
                     
                     <Link
@@ -350,7 +350,7 @@ function CompanyName() {
                       <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
                         <i className="fas fa-hand-holding-usd text-xs"></i>
                       </div>
-                      <span className="text-xs font-medium">المبالغ المستحقة</span>
+                      <span className={`font-medium text-[13px] sm:text-sm ${location === "/receivables" ? "text-emerald-700 dark:text-emerald-300" : "text-slate-800 dark:text-slate-300"}`}>المبالغ المستحقة</span>
                     </Link>
                   </div>
                 </div>
@@ -574,7 +574,7 @@ function CompanyName() {
                             }`}>
                               <i className={`fas fa-${activeProjectId === project.id ? 'folder-open' : 'folder'} text-lg`}></i>
                             </div>
-                            <span className="text-sm font-medium truncate">{project.name}</span>
+                            <span className="font-medium truncate text-[13px] sm:text-sm text-slate-800 dark:text-slate-200">{project.name}</span>
                           </div>
                           
                           {/* زر تعيين كمشروع نشط */}
