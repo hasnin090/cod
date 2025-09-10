@@ -281,7 +281,7 @@ export default function DeferredPayments() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6" dir="rtl">
+  <div className="page-container space-y-6 mx-auto" dir="rtl">
       {/* العنوان */}
       <div className="flex items-center justify-between">
         <div>

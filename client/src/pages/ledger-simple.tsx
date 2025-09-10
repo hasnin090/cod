@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 
 export default function LedgerSimple() {
   return (
-    <div className="container mx-auto p-6 space-y-6">
+  <div className="page-container space-y-6 mx-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">دفتر الأستاذ العام</h1>

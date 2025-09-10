@@ -330,7 +330,7 @@ export default function Documents() {
   return (
     <div className="w-full max-w-full overflow-x-hidden">
       <div className="py-6 px-4 pb-mobile-nav-large">
-        <div className="container mx-auto max-w-7xl">
+  <div className="page-container max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[hsl(var(--primary))] flex items-center gap-3">
             <FileText className="w-8 h-8 text-[hsl(var(--primary))]" />

@@ -248,7 +248,7 @@ export default function CompletedWorksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50" dir="rtl">
-      <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl">
+  <div className="page-container space-y-4 sm:space-y-6 max-w-7xl mx-auto">
         {/* Header - محسن للجوال */}
         <div className="space-y-4 sm:space-y-0 sm:flex sm:justify-between sm:items-start">
           <div className="text-center sm:text-right">
