@@ -78,7 +78,7 @@ export default function Settings() {
   // Check if user has admin permissions
   if (!user || user.role !== 'admin') {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+  <div className="page-container mx-auto max-w-2xl">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>غير مصرح</AlertTitle>
@@ -288,7 +288,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
+  <div className="page-container mx-auto max-w-6xl">
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-6">

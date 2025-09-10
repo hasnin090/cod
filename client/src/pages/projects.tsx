@@ -42,14 +42,14 @@ export default function Projects() {
   };
   
   return (
-    <div className="py-4 px-4 pb-mobile-nav-large">
+    <div className="page-container pb-mobile-nav-large">
       {/* عنوان الصفحة */}
       <div className="mb-6 space-y-2">
         <div className="flex items-center space-x-2 space-x-reverse">
           <FolderOpen className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl sm:text-3xl font-bold">إدارة المشاريع</h1>
+          <h1 className="section-title">إدارة المشاريع</h1>
         </div>
-        <p className="text-muted-foreground text-sm sm:text-base">
+        <p className="section-subtitle">
           إدارة وتتبع مشاريع الشركة وحالتها ومتابعة تقدمها
         </p>
       </div>

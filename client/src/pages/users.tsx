@@ -24,7 +24,7 @@ export default function Users() {
   // Check if user is admin
   if (user?.role !== 'admin') {
     return (
-      <div className="py-6 px-4 pb-mobile-nav-large">
+  <div className="page-container pb-mobile-nav-large">
         <div className="mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-[hsl(var(--primary))]">إدارة المستخدمين</h2>
           <p className="text-[hsl(var(--muted-foreground))] mt-2">إدارة حسابات المستخدمين والصلاحيات</p>
@@ -60,12 +60,12 @@ export default function Users() {
   };
 
   return (
-    <div className="py-4 sm:py-6 px-3 sm:px-4 pb-mobile-nav-large">
+    <div className="page-container pb-mobile-nav-large">
       {/* Header Section */}
       <div className="mb-6 sm:mb-8">
-        <div className="bg-gradient-to-l from-[hsl(var(--primary))] to-[hsl(var(--primary))/90] text-white py-4 sm:py-6 px-4 sm:px-6 rounded-xl shadow-lg mb-6 dark:from-[hsl(var(--primary))/90] dark:to-[hsl(var(--primary))/70]">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">إدارة المستخدمين</h2>
-          <p className="text-white/80 dark:text-white/70 text-sm sm:text-base">
+        <div className="app-window py-4 sm:py-5 px-4 sm:px-6 rounded-xl mb-6">
+          <h2 className="section-title mb-1">إدارة المستخدمين</h2>
+          <p className="section-subtitle">
             إدارة حسابات المستخدمين والصلاحيات وأدوار النظام
           </p>
         </div>
