@@ -4,6 +4,7 @@
 @import './styles/blue-theme-unified.css';
 @import './styles/icons-unified.css';
 @import './styles/final-unified-theme.css';
+@import './styles/light-mode-tweaks.css';
 
 @tailwind base;
 @tailwind components;
@@ -20,14 +21,15 @@
     --popover-foreground: 215 16% 47%;
     
     /* الألوان الأساسية - أزرق فاتح موحد */
-    --primary: 210 100% 88%;
-    --primary-foreground: 215 100% 25%;
+  /* primary was too light for text in light mode; darken for better contrast */
+  --primary: 210 90% 55%;
+  --primary-foreground: 215 100% 20%;
     --secondary: 215 100% 95%;
     --secondary-foreground: 215 60% 35%;
     --muted: 215 100% 96%;
     --muted-foreground: 215 30% 55%;
-    --accent: 210 100% 90%;
-    --accent-foreground: 215 100% 30%;
+  --accent: 210 90% 68%;
+  --accent-foreground: 215 100% 20%;
     
     /* ألوان التحكم والحدود */
     --destructive: 0 84.2% 60.2%;
