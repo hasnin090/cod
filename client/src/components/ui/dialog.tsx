@@ -60,7 +60,7 @@ const DialogContent = React.forwardRef<
   <DialogPrimitive.Content
       ref={ref}
       className={cn(
-    "fixed left-[50%] top-[50%] z-50 grid translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-2xl duration-200",
+    "fixed left-[50%] top-[50%] z-50 grid translate-x-[-50%] translate-y-[-50%] gap-4 app-window p-4 sm:p-6 duration-200",
     // Base width and responsive max-width via size variants
     "w-[95vw] xs:w-[90vw] sm:w-auto",
     dialogSizeVariants({ size }),
@@ -73,7 +73,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 grid size-8 place-items-center rounded-lg bg-muted/40 text-foreground opacity-80 ring-offset-background transition-all hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+  <DialogPrimitive.Close className="absolute right-4 top-4 grid size-8 place-items-center rounded-lg bg-muted/40 text-foreground opacity-85 ring-offset-background transition-all hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none shadow-sm">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -88,7 +88,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex flex-col space-y-1.5 text-center sm:text-left pb-3 sm:pb-4 border-b border-border/60",
       className
     )}
     {...props}
@@ -102,7 +102,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 pt-3 sm:pt-4 border-t border-border/60 sticky bottom-0 bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/70",
       className
     )}
     {...props}
@@ -117,7 +117,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-xl sm:text-2xl font-extrabold leading-tight tracking-tight",
       className
     )}
     {...props}
