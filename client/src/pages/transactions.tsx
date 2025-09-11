@@ -421,12 +421,16 @@ export default function Transactions() {
   return (
     <div className="w-full max-w-full overflow-x-hidden">
       <div className="py-6 px-4 pb-mobile-nav-large">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[hsl(var(--primary))] flex items-center gap-3">
-            <i className="fas fa-exchange-alt text-[hsl(var(--primary))]"></i>
-            العمليات المالية
-          </h1>
-          <p className="text-[hsl(var(--muted-foreground))] mt-2">إدارة ومتابعة جميع المعاملات المالية في النظام</p>
+        <div className="page-header-compact">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <i className="fas fa-exchange-alt"></i>
+            </div>
+            <div>
+              <h1 className="section-title text-xl sm:text-2xl">العمليات النقدية</h1>
+              <p className="section-subtitle">إدارة ومتابعة جميع العمليات النقدية في النظام</p>
+            </div>
+          </div>
         </div>
       
         {user?.role !== 'viewer' && (
@@ -441,11 +445,11 @@ export default function Transactions() {
           </div>
         )}
         
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-5 rounded-xl shadow-sm fade-in">
+  <div className="section-block fade-in">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3">
-            <h3 className="text-base font-medium text-[hsl(var(--foreground))] flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[hsl(var(--foreground))] flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              عرض وفلترة المعاملات المالية
+              عرض وفلترة العمليات النقدية
             </h3>
             
             <div className="flex flex-wrap gap-2 w-full lg:w-auto items-center">
@@ -570,7 +574,7 @@ export default function Transactions() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="البحث في المعاملات المالية..."
+                placeholder="البحث في العمليات النقدية..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"

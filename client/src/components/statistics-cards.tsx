@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/lib/chart-utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import AutoFitNumber from '@/components/ui/auto-fit-number';
 
 interface StatisticsCardsProps {
   income: number;
@@ -31,12 +32,18 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
 
   const isShowingAdmin = isAdmin ? displayMode === 'admin' : false;
 
+  // Memoize formatted values to avoid extra recalculations
+  const fmtIncome = useMemo(() => formatCurrency(income), [income]);
+  const fmtExpenses = useMemo(() => formatCurrency(expenses), [expenses]);
+  const fmtProfit = useMemo(() => formatCurrency(profit), [profit]);
+  const fmtAdminBalance = useMemo(() => formatCurrency(adminFundBalance ?? 0), [adminFundBalance]);
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 animate-fade-in">
       {/* بطاقة الإيرادات */}
       {canViewIncome && (
-        <div className="stats-card-pro group cursor-pointer">
-          <div className="flex items-start justify-between mb-4">
+        <div className="stats-card-pro stats-card-compact group cursor-pointer">
+          <div className="flex items-start justify-between mb-3">
             <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500/20 transition-colors duration-300">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -46,16 +53,14 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
               +12.5%
             </div>
           </div>
-          <div className="stats-value-pro text-emerald-600">
-            {formatCurrency(income)}
-          </div>
+          <AutoFitNumber value={fmtIncome} colorClassName="text-emerald-600" className="min-h-[28px]" maxFont={26} minFont={14} />
           <div className="stats-label-pro">إجمالي الإيرادات</div>
         </div>
       )}
 
       {/* بطاقة المصروفات */}
-      <div className="stats-card-pro group cursor-pointer">
-        <div className="flex items-start justify-between mb-4">
+      <div className="stats-card-pro stats-card-compact group cursor-pointer">
+        <div className="flex items-start justify-between mb-3">
           <div className="p-3 rounded-xl bg-red-500/10 text-red-600 group-hover:bg-red-500/20 transition-colors duration-300">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
@@ -65,15 +70,13 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
             -5.2%
           </div>
         </div>
-        <div className="stats-value-pro text-red-600">
-          {formatCurrency(expenses)}
-        </div>
+        <AutoFitNumber value={fmtExpenses} colorClassName="text-red-600" className="min-h-[28px]" maxFont={26} minFont={14} />
         <div className="stats-label-pro">إجمالي المصروفات</div>
       </div>
 
       {/* بطاقة صافي الربح */}
-      <div className="stats-card-pro group cursor-pointer">
-        <div className="flex items-start justify-between mb-4">
+      <div className="stats-card-pro stats-card-compact group cursor-pointer">
+        <div className="flex items-start justify-between mb-3">
           <div className={`p-3 rounded-xl transition-colors duration-300 ${
             profit >= 0 
               ? 'bg-blue-500/10 text-blue-600 group-hover:bg-blue-500/20' 
@@ -91,16 +94,14 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
             {profit >= 0 ? '+8.3%' : '-2.1%'}
           </div>
         </div>
-        <div className={`stats-value-pro ${profit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-          {formatCurrency(profit)}
-        </div>
+        <AutoFitNumber value={fmtProfit} colorClassName={profit >= 0 ? 'text-blue-600' : 'text-orange-600'} className="min-h-[28px]" maxFont={26} minFont={14} />
         <div className="stats-label-pro">صافي {profit >= 0 ? 'الربح' : 'الخسارة'}</div>
       </div>
 
       {/* بطاقة رصيد الصندوق للمشرفين فقط */}
       {isAdmin && isShowingAdmin && adminFundBalance !== undefined && (
-        <div className="stats-card-pro group cursor-pointer">
-          <div className="flex items-start justify-between mb-4">
+        <div className="stats-card-pro stats-card-compact group cursor-pointer">
+          <div className="flex items-start justify-between mb-3">
             <div className="p-3 rounded-xl bg-purple-500/10 text-purple-600 group-hover:bg-purple-500/20 transition-colors duration-300">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -110,9 +111,7 @@ export function StatisticsCards({ income, expenses, profit, adminFundBalance, di
               الرصيد
             </div>
           </div>
-          <div className="stats-value-pro text-purple-600">
-            {formatCurrency(adminFundBalance)}
-          </div>
+          <AutoFitNumber value={fmtAdminBalance} colorClassName="text-purple-600" className="min-h-[28px]" maxFont={26} minFont={14} />
           <div className="stats-label-pro">رصيد الصندوق الرئيسي</div>
         </div>
       )}

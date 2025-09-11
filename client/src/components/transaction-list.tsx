@@ -298,15 +298,15 @@ export function TransactionList({
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="app-window text-center py-10">
         <div className="text-gray-400 mb-4">
           <i className="fas fa-receipt text-6xl"></i>
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          {isArchiveMode ? "لا توجد معاملات مؤرشفة" : "لا توجد معاملات مالية"}
+          {isArchiveMode ? "لا توجد عمليات نقدية مؤرشفة" : "لا توجد عمليات نقدية"}
         </h3>
         <p className="text-gray-600 dark:text-gray-400">
-          {isArchiveMode ? "لم يتم أرشفة أي معاملات بعد" : "ابدأ بإضافة معاملتك المالية الأولى"}
+          {isArchiveMode ? "لم يتم أرشفة أي عمليات بعد" : "ابدأ بإضافة أول عملية نقدية"}
         </p>
       </div>
     );
@@ -314,12 +314,12 @@ export function TransactionList({
 
   return (
     <div className="space-y-4">
-      <div className="bg-secondary-light dark:bg-gray-800 rounded-xl shadow-card">
+  <div className="app-window rounded-xl shadow-sm">
         <div className="p-4 flex flex-col md:flex-row justify-between md:items-center gap-3">
           <div className="flex items-center">
             <span className="px-3 py-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg font-bold text-sm ml-2 flex items-center">
               <i className="fas fa-clipboard-list ml-1.5"></i>
-              {transactions.length} معاملة
+      {transactions.length} عملية
             </span>
           </div>
         </div>

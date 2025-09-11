@@ -177,7 +177,7 @@ export function Sidebar() {
         {/* القائمة الرئيسية */}
         <div>
           <div className="sidebar-section-title">القائمة الرئيسية</div>
-          <nav className="nav-pro">
+          <nav className="nav-pro nav-compact">
             <Link href="/" className={`nav-item-pro ${location === "/" ? "active" : ""}`}>
               <div className="nav-icon-pro">
                 <i className="fas fa-chart-line"></i>
@@ -200,7 +200,7 @@ export function Sidebar() {
                 <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
                   <i className="fas fa-exchange-alt text-[11px]"></i>
                 </div>
-                <span className="text-[13px] sm:text-sm">المعاملات</span>
+                <span className="text-[13px] sm:text-sm">العمليات النقدية</span>
               </Link>
               <Link href="/receivables" className={`submenu-item-pro ${location === "/receivables" ? "active" : ""}`}>
                 <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
@@ -274,7 +274,7 @@ export function Sidebar() {
         {user && user.role !== "admin" && (
           <div className="mt-4">
             <div className="sidebar-section-title">مشاريعي</div>
-            <nav className="nav-pro">
+            <nav className="nav-pro nav-compact">
               {isLoadingProjects ? (
                 <div className="flex items-center justify-center py-6">
                   <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
@@ -322,7 +322,7 @@ export function Sidebar() {
         {user?.role === "admin" && (
           <div className="mt-4">
             <div className="sidebar-section-title">الإدارة والمستخدمين</div>
-            <nav className="nav-pro">
+            <nav className="nav-pro nav-compact">
               <Link href="/users" className={`nav-item-pro ${location === "/users" ? "active" : ""}`}>
                 <div className="nav-icon-pro">
                   <i className="fas fa-users-cog"></i>
@@ -343,7 +343,7 @@ export function Sidebar() {
         {user?.role === "admin" && (
           <div className="mt-4">
             <div className="sidebar-section-title">إعدادات النظام</div>
-            <nav className="nav-pro">
+            <nav className="nav-pro nav-compact">
               <Link href="/settings" className={`nav-item-pro ${location === "/settings" ? "active" : ""}`}>
                 <div className="nav-icon-pro">
                   <i className="fas fa-cog"></i>
