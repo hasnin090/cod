@@ -32,7 +32,8 @@ import {
 import { ImageViewer } from '@/components/image-viewer';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { Button } from '@/components/ui/button';
-import { deleteFile, getFileType, getReadableFileSize } from '@/lib/firebase-storage';
+import { deleteFile } from '@/lib/storage-helpers';
+import { getFileType, getReadableFileSize } from '@/lib/file-utils';
 import { getFileTypeLabel, getFileTypeIcon, getFileTypeBadgeClasses } from '@/lib/file-helpers';
 import { Badge } from '@/components/ui/badge';
 import {

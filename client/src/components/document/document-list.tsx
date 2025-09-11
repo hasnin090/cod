@@ -18,7 +18,8 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { deleteFile } from '@/lib/firebase-storage';
+import { deleteFile } from '@/lib/storage-helpers';
+import { getReadableFileSize, getFileType } from '@/lib/file-utils';
 import { DocumentPreviewDialog } from './document-preview-dialog';
 import { DocumentCard } from './document-card';
 import { DocumentListToolbar } from './document-list-toolbar';

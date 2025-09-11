@@ -15,10 +15,7 @@ import {
   Loader2, Upload, File, FileImage, FileText, FileIcon, 
   AlertCircle, CheckCircle, Trash2, UploadCloud, Info 
 } from 'lucide-react';
-import { 
-  getFileType, 
-  getReadableFileSize 
-} from '@/lib/firebase-storage';
+import { getFileType, getReadableFileSize } from '@/lib/file-utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

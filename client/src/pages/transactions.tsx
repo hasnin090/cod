@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, ArrowDown, ArrowUp, Search, Archive, CheckSquare, Square, Download, Printer, FileSpreadsheet, Paperclip } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/chart-utils';
@@ -133,7 +132,7 @@ export default function Transactions() {
   }
 
   // وظيفة تصدير البيانات إلى Excel - مخصصة للمستخدمين من نوع المشاهدة
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (!filteredTransactions || filteredTransactions.length === 0) {
       toast({
         title: "لا توجد بيانات للتصدير",
@@ -179,8 +178,10 @@ export default function Transactions() {
       return baseData;
     });
 
-    // إنشاء ورقة عمل
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
+  // تحميل مكتبة xlsx عند الحاجة فقط
+  const XLSX = await import('xlsx');
+  // إنشاء ورقة عمل
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
     
     // تنسيق عرض الأعمدة
     const wscols = [
@@ -195,7 +196,7 @@ export default function Transactions() {
     worksheet['!cols'] = wscols;
 
     // إنشاء كتاب عمل
-    const workbook = XLSX.utils.book_new();
+  const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'المعاملات المالية');
 
     // تصدير الملف

@@ -1,5 +1,5 @@
 import { FileText, FileImage, File } from 'lucide-react';
-import { getFileType } from "./firebase-storage";
+import { getFileType } from "./file-utils";
 
 // دوال مساعدة لتنسيقات أنواع الملفات
 export const getFileTypeLabel = (fileType: string): string => {

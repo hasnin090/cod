@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { deleteFile } from '@/lib/storage-helpers';
 import { DocumentForm } from '@/components/document-form';
 import { DocumentList, DocumentSidebar } from '@/components/document';
 import { DocumentLinker } from '@/components/document-library/document-linker';
@@ -908,7 +909,6 @@ export default function Documents() {
                                   try {
                                     // أولاً محاولة حذف الملف من Firebase Storage
                                     try {
-                                      const { deleteFile } = await import('@/lib/firebase-storage');
                                       if (doc.fileUrl) {
                                         await deleteFile(doc.fileUrl);
                                       }

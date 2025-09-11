@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Archive, Search, Filter, Calendar, TrendingUp, TrendingDown, DollarSign, FileText, Download, Printer, Grid, List } from "lucide-react";
-import * as XLSX from 'xlsx';
 import { formatDate } from "@/utils/date-utils";
 
 // دالة تنسيق العملة محلياً
@@ -181,7 +180,7 @@ export default function ArchivePage() {
   };
 
   // تصدير البيانات إلى Excel
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     const dataToExport = filteredTransactions.map((transaction, index) => ({
       'رقم المعاملة': index + 1,
       'التاريخ': formatDate(transaction.date),
@@ -192,7 +191,8 @@ export default function ArchivePage() {
       'المرفقات': transaction.attachmentUrl ? 'نعم' : 'لا'
     }));
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+  const XLSX = await import('xlsx');
+  const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'المعاملات المؤرشفة');
     

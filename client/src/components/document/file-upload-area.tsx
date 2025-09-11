@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Upload, UploadCloud } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { getFileType, getReadableFileSize } from '@/lib/firebase-storage';
+import { getFileType, getReadableFileSize } from '@/lib/file-utils';
 
 interface FileUploadAreaProps {
   file: File | null;
