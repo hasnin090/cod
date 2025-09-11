@@ -277,7 +277,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/" 
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -300,7 +300,7 @@ function CompanyName() {
                   className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     (location === "/transactions" || location === "/receivables")
                       ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg shadow-emerald-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -363,7 +363,7 @@ function CompanyName() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/projects" 
                       ? "bg-gradient-to-r from-amber-600 to-orange-700 dark:from-amber-500 dark:to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -385,7 +385,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/documents" 
                     ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -419,7 +419,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/reports" 
                     ? "bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold shadow-lg shadow-rose-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-rose-50 hover:to-red-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -454,7 +454,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/employees" 
                     ? "bg-gradient-to-r from-orange-600 to-amber-700 dark:from-orange-500 dark:to-amber-600 text-white font-semibold shadow-lg shadow-orange-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -476,7 +476,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/deferred-payments" 
                     ? "bg-gradient-to-r from-yellow-600 to-orange-700 dark:from-yellow-500 dark:to-orange-600 text-white font-semibold shadow-lg shadow-yellow-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -498,7 +498,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/completed-works" 
                     ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -520,7 +520,7 @@ function CompanyName() {
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                   location === "/archive" 
                     ? "bg-gradient-to-r from-gray-500 to-slate-600 text-white font-semibold shadow-lg shadow-gray-500/25" 
-                    : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                    : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -624,7 +624,7 @@ function CompanyName() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/users" 
                       ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -646,7 +646,7 @@ function CompanyName() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/activities" 
                       ? "bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold shadow-lg shadow-indigo-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -683,7 +683,7 @@ function CompanyName() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/settings" 
                       ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
@@ -705,7 +705,7 @@ function CompanyName() {
                   className={`group flex items-center gap-3 px-4 py-3 rounded-xl no-flicker touch-target transition-all duration-300 transform hover:scale-[1.02] ${
                     location === "/database-management" 
                       ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25" 
-                      : "text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-slate-700/50 dark:hover:to-slate-600/50 hover:shadow-md"
+                      : "text-slate-900 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 hover:shadow-md"
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 ${
