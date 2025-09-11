@@ -12,7 +12,7 @@ export const createMulterConfig = (destination: string = "uploads") => {
   if (isNetlify) {
     return multer({
       storage: multer.memoryStorage(),
-      limits: { fileSize: 20 * 1024 * 1024 },
+      limits: { fileSize: 50 * 1024 * 1024 },
     });
   }
 
@@ -37,7 +37,7 @@ export const createMulterConfig = (destination: string = "uploads") => {
       },
     }),
     limits: {
-      fileSize: 20 * 1024 * 1024, // 20MB
+      fileSize: 50 * 1024 * 1024, // 50MB
     },
     fileFilter: (_req, _file, cb) => {
       cb(null, true);

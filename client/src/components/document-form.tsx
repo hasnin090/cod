@@ -39,7 +39,7 @@ interface DocumentFormProps {
   isManagerDocument?: boolean; // إضافة خاصية لتحديد ما إذا كان المستند إدارياً
 }
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ACCEPTED_FILE_TYPES = [
   // PDF files
   "application/pdf", 

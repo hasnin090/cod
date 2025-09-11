@@ -39,7 +39,7 @@ interface BulkFolderUploadProps {
 }
 
 const MAX_FILES = 200;
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
 const ALLOWED_TYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp',
   'application/pdf',
@@ -89,7 +89,7 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        invalidFiles.push(`${file.name} - حجم الملف كبير جداً (أكثر من 20MB)`);
+        invalidFiles.push(`${file.name} - حجم الملف كبير جداً (أكثر من 50MB)`);
         return;
       }
 
@@ -386,7 +386,7 @@ export function BulkFolderUpload({ projectId, onUploadComplete, className }: Bul
             رفع مجلد كامل من المستندات
           </CardTitle>
           <div className="text-sm text-muted-foreground">
-            يمكن رفع حتى {MAX_FILES} ملف في المرة الواحدة (حد أقصى 20MB لكل ملف)
+            يمكن رفع حتى {MAX_FILES} ملف في المرة الواحدة (حد أقصى 50MB لكل ملف)
           </div>
         </CardHeader>
         

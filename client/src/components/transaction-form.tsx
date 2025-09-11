@@ -31,7 +31,7 @@ interface TransactionFormProps {
   isLoading: boolean;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ACCEPTED_FILE_TYPES = [
   "image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp", "image/svg+xml",
   "application/pdf", "application/msword", 

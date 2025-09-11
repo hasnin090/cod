@@ -793,7 +793,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(201).json(created);
       } catch (err) {
   console.error('Create transaction error:', err);
-  return res.status(500).json({ message: "تعذر حفظ المرفق أو المعاملة. تأكد من أن حجم الملف أقل من 20MB وأن الاتصال مستقر" });
+  return res.status(500).json({ message: "تعذر حفظ المرفق أو المعاملة. تأكد من أن حجم الملف أقل من 50MB وأن الاتصال مستقر" });
       }
     },
   );
