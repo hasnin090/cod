@@ -799,7 +799,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
       </div>
       
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+  <AlertDialogContent size="md" className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg text-red-600 dark:text-red-400 flex items-center">
               <TrashIcon className="h-5 w-5 ml-2 text-red-500 dark:text-red-400" />

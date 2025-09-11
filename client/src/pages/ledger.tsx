@@ -289,7 +289,7 @@ export default function LedgerPage() {
                 إضافة نوع مصروف
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent size="md">
             <DialogHeader>
               <DialogTitle>إضافة نوع مصروف جديد</DialogTitle>
               <DialogDescription>
@@ -378,7 +378,7 @@ export default function LedgerPage() {
 
         {/* مربع حوار تحرير نوع المصروف */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+    <DialogContent size="md">
             <DialogHeader>
               <DialogTitle>تحرير نوع المصروف</DialogTitle>
               <DialogDescription>

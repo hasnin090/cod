@@ -563,7 +563,7 @@ export default function Settings() {
                     إضافة نوع جديد
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent size="lg">
                   <DialogHeader>
                     <DialogTitle className="text-xl">
                       {editingExpenseType ? 'تعديل نوع المصروف' : 'إضافة نوع مصروف جديد'}

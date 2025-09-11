@@ -301,7 +301,7 @@ export default function DeferredPayments() {
               إضافة مستحق جديد
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent size="md">
             <DialogHeader>
               <DialogTitle>إضافة مستحق جديد</DialogTitle>
               <DialogDescription>
@@ -553,7 +553,7 @@ export default function DeferredPayments() {
                               <Eye className="w-4 h-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent size="xl">
                             <DialogHeader>
                               <DialogTitle>تفاصيل المستحق - {payment.beneficiaryName}</DialogTitle>
                               <DialogDescription>

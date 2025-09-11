@@ -160,7 +160,7 @@ export default function ExpenseTypesManagementPage() {
               إضافة نوع مصروف
             </Button>
           </DialogTrigger>
-          <DialogContent className="app-window sm:max-w-md">
+          <DialogContent size="md" className="app-window">
             <DialogHeader>
               <DialogTitle>إضافة نوع مصروف جديد</DialogTitle>
               <DialogDescription>
@@ -321,7 +321,7 @@ export default function ExpenseTypesManagementPage() {
 
       {/* مربع حوار تحرير نوع المصروف */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="app-window sm:max-w-md">
+  <DialogContent size="md" className="app-window">
           <DialogHeader>
             <DialogTitle>تحرير نوع المصروف</DialogTitle>
             <DialogDescription>

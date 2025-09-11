@@ -3,6 +3,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { cva, type VariantProps } from "class-variance-authority"
 
 const AlertDialog = AlertDialogPrimitive.Root
 
@@ -25,16 +26,39 @@ const AlertDialogOverlay = React.forwardRef<
 ))
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
+const alertSizeVariants = cva("", {
+  variants: {
+    size: {
+      xs: "sm:max-w-xs",
+      sm: "sm:max-w-sm",
+      md: "sm:max-w-md md:max-w-lg",
+      lg: "sm:max-w-lg md:max-w-xl",
+      xl: "sm:max-w-xl md:max-w-2xl",
+      "2xl": "sm:max-w-2xl md:max-w-3xl",
+      "3xl": "sm:max-w-3xl md:max-w-4xl",
+      full: "sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:w-[75vw]",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+})
+
+interface AlertDialogContentProps
+  extends React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>,
+    VariantProps<typeof alertSizeVariants> {}
+
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+  AlertDialogContentProps
+>(({ className, size, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border bg-card p-6 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+  "fixed left-[50%] top-[50%] z-50 grid translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-2xl duration-200 w-[95vw] xs:w-[90vw] sm:w-auto max-h-[90dvh] overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        alertSizeVariants({ size }),
         className
       )}
       {...props}

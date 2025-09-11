@@ -122,7 +122,7 @@ export const DocumentPreviewDialog = memo(({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="app-window sm:max-w-[800px] max-h-[90dvh] w-[95vw] xs:w-[90vw] sm:w-auto overflow-hidden flex flex-col p-4 xs:p-5 sm:p-6">
+    <DialogContent size="preview" className="app-window w-[95vw] xs:w-[90vw] sm:w-auto max-h-[90dvh] overflow-hidden flex flex-col p-4 xs:p-5 sm:p-6">
         <DialogHeader className="mb-3 xs:mb-4 sm:mb-5 space-y-2">
           <DialogTitle className="flex items-center gap-3 text-base xs:text-lg sm:text-xl">
             <div className="h-8 w-8 xs:h-10 xs:w-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">

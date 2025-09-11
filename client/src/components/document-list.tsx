@@ -573,7 +573,7 @@ export function DocumentList({ documents, projects, isLoading, onDocumentUpdated
       
       {/* حوار معاينة المستند */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
-        <DialogContent className="max-w-4xl">
+  <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               {currentDocument && getFileIcon(currentDocument.fileType)}

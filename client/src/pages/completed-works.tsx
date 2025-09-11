@@ -265,7 +265,7 @@ export default function CompletedWorksPage() {
                   إضافة عمل منجز
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+              <DialogContent size="xl" className="w-[95vw] sm:w-auto max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader className="pb-4">
                   <DialogTitle className="text-xl font-bold">إضافة عمل منجز جديد</DialogTitle>
                 </DialogHeader>
@@ -437,7 +437,7 @@ export default function CompletedWorksPage() {
                   رفع مستند
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+              <DialogContent size="xl" className="w-[95vw] sm:w-auto max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader className="pb-4">
                   <DialogTitle className="text-xl font-bold">رفع مستند جديد</DialogTitle>
                 </DialogHeader>
