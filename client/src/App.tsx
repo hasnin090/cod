@@ -111,15 +111,15 @@ function AppRoutes() {
   }
   
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="flex-1 transition-all duration-300 mr-0 md:mr-72 lg:mr-80 bg-[hsl(var(--background))] dark:bg-gray-900 dark:text-gray-100 overflow-y-auto">
-        {/* شريط علوي فارغ لمنع التداخل مع شريط القوائم */}
-        <div className="h-20 md:h-16 lg:h-18"></div>
+      <main className="flex-1 transition-all duration-300 mr-0 md:mr-72 lg:mr-80 overflow-y-auto">
+        {/* شريط علوي للتباعد المناسب مع الشريط الجانبي */}
+        <div className="h-20 md:h-16 lg:h-18 w-full"></div>
         
-        {/* المحتوى الرئيسي مع padding مناسب */}
-        <div className="px-4 md:px-6 lg:px-8 py-4 md:py-6 max-w-7xl mx-auto w-full">
-          <div className="bg-background/95 backdrop-blur-sm rounded-lg border shadow-sm p-4 md:p-6">
+        {/* حاوية المحتوى الرئيسي المحسنة */}
+        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-screen-2xl mx-auto w-full">
+          <div className="min-h-[calc(100vh-8rem)] bg-card/50 backdrop-blur-sm rounded-xl border shadow-lg p-6 lg:p-8">
             <Switch>
               <Route path="/" component={Dashboard} />
               <Route path="/transactions" component={Transactions} />
