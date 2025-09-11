@@ -411,7 +411,7 @@ export default function Reports() {
 
         {/* حوار تفاصيل نوع الحساب */}
         <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent size="xl" className="max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>تفاصيل حساب: {dialogAccountType}</DialogTitle>
               <DialogDescription>

@@ -568,7 +568,7 @@ export function TransactionList({
       </AlertDialog>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+  <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تعديل المعاملة المالية</DialogTitle>
           </DialogHeader>
@@ -797,7 +797,7 @@ export function TransactionList({
 
       {/* نافذة عرض المرفق */}
       <Dialog open={attachmentDialogOpen} onOpenChange={setAttachmentDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] p-0">
+  <DialogContent size="3xl" className="max-h-[95vh] p-0">
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle className="text-right">عرض المرفق</DialogTitle>
             <DialogDescription className="text-right text-sm text-gray-600">

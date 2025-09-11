@@ -429,7 +429,7 @@ export default function Employees() {
 
       {/* حوار إضافة موظف جديد */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto mx-4">
+  <DialogContent size="md" className="max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>إضافة موظف جديد</DialogTitle>
           </DialogHeader>
@@ -529,7 +529,7 @@ export default function Employees() {
 
       {/* حوار تعديل موظف */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto mx-4">
+  <DialogContent size="md" className="max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>تعديل بيانات الموظف</DialogTitle>
           </DialogHeader>
@@ -674,7 +674,7 @@ export default function Employees() {
       {/* حوار دفع الراتب */}
       {selectedEmployee && (
         <Dialog open={isSalaryPaymentDialogOpen} onOpenChange={setIsSalaryPaymentDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto mx-4">
+          <DialogContent size="md" className="max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
               <DialogTitle>دفع راتب - {selectedEmployee.name}</DialogTitle>
             </DialogHeader>

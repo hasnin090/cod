@@ -825,7 +825,7 @@ export function UserList({ users, isLoading, onUserUpdated, currentUserId }: Use
       </AlertDialog>
       
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+  <DialogContent size="md" className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-800 dark:text-gray-200">
               <div className="flex items-center">

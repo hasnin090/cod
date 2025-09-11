@@ -227,7 +227,7 @@ export function DocumentLinker() {
                                   ربط
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
+                              <DialogContent size="xl">
                                 <DialogHeader>
                                   <DialogTitle>ربط المستند بعملية مالية</DialogTitle>
                                   <DialogDescription>

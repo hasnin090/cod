@@ -387,7 +387,7 @@ export function ProjectList({ projects, isLoading, onProjectUpdated }: ProjectLi
 
       {/* نافذة تعديل المشروع */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+  <DialogContent size="lg" className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-primary flex items-center">
               <i className="fas fa-edit ml-2"></i>
@@ -559,7 +559,7 @@ export function ProjectList({ projects, isLoading, onProjectUpdated }: ProjectLi
       
       {/* مربع حوار تفاصيل خطأ الحذف */}
       <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+  <DialogContent size="md">
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center">
               <i className="fas fa-exclamation-circle ml-2"></i>

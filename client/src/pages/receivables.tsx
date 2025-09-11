@@ -739,7 +739,7 @@ export default function Receivables() {
 
       {/* نافذة تفاصيل المستحق - بسيطة ومنظمة */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden" dir="rtl">
+  <DialogContent size="xl" className="max-h-[80vh] overflow-hidden" dir="rtl">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               تفاصيل المستحق - {selectedReceivable?.beneficiaryName}
