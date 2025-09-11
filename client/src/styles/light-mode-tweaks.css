@@ -60,6 +60,31 @@ html:not(.dark) .sidebar a:hover {
   box-shadow: none !important;
 }
 
+/* Force high-contrast sidebar/link text in light mode */
+html:not(.dark) aside nav a,
+html:not(.dark) aside nav button,
+html:not(.dark) nav a,
+html:not(.dark) .sidebar a {
+  color: #0f172a !important; /* slate-900 */
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Keep active gradient items white in light mode */
+html:not(.dark) aside nav a.bg-gradient-to-r,
+html:not(.dark) aside nav a.bg-gradient-to-r span,
+html:not(.dark) nav a.bg-gradient-to-r,
+html:not(.dark) .sidebar a.bg-gradient-to-r {
+  color: #ffffff !important;
+}
+
+/* Ensure inner label spans are fully opaque and dark by default */
+html:not(.dark) aside nav a span,
+html:not(.dark) aside nav button span {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
 /* Tables: calm hover without scale */
 html:not(.dark) tbody tr:hover,
 html:not(.dark) .table-row:hover {
