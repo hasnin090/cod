@@ -26,19 +26,16 @@ import WhatsAppIntegration from './pages/whatsapp-integration';
 import SystemManagement from './pages/system-management';
 import CompletedWorks from './pages/completed-works';
 
-
-
 import { useAuth } from "./hooks/use-auth";
 import { AuthProvider } from "./context/auth-context";
-import { Sidebar } from "@/components/ui/sidebar";
-import { UserMenu } from "@/components/ui/user-menu";
+import { RootNavigation } from "@/components/root-navigation";
+import { RootHeader } from "@/components/root-header";
 import { useEffect, useState } from "react";
 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
   const [isMobile, setIsMobile] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   
   // تحديد حجم الشاشة وتغييرات الواجهة
   useEffect(() => {
@@ -67,32 +64,6 @@ function AppRoutes() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // مراقبة تمرير الصفحة
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  // التأثير البصري لعنوان الصفحة
-  const getPageTitle = () => {
-    switch (location) {
-      case '/': return 'لوحة التحكم';
-      case '/transactions': return 'العمليات المالية';
-      case '/projects': return 'المشاريع';
-      case '/users': return 'المستخدمين';
-      case '/documents': return 'المستندات';
-      case '/archive': return 'الأرشيف';
-      case '/reports': return 'التقارير';
-      case '/activities': return 'سجل النشاطات';
-      case '/settings': return 'الإعدادات';
-      default: return 'الصفحة غير موجودة';
-    }
-  };
-  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -109,68 +80,67 @@ function AppRoutes() {
       </Switch>
     );
   }
-  
+
+  const isHomePage = location === '/';
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 transition-all duration-300 mr-0 md:mr-72 lg:mr-80 overflow-y-auto">
-        {/* شريط علوي للتباعد المناسب مع الشريط الجانبي */}
-        <div className="h-20 md:h-16 lg:h-18 w-full"></div>
-        
-        {/* حاوية المحتوى الرئيسي المحسنة */}
-        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-screen-2xl mx-auto w-full">
-          <div className="min-h-[calc(100vh-8rem)] bg-card/50 backdrop-blur-sm rounded-xl border shadow-lg p-6 lg:p-8">
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/transactions" component={Transactions} />
-              <Route path="/projects" component={Projects} />
-              <Route path="/projects/details/:id" component={Projects} />
-              <Route path="/users" component={Users} />
-              <Route path="/employees">
-                {user?.role === 'admin' ? <Employees /> : <NotFound />}
-              </Route>
-              <Route path="/documents" component={Documents} />
-              <Route path="/archive" component={Archive} />
-              <Route path="/reports">
-                {user?.role === 'admin' ? <Reports /> : <NotFound />}
-              </Route>
-              <Route path="/activities" component={Activities} />
-              <Route path="/settings" component={Settings} />
-              <Route path="/ledger" component={Reports} />
-              <Route path="/receivables" component={Receivables} />
-              <Route path="/database-management">
-                {user?.role === 'admin' ? <DatabaseManagement /> : <NotFound />}
-              </Route>
-              <Route path="/hybrid-storage">
-                {user?.role === 'admin' ? <HybridStorage /> : <NotFound />}
-              </Route>
-              <Route path="/supabase-status">
-                {user?.role === 'admin' ? <SupabaseStatus /> : <NotFound />}
-              </Route>
-              <Route path="/file-migration">
-                {user?.role === 'admin' ? <FileMigration /> : <NotFound />}
-              </Route>
-              <Route path="/cloud-migration">
-                {user?.role === 'admin' ? <CloudStorageMigration /> : <NotFound />}
-              </Route>
-              <Route path="/deferred-payments" component={DeferredPayments} />
-              <Route path="/whatsapp-integration">
-                {user?.role === 'admin' ? <WhatsAppIntegration /> : <NotFound />}
-              </Route>
-              <Route path="/system-management">
-                {user?.role === 'admin' ? <SystemManagement /> : <NotFound />}
-              </Route>
-              <Route path="/completed-works">
-                {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
-              </Route>
+    <div className="min-h-screen bg-background">
+      {/* شريط الرأس العلوي - يظهر في جميع الصفحات */}
+      <RootHeader />
+      
+      {/* المحتوى الرئيسي */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Switch>
+          {/* الصفحة الرئيسية تعرض نظام البطاقات */}
+          <Route path="/">
+            <RootNavigation />
+          </Route>
+          
+          {/* باقي الصفحات */}
+          <Route path="/transactions" component={Transactions} />
+          <Route path="/projects" component={Projects} />
+          <Route path="/projects/details/:id" component={Projects} />
+          <Route path="/users" component={Users} />
+          <Route path="/employees">
+            {user?.role === 'admin' ? <Employees /> : <NotFound />}
+          </Route>
+          <Route path="/documents" component={Documents} />
+          <Route path="/archive" component={Archive} />
+          <Route path="/reports">
+            {user?.role === 'admin' ? <Reports /> : <NotFound />}
+          </Route>
+          <Route path="/activities" component={Activities} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/ledger" component={Reports} />
+          <Route path="/receivables" component={Receivables} />
+          <Route path="/database-management">
+            {user?.role === 'admin' ? <DatabaseManagement /> : <NotFound />}
+          </Route>
+          <Route path="/hybrid-storage">
+            {user?.role === 'admin' ? <HybridStorage /> : <NotFound />}
+          </Route>
+          <Route path="/supabase-status">
+            {user?.role === 'admin' ? <SupabaseStatus /> : <NotFound />}
+          </Route>
+          <Route path="/file-migration">
+            {user?.role === 'admin' ? <FileMigration /> : <NotFound />}
+          </Route>
+          <Route path="/cloud-migration">
+            {user?.role === 'admin' ? <CloudStorageMigration /> : <NotFound />}
+          </Route>
+          <Route path="/deferred-payments" component={DeferredPayments} />
+          <Route path="/whatsapp-integration">
+            {user?.role === 'admin' ? <WhatsAppIntegration /> : <NotFound />}
+          </Route>
+          <Route path="/system-management">
+            {user?.role === 'admin' ? <SystemManagement /> : <NotFound />}
+          </Route>
+          <Route path="/completed-works">
+            {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
+          </Route>
 
-
-              <Route component={NotFound} />
-            </Switch>
-          </div>
-        </div>
-        
-        {/* لم نعد بحاجة إلى مساحة إضافية هنا بسبب استخدام pb-mobile-nav */}
+          <Route component={NotFound} />
+        </Switch>
       </main>
     </div>
   );

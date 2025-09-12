@@ -2,7 +2,17 @@
 
 /* === PROFESSIONAL ACCOUNTING SYSTEM - ENTERPRISE GRADE === */
 /* Core Professional Design System */
-@import './styles/professional-accounting-system.css';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* استيراد نظام الألوان المهني */
+@import "./styles/professional-accounting-system.css";
+
+/* استيراد نظام Root الجديد */
+@import "./styles/root-system.css";
+
+/* أنماط أساسية للتطبيق */
 @import './styles/professional-typography.css';
 
 /* Professional UI Components */
