@@ -213,6 +213,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        <div className="mt-4">
+          <div className="header-accent-divider"></div>
+        </div>
       </div>
       
       {/* Main Content */}
