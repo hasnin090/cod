@@ -1,0 +1,583 @@
+/**
+ * NetSuite Cards and Tables Components
+ * مكونات البطاقات والجداول المتقدمة لتحاكي تجربة NetSuite
+ */
+
+/* === NetSuite Advanced Cards === */
+.netsuite-card-advanced {
+  background: rgb(var(--netsuite-bg-primary));
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  border-radius: var(--netsuite-radius-lg);
+  box-shadow: var(--netsuite-shadow-sm);
+  transition: var(--netsuite-transition);
+  overflow: hidden;
+  position: relative;
+}
+
+.netsuite-card-advanced:hover {
+  box-shadow: var(--netsuite-shadow-md);
+  transform: translateY(-2px);
+  border-color: rgb(var(--netsuite-primary) / 0.3);
+}
+
+.netsuite-card-advanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgb(var(--netsuite-primary)), rgb(var(--netsuite-primary-dark)));
+  opacity: 0;
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-card-advanced:hover::before {
+  opacity: 1;
+}
+
+/* === NetSuite Card Header === */
+.netsuite-card-header-advanced {
+  padding: var(--netsuite-spacing-lg);
+  border-bottom: 1px solid rgb(var(--netsuite-border-secondary));
+  background: rgb(var(--netsuite-bg-secondary) / 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.netsuite-card-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-md);
+}
+
+.netsuite-card-title-icon {
+  width: 24px;
+  height: 24px;
+  background: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-text-inverse));
+  border-radius: var(--netsuite-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--netsuite-font-size-sm);
+}
+
+.netsuite-card-title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.netsuite-card-title-advanced {
+  font-size: var(--netsuite-font-size-lg);
+  font-weight: 600;
+  color: rgb(var(--netsuite-text-primary));
+  margin: 0;
+  line-height: 1.2;
+}
+
+.netsuite-card-subtitle-advanced {
+  font-size: var(--netsuite-font-size-sm);
+  color: rgb(var(--netsuite-text-secondary));
+  margin: 0;
+  line-height: 1.2;
+}
+
+.netsuite-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-card-action-btn {
+  background: none;
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  color: rgb(var(--netsuite-text-secondary));
+  padding: var(--netsuite-spacing-xs) var(--netsuite-spacing-sm);
+  border-radius: var(--netsuite-radius-md);
+  cursor: pointer;
+  transition: var(--netsuite-transition);
+  font-size: var(--netsuite-font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-xs);
+}
+
+.netsuite-card-action-btn:hover {
+  border-color: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-primary));
+  background: rgb(var(--netsuite-primary) / 0.05);
+}
+
+/* === NetSuite Card Content === */
+.netsuite-card-content-advanced {
+  padding: var(--netsuite-spacing-lg);
+}
+
+.netsuite-card-content-advanced.no-padding {
+  padding: 0;
+}
+
+/* === NetSuite Statistics Cards === */
+.netsuite-stats-card {
+  background: rgb(var(--netsuite-bg-primary));
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  border-radius: var(--netsuite-radius-lg);
+  padding: var(--netsuite-spacing-lg);
+  box-shadow: var(--netsuite-shadow-sm);
+  transition: var(--netsuite-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.netsuite-stats-card:hover {
+  box-shadow: var(--netsuite-shadow-md);
+  transform: translateY(-1px);
+}
+
+.netsuite-stats-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, rgb(var(--netsuite-primary)), rgb(var(--netsuite-primary-light)));
+}
+
+.netsuite-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--netsuite-spacing-lg);
+}
+
+.netsuite-stats-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgb(var(--netsuite-primary) / 0.1), rgb(var(--netsuite-primary) / 0.05));
+  border: 2px solid rgb(var(--netsuite-primary) / 0.2);
+  border-radius: var(--netsuite-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--netsuite-primary));
+  font-size: var(--netsuite-font-size-xl);
+}
+
+.netsuite-stats-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-xs);
+  font-size: var(--netsuite-font-size-xs);
+  font-weight: 600;
+  padding: var(--netsuite-spacing-xs) var(--netsuite-spacing-sm);
+  border-radius: var(--netsuite-radius-xl);
+}
+
+.netsuite-stats-trend.positive {
+  background: rgb(var(--netsuite-success) / 0.1);
+  color: rgb(var(--netsuite-success));
+}
+
+.netsuite-stats-trend.negative {
+  background: rgb(var(--netsuite-error) / 0.1);
+  color: rgb(var(--netsuite-error));
+}
+
+.netsuite-stats-trend.neutral {
+  background: rgb(var(--netsuite-secondary) / 0.1);
+  color: rgb(var(--netsuite-secondary));
+}
+
+.netsuite-stats-value {
+  font-size: var(--netsuite-font-size-3xl);
+  font-weight: 700;
+  color: rgb(var(--netsuite-text-primary));
+  margin-bottom: var(--netsuite-spacing-xs);
+  font-family: 'Inter', 'Cairo', sans-serif;
+  line-height: 1.1;
+}
+
+.netsuite-stats-label {
+  font-size: var(--netsuite-font-size-sm);
+  color: rgb(var(--netsuite-text-secondary));
+  font-weight: 500;
+  margin-bottom: var(--netsuite-spacing-sm);
+}
+
+.netsuite-stats-detail {
+  font-size: var(--netsuite-font-size-xs);
+  color: rgb(var(--netsuite-text-tertiary));
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-xs);
+}
+
+/* === NetSuite Advanced Tables === */
+.netsuite-table-container {
+  background: rgb(var(--netsuite-bg-primary));
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  border-radius: var(--netsuite-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--netsuite-shadow-sm);
+}
+
+.netsuite-table-header {
+  background: rgb(var(--netsuite-bg-secondary));
+  border-bottom: 2px solid rgb(var(--netsuite-border-primary));
+  padding: var(--netsuite-spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.netsuite-table-title {
+  font-size: var(--netsuite-font-size-lg);
+  font-weight: 600;
+  color: rgb(var(--netsuite-text-primary));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-md);
+}
+
+.netsuite-table-title-icon {
+  width: 20px;
+  height: 20px;
+  color: rgb(var(--netsuite-primary));
+}
+
+.netsuite-table-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-table-search {
+  position: relative;
+  min-width: 250px;
+}
+
+.netsuite-table-search-input {
+  width: 100%;
+  padding: var(--netsuite-spacing-sm) var(--netsuite-spacing-md);
+  padding-right: 2.5rem;
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  border-radius: var(--netsuite-radius-md);
+  font-size: var(--netsuite-font-size-sm);
+  background: rgb(var(--netsuite-bg-primary));
+  color: rgb(var(--netsuite-text-primary));
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-table-search-input:focus {
+  outline: none;
+  border-color: rgb(var(--netsuite-primary));
+  box-shadow: 0 0 0 3px rgb(var(--netsuite-primary) / 0.1);
+}
+
+.netsuite-table-search-icon {
+  position: absolute;
+  left: var(--netsuite-spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--netsuite-text-tertiary));
+}
+
+.netsuite-table-filter-btn {
+  background: rgb(var(--netsuite-bg-primary));
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  color: rgb(var(--netsuite-text-secondary));
+  padding: var(--netsuite-spacing-sm) var(--netsuite-spacing-md);
+  border-radius: var(--netsuite-radius-md);
+  cursor: pointer;
+  transition: var(--netsuite-transition);
+  font-size: var(--netsuite-font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-table-filter-btn:hover {
+  border-color: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-primary));
+}
+
+.netsuite-table-advanced {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--netsuite-font-size-sm);
+  background: rgb(var(--netsuite-bg-primary));
+}
+
+.netsuite-table-advanced thead {
+  background: rgb(var(--netsuite-bg-secondary));
+}
+
+.netsuite-table-advanced th {
+  background: rgb(var(--netsuite-bg-secondary));
+  color: rgb(var(--netsuite-text-secondary));
+  font-weight: 600;
+  text-align: right;
+  padding: var(--netsuite-spacing-md) var(--netsuite-spacing-lg);
+  border-bottom: 1px solid rgb(var(--netsuite-border-primary));
+  font-size: var(--netsuite-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  cursor: pointer;
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-table-advanced th:hover {
+  background: rgb(var(--netsuite-bg-tertiary));
+  color: rgb(var(--netsuite-text-primary));
+}
+
+.netsuite-table-advanced th.sortable::after {
+  content: '↕';
+  position: absolute;
+  left: var(--netsuite-spacing-sm);
+  color: rgb(var(--netsuite-text-tertiary));
+  font-size: var(--netsuite-font-size-xs);
+}
+
+.netsuite-table-advanced th.sorted-asc::after {
+  content: '↑';
+  color: rgb(var(--netsuite-primary));
+}
+
+.netsuite-table-advanced th.sorted-desc::after {
+  content: '↓';
+  color: rgb(var(--netsuite-primary));
+}
+
+.netsuite-table-advanced td {
+  padding: var(--netsuite-spacing-md) var(--netsuite-spacing-lg);
+  border-bottom: 1px solid rgb(var(--netsuite-border-secondary));
+  color: rgb(var(--netsuite-text-primary));
+  vertical-align: middle;
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-table-advanced tbody tr {
+  transition: var(--netsuite-transition);
+  cursor: pointer;
+}
+
+.netsuite-table-advanced tbody tr:hover {
+  background: rgb(var(--netsuite-bg-secondary) / 0.5);
+}
+
+.netsuite-table-advanced tbody tr.selected {
+  background: rgb(var(--netsuite-primary) / 0.05);
+  border-left: 3px solid rgb(var(--netsuite-primary));
+}
+
+.netsuite-table-advanced tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* === NetSuite Table Status Indicators === */
+.netsuite-table-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-xs);
+  padding: var(--netsuite-spacing-xs) var(--netsuite-spacing-sm);
+  border-radius: var(--netsuite-radius-xl);
+  font-size: var(--netsuite-font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.netsuite-table-status.active {
+  background: rgb(var(--netsuite-success) / 0.1);
+  color: rgb(var(--netsuite-success));
+}
+
+.netsuite-table-status.inactive {
+  background: rgb(var(--netsuite-error) / 0.1);
+  color: rgb(var(--netsuite-error));
+}
+
+.netsuite-table-status.pending {
+  background: rgb(var(--netsuite-warning) / 0.1);
+  color: rgb(var(--netsuite-warning));
+}
+
+.netsuite-table-status.draft {
+  background: rgb(var(--netsuite-secondary) / 0.1);
+  color: rgb(var(--netsuite-secondary));
+}
+
+.netsuite-table-status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* === NetSuite Table Actions === */
+.netsuite-table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-xs);
+}
+
+.netsuite-table-action-btn {
+  background: none;
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  color: rgb(var(--netsuite-text-secondary));
+  padding: var(--netsuite-spacing-xs);
+  border-radius: var(--netsuite-radius-sm);
+  cursor: pointer;
+  transition: var(--netsuite-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.netsuite-table-action-btn:hover {
+  border-color: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-primary));
+  background: rgb(var(--netsuite-primary) / 0.05);
+}
+
+.netsuite-table-action-btn.danger:hover {
+  border-color: rgb(var(--netsuite-error));
+  color: rgb(var(--netsuite-error));
+  background: rgb(var(--netsuite-error) / 0.05);
+}
+
+.netsuite-table-action-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* === NetSuite Table Pagination === */
+.netsuite-table-footer {
+  background: rgb(var(--netsuite-bg-secondary));
+  border-top: 1px solid rgb(var(--netsuite-border-secondary));
+  padding: var(--netsuite-spacing-md) var(--netsuite-spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.netsuite-table-info {
+  font-size: var(--netsuite-font-size-sm);
+  color: rgb(var(--netsuite-text-secondary));
+}
+
+.netsuite-table-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-pagination-btn {
+  background: rgb(var(--netsuite-bg-primary));
+  border: 1px solid rgb(var(--netsuite-border-primary));
+  color: rgb(var(--netsuite-text-secondary));
+  padding: var(--netsuite-spacing-xs) var(--netsuite-spacing-sm);
+  border-radius: var(--netsuite-radius-md);
+  cursor: pointer;
+  transition: var(--netsuite-transition);
+  font-size: var(--netsuite-font-size-sm);
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.netsuite-pagination-btn:hover:not(:disabled) {
+  border-color: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-primary));
+  background: rgb(var(--netsuite-primary) / 0.05);
+}
+
+.netsuite-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.netsuite-pagination-btn.active {
+  background: rgb(var(--netsuite-primary));
+  border-color: rgb(var(--netsuite-primary));
+  color: rgb(var(--netsuite-text-inverse));
+}
+
+/* === NetSuite Card Grid === */
+.netsuite-card-grid {
+  display: grid;
+  gap: var(--netsuite-spacing-lg);
+}
+
+.netsuite-card-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.netsuite-card-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.netsuite-card-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+  .netsuite-card-grid-2,
+  .netsuite-card-grid-3,
+  .netsuite-card-grid-4 {
+    grid-template-columns: 1fr;
+  }
+  
+  .netsuite-table-container {
+    overflow-x: auto;
+  }
+  
+  .netsuite-table-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--netsuite-spacing-md);
+  }
+  
+  .netsuite-table-search {
+    min-width: auto;
+  }
+}
+
+/* === NetSuite Loading States === */
+.netsuite-card-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.netsuite-card-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: netsuite-shimmer 1.5s infinite;
+}
+
+@keyframes netsuite-shimmer {
+  0% {
+    right: -100%;
+  }
+  100% {
+    right: 100%;
+  }
+}

@@ -40,35 +40,67 @@
   
   /* === STATISTICS CARDS === */
   .accounting-stats-card {
-    @apply accounting-card relative overflow-hidden;
-    background: linear-gradient(135deg, hsl(var(--surface-base)) 0%, hsl(var(--surface-raised)) 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border-subtle));
+    background: #ffffff;
+    box-shadow: var(--card-shadow);
+    transition: all 0.2s ease;
+  }
+  
+  .accounting-stats-card:hover {
+    box-shadow: var(--card-shadow-lg);
+    transform: translateY(-1px);
   }
   
   .accounting-stats-card::before {
     content: '';
-    @apply absolute top-0 right-0 w-1 h-full;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
     background: linear-gradient(to bottom, hsl(var(--brand-primary)), hsl(var(--brand-primary-dark)));
   }
   
   .accounting-stats-icon {
-    @apply w-12 h-12 rounded-lg flex items-center justify-center text-xl shadow-lg;
-    background: linear-gradient(135deg, hsl(var(--brand-primary-light)) 0%, hsl(var(--brand-primary) / 0.1) 100%);
-    color: hsl(var(--brand-primary));
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    background: linear-gradient(135deg, hsl(var(--brand-primary) / 0.1) 0%, hsl(var(--brand-primary) / 0.05) 100%);
+    color: hsl(var(--brand-primary-dark));
+    border: 1px solid hsl(var(--brand-primary) / 0.2);
   }
   
   .accounting-stats-value {
-    @apply text-3xl font-bold mt-4 mb-2;
-    color: hsl(var(--text-primary));
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #0f172a; /* Very dark for maximum contrast */
     font-family: 'Cairo', sans-serif;
+    line-height: 1.2;
   }
   
   .accounting-stats-label {
-    @apply text-sm font-medium;
-    color: hsl(var(--text-secondary));
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151; /* Dark gray for better readability */
   }
   
   .accounting-stats-change {
-    @apply text-xs font-medium mt-2 flex items-center gap-1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
   
   .accounting-stats-change.positive {
@@ -135,18 +167,19 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     font-family: 'Cairo', sans-serif;
+    color: #0f172a; /* Dark color for maximum contrast */
   }
   
   .financial-amount.positive {
-    color: hsl(var(--status-positive));
+    color: #059669; /* Strong green for better visibility */
   }
   
   .financial-amount.negative {
-    color: hsl(var(--status-negative));
+    color: #dc2626; /* Strong red for better visibility */
   }
   
   .financial-amount.neutral {
-    color: hsl(var(--text-primary));
+    color: #0f172a; /* Dark for neutral amounts */
   }
   
   .financial-badge {
@@ -155,17 +188,19 @@
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
   }
   
   .financial-badge.income {
-    background: hsl(var(--status-positive-light));
-    color: hsl(var(--status-positive-dark));
+    background: #dcfce7; /* Light green background */
+    color: #166534; /* Dark green text for contrast */
+    border: 1px solid #bbf7d0;
   }
   
   .financial-badge.expense {
-    background: hsl(var(--status-negative-light));
-    color: hsl(var(--status-negative-dark));
+    background: #fef2f2; /* Light red background */
+    color: #991b1b; /* Dark red text for contrast */
+    border: 1px solid #fecaca;
   }
   
   .financial-badge.pending {

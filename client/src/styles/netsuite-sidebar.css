@@ -1,0 +1,455 @@
+/**
+ * NetSuite Sidebar Components
+ * مكونات الشريط الجانبي المتقدمة لتحاكي تجربة NetSuite
+ */
+
+/* === NetSuite Advanced Sidebar === */
+.netsuite-sidebar-advanced {
+  background: linear-gradient(180deg, rgb(var(--netsuite-primary)) 0%, rgb(var(--netsuite-primary-dark)) 100%);
+  width: 280px;
+  height: 100vh;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: var(--netsuite-z-fixed);
+  overflow-y: auto;
+  box-shadow: -4px 0 20px rgb(0 0 0 / 0.15);
+  border-left: 1px solid rgb(var(--netsuite-primary-light));
+}
+
+/* === NetSuite Sidebar Header === */
+.netsuite-sidebar-header-advanced {
+  padding: var(--netsuite-spacing-xl);
+  border-bottom: 1px solid rgb(var(--netsuite-primary-light) / 0.3);
+  background: rgb(var(--netsuite-primary-dark) / 0.2);
+}
+
+.netsuite-sidebar-logo-advanced {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-md);
+  text-decoration: none;
+  color: rgb(var(--netsuite-text-inverse));
+}
+
+.netsuite-sidebar-logo-icon {
+  width: 40px;
+  height: 40px;
+  background: rgb(var(--netsuite-text-inverse));
+  color: rgb(var(--netsuite-primary));
+  border-radius: var(--netsuite-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--netsuite-font-size-lg);
+}
+
+.netsuite-sidebar-logo-text {
+  font-size: var(--netsuite-font-size-xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.netsuite-sidebar-logo-subtitle {
+  font-size: var(--netsuite-font-size-xs);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* === NetSuite User Profile Section === */
+.netsuite-sidebar-user {
+  padding: var(--netsuite-spacing-lg) var(--netsuite-spacing-xl);
+  border-bottom: 1px solid rgb(var(--netsuite-primary-light) / 0.3);
+  background: rgb(var(--netsuite-primary-dark) / 0.1);
+}
+
+.netsuite-sidebar-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-md);
+  margin-bottom: var(--netsuite-spacing-md);
+}
+
+.netsuite-sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(var(--netsuite-primary-lighter));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--netsuite-text-inverse));
+  font-weight: 600;
+  font-size: var(--netsuite-font-size-sm);
+}
+
+.netsuite-sidebar-user-details h4 {
+  margin: 0;
+  font-size: var(--netsuite-font-size-sm);
+  font-weight: 600;
+  color: rgb(var(--netsuite-text-inverse));
+}
+
+.netsuite-sidebar-user-details p {
+  margin: 2px 0 0 0;
+  font-size: var(--netsuite-font-size-xs);
+  color: rgb(var(--netsuite-text-inverse) / 0.8);
+}
+
+.netsuite-sidebar-user-actions {
+  display: flex;
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-sidebar-user-btn {
+  flex: 1;
+  padding: var(--netsuite-spacing-xs) var(--netsuite-spacing-sm);
+  background: rgb(var(--netsuite-primary-light) / 0.3);
+  color: rgb(var(--netsuite-text-inverse));
+  border: 1px solid rgb(var(--netsuite-primary-light) / 0.5);
+  border-radius: var(--netsuite-radius-md);
+  font-size: var(--netsuite-font-size-xs);
+  text-align: center;
+  text-decoration: none;
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-sidebar-user-btn:hover {
+  background: rgb(var(--netsuite-primary-light) / 0.5);
+  border-color: rgb(var(--netsuite-primary-light));
+}
+
+/* === NetSuite Navigation Sections === */
+.netsuite-sidebar-nav-advanced {
+  padding: var(--netsuite-spacing-lg) 0;
+}
+
+.netsuite-sidebar-section-advanced {
+  margin-bottom: var(--netsuite-spacing-xl);
+}
+
+.netsuite-sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--netsuite-spacing-sm) var(--netsuite-spacing-xl);
+  margin-bottom: var(--netsuite-spacing-sm);
+}
+
+.netsuite-sidebar-section-title-advanced {
+  font-size: var(--netsuite-font-size-xs);
+  font-weight: 700;
+  color: rgb(var(--netsuite-primary-lighter));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.netsuite-sidebar-section-badge {
+  background: rgb(var(--netsuite-primary-lighter) / 0.3);
+  color: rgb(var(--netsuite-text-inverse));
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--netsuite-radius-xl);
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.netsuite-sidebar-section-toggle {
+  background: none;
+  border: none;
+  color: rgb(var(--netsuite-primary-lighter));
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--netsuite-radius-sm);
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-sidebar-section-toggle:hover {
+  background: rgb(var(--netsuite-primary-light) / 0.3);
+  color: rgb(var(--netsuite-text-inverse));
+}
+
+/* === NetSuite Navigation Links === */
+.netsuite-sidebar-link-advanced {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-md);
+  padding: var(--netsuite-spacing-md) var(--netsuite-spacing-xl);
+  color: rgb(var(--netsuite-text-inverse) / 0.9);
+  text-decoration: none;
+  font-size: var(--netsuite-font-size-sm);
+  transition: var(--netsuite-transition);
+  border-right: 3px solid transparent;
+  position: relative;
+}
+
+.netsuite-sidebar-link-advanced::before {
+  content: '';
+  position: absolute;
+  left: var(--netsuite-spacing-xl);
+  right: var(--netsuite-spacing-xl);
+  bottom: 0;
+  height: 1px;
+  background: rgb(var(--netsuite-primary-light) / 0.1);
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-sidebar-link-advanced:hover {
+  background: rgb(var(--netsuite-primary-light) / 0.2);
+  color: rgb(var(--netsuite-text-inverse));
+  transform: translateX(-2px);
+}
+
+.netsuite-sidebar-link-advanced:hover::before {
+  background: rgb(var(--netsuite-primary-light) / 0.3);
+}
+
+.netsuite-sidebar-link-advanced.active {
+  background: rgb(var(--netsuite-primary-light) / 0.4);
+  color: rgb(var(--netsuite-text-inverse));
+  border-right-color: rgb(var(--netsuite-primary-lighter));
+  font-weight: 600;
+}
+
+.netsuite-sidebar-link-advanced.active::before {
+  background: rgb(var(--netsuite-primary-lighter) / 0.5);
+}
+
+.netsuite-sidebar-icon-advanced {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.netsuite-sidebar-link-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.netsuite-sidebar-link-badge {
+  background: rgb(var(--netsuite-success));
+  color: rgb(var(--netsuite-text-inverse));
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--netsuite-radius-xl);
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.netsuite-sidebar-link-arrow {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+  transition: var(--netsuite-transition);
+  transform: rotate(180deg);
+}
+
+.netsuite-sidebar-link-advanced:hover .netsuite-sidebar-link-arrow {
+  opacity: 1;
+  transform: rotate(180deg) translateX(-2px);
+}
+
+/* === NetSuite Submenu === */
+.netsuite-sidebar-submenu {
+  padding-left: var(--netsuite-spacing-2xl);
+  background: rgb(var(--netsuite-primary-dark) / 0.2);
+  border-right: 1px solid rgb(var(--netsuite-primary-light) / 0.2);
+}
+
+.netsuite-sidebar-submenu-link {
+  display: flex;
+  align-items: center;
+  gap: var(--netsuite-spacing-sm);
+  padding: var(--netsuite-spacing-sm) var(--netsuite-spacing-xl);
+  color: rgb(var(--netsuite-text-inverse) / 0.8);
+  text-decoration: none;
+  font-size: var(--netsuite-font-size-sm);
+  transition: var(--netsuite-transition);
+  border-right: 2px solid transparent;
+}
+
+.netsuite-sidebar-submenu-link:hover {
+  color: rgb(var(--netsuite-text-inverse));
+  background: rgb(var(--netsuite-primary-light) / 0.1);
+}
+
+.netsuite-sidebar-submenu-link.active {
+  color: rgb(var(--netsuite-text-inverse));
+  background: rgb(var(--netsuite-primary-light) / 0.2);
+  border-right-color: rgb(var(--netsuite-primary-lighter));
+  font-weight: 500;
+}
+
+.netsuite-sidebar-submenu-icon {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* === NetSuite Sidebar Footer === */
+.netsuite-sidebar-footer {
+  margin-top: auto;
+  padding: var(--netsuite-spacing-lg) var(--netsuite-spacing-xl);
+  border-top: 1px solid rgb(var(--netsuite-primary-light) / 0.3);
+  background: rgb(var(--netsuite-primary-dark) / 0.3);
+}
+
+.netsuite-sidebar-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--netsuite-spacing-sm);
+  margin-bottom: var(--netsuite-spacing-md);
+}
+
+.netsuite-sidebar-footer-link {
+  color: rgb(var(--netsuite-text-inverse) / 0.7);
+  text-decoration: none;
+  font-size: var(--netsuite-font-size-xs);
+  padding: var(--netsuite-spacing-xs) 0;
+  transition: var(--netsuite-transition);
+}
+
+.netsuite-sidebar-footer-link:hover {
+  color: rgb(var(--netsuite-text-inverse));
+}
+
+.netsuite-sidebar-footer-info {
+  font-size: var(--netsuite-font-size-xs);
+  color: rgb(var(--netsuite-text-inverse) / 0.6);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* === NetSuite Mobile Sidebar === */
+@media (max-width: 768px) {
+  .netsuite-sidebar-advanced {
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 300px;
+  }
+  
+  .netsuite-sidebar-advanced.open {
+    transform: translateX(0);
+  }
+  
+  .netsuite-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgb(0 0 0 / 0.5);
+    z-index: calc(var(--netsuite-z-fixed) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .netsuite-sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* === NetSuite Sidebar Animations === */
+@keyframes netsuite-sidebar-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes netsuite-sidebar-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.netsuite-sidebar-advanced {
+  animation: netsuite-sidebar-slide-in 0.3s ease-out;
+}
+
+.netsuite-sidebar-link-advanced {
+  animation: netsuite-sidebar-fade-in 0.2s ease-out;
+  animation-fill-mode: both;
+}
+
+.netsuite-sidebar-link-advanced:nth-child(1) { animation-delay: 0.05s; }
+.netsuite-sidebar-link-advanced:nth-child(2) { animation-delay: 0.1s; }
+.netsuite-sidebar-link-advanced:nth-child(3) { animation-delay: 0.15s; }
+.netsuite-sidebar-link-advanced:nth-child(4) { animation-delay: 0.2s; }
+.netsuite-sidebar-link-advanced:nth-child(5) { animation-delay: 0.25s; }
+.netsuite-sidebar-link-advanced:nth-child(6) { animation-delay: 0.3s; }
+
+/* === NetSuite Quick Actions === */
+.netsuite-sidebar-quick-actions {
+  padding: var(--netsuite-spacing-md) var(--netsuite-spacing-xl);
+  border-bottom: 1px solid rgb(var(--netsuite-primary-light) / 0.3);
+  background: rgb(var(--netsuite-primary-dark) / 0.1);
+}
+
+.netsuite-quick-actions-title {
+  font-size: var(--netsuite-font-size-xs);
+  font-weight: 600;
+  color: rgb(var(--netsuite-primary-lighter));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--netsuite-spacing-sm);
+}
+
+.netsuite-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--netsuite-spacing-sm);
+}
+
+.netsuite-quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--netsuite-spacing-sm);
+  background: rgb(var(--netsuite-primary-light) / 0.2);
+  border: 1px solid rgb(var(--netsuite-primary-light) / 0.3);
+  border-radius: var(--netsuite-radius-md);
+  color: rgb(var(--netsuite-text-inverse));
+  text-decoration: none;
+  transition: var(--netsuite-transition);
+  text-align: center;
+}
+
+.netsuite-quick-action:hover {
+  background: rgb(var(--netsuite-primary-light) / 0.4);
+  border-color: rgb(var(--netsuite-primary-light));
+  transform: translateY(-1px);
+}
+
+.netsuite-quick-action-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: var(--netsuite-spacing-xs);
+}
+
+.netsuite-quick-action-text {
+  font-size: var(--netsuite-font-size-xs);
+  font-weight: 500;
+  line-height: 1.2;
+}
