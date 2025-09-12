@@ -1324,3 +1324,106 @@ input[type="number"] {
     @apply text-xs sm:text-sm;
   }
 }
+
+/* ==============================================================
+   Final unified color tokens (single source of truth)
+   These aliases ensure consistent colors across all contexts
+   without changing the current visual palette.
+   ============================================================== */
+
+:root {
+  --brand-background: 210 40% 98%;
+  --brand-foreground: 215 25% 25%;
+  --brand-card: 0 0% 100%;
+  --brand-popover: 0 0% 100%;
+  --brand-primary: 214 80% 56%;
+  --brand-accent: 214 85% 60%;
+  --brand-secondary: 215 32% 95%;
+  --brand-muted: 210 20% 80%;
+  --brand-muted-foreground: 215 15% 45%;
+  --brand-destructive: 0 84% 60%;
+  --brand-border: 215 32% 91%;
+  --brand-input: 215 32% 91%;
+  --brand-ring: 214 80% 56%;
+  --brand-success: 142 70% 45%;
+  --brand-warning: 38 95% 55%;
+  --brand-info: 200 80% 55%;
+
+  --background: var(--brand-background);
+  --foreground: var(--brand-foreground);
+  --card: var(--brand-card);
+  --card-foreground: var(--brand-foreground);
+  --popover: var(--brand-popover);
+  --popover-foreground: var(--brand-foreground);
+  --primary: var(--brand-primary);
+  --primary-foreground: 0 0% 100%;
+  --secondary: var(--brand-secondary);
+  --secondary-foreground: var(--brand-foreground);
+  --muted: var(--brand-secondary);
+  --muted-foreground: var(--brand-muted-foreground);
+  --accent: var(--brand-accent);
+  --accent-foreground: 0 0% 100%;
+  --destructive: var(--brand-destructive);
+  --destructive-foreground: 0 0% 100%;
+  --border: var(--brand-border);
+  --input: var(--brand-input);
+  --ring: var(--brand-ring);
+  --success: var(--brand-success);
+  --warning: var(--brand-warning);
+  --info: var(--brand-info);
+
+  --text-primary: hsl(var(--foreground));
+  --text-secondary: hsl(var(--muted-foreground));
+  --sidebar-bg: hsl(var(--card));
+  --header-bg: hsl(var(--secondary));
+  --menu-icon-light-color: hsl(var(--primary));
+  --menu-hover-light-bg: hsl(var(--primary) / 0.06);
+  --menu-border-light-color: hsl(var(--border));
+}
+
+.dark {
+  --brand-background: 215 25% 12%;
+  --brand-foreground: 210 40% 98%;
+  --brand-card: 215 25% 17%;
+  --brand-popover: 215 25% 17%;
+  --brand-primary: 214 80% 58%;
+  --brand-accent: 214 85% 60%;
+  --brand-secondary: 215 25% 25%;
+  --brand-muted: 215 25% 30%;
+  --brand-muted-foreground: 210 20% 85%;
+  --brand-destructive: 0 84% 65%;
+  --brand-border: 215 25% 25%;
+  --brand-input: 215 25% 20%;
+  --brand-ring: 214 80% 60%;
+  --brand-success: 142 60% 55%;
+  --brand-warning: 38 90% 65%;
+  --brand-info: 200 70% 65%;
+
+  --background: var(--brand-background);
+  --foreground: var(--brand-foreground);
+  --card: var(--brand-card);
+  --card-foreground: var(--brand-foreground);
+  --popover: var(--brand-popover);
+  --popover-foreground: var(--brand-foreground);
+  --primary: var(--brand-primary);
+  --primary-foreground: 0 0% 100%;
+  --secondary: var(--brand-secondary);
+  --secondary-foreground: var(--brand-foreground);
+  --muted: var(--brand-secondary);
+  --muted-foreground: var(--brand-muted-foreground);
+  --accent: var(--brand-accent);
+  --accent-foreground: 0 0% 100%;
+  --destructive: var(--brand-destructive);
+  --destructive-foreground: 0 0% 100%;
+  --border: var(--brand-border);
+  --input: var(--brand-input);
+  --ring: var(--brand-ring);
+  --success: var(--brand-success);
+  --warning: var(--brand-warning);
+  --info: var(--brand-info);
+
+  --text-primary: hsl(var(--foreground));
+  --text-secondary: hsl(var(--muted-foreground));
+  --sidebar-bg: hsl(var(--card));
+  --header-bg: hsl(var(--secondary));
+}
