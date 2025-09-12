@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-import { Link } from 'wouter';
 
 interface NetSuiteLayoutProps {
   children: ReactNode;
@@ -78,14 +77,14 @@ export const NetSuiteLayout: React.FC<NetSuiteLayoutProps> = ({
             <div className="netsuite-sidebar-section-header">
               <div className="netsuite-sidebar-section-title-advanced">لوحة التحكم</div>
             </div>
-            <Link href="/" className="netsuite-sidebar-link-advanced">
+            <a href="/netsuite" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">🏠</div>
               <div className="netsuite-sidebar-link-text">الرئيسية</div>
-            </Link>
-            <Link href="/reports" className="netsuite-sidebar-link-advanced">
+            </a>
+            <a href="/netsuite/analytics" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">📈</div>
               <div className="netsuite-sidebar-link-text">التحليلات</div>
-            </Link>
+            </a>
           </div>
 
           {/* Transactions Section */}
@@ -94,19 +93,19 @@ export const NetSuiteLayout: React.FC<NetSuiteLayoutProps> = ({
               <div className="netsuite-sidebar-section-title-advanced">المعاملات</div>
               <div className="netsuite-sidebar-section-badge">12</div>
             </div>
-            <Link href="/transactions" className="netsuite-sidebar-link-advanced">
+            <a href="/netsuite/transactions" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">📄</div>
               <div className="netsuite-sidebar-link-text">الفواتير</div>
               <div className="netsuite-sidebar-link-badge">5</div>
-            </Link>
-            <Link href="/deferred-payments" className="netsuite-sidebar-link-advanced">
+            </a>
+            <a href="/netsuite/payments" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">💳</div>
               <div className="netsuite-sidebar-link-text">المدفوعات</div>
-            </Link>
-            <Link href="/transactions" className="netsuite-sidebar-link-advanced">
+            </a>
+            <a href="/netsuite/expenses" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">🧾</div>
               <div className="netsuite-sidebar-link-text">المصروفات</div>
-            </Link>
+            </a>
           </div>
 
           {/* Customers Section */}
@@ -114,14 +113,14 @@ export const NetSuiteLayout: React.FC<NetSuiteLayoutProps> = ({
             <div className="netsuite-sidebar-section-header">
               <div className="netsuite-sidebar-section-title-advanced">العملاء</div>
             </div>
-            <Link href="/users" className="netsuite-sidebar-link-advanced">
+            <a href="/netsuite/customers" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">👥</div>
               <div className="netsuite-sidebar-link-text">قائمة العملاء</div>
-            </Link>
-            <Link href="/users" className="netsuite-sidebar-link-advanced">
+            </a>
+            <a href="/netsuite/contacts" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">📞</div>
               <div className="netsuite-sidebar-link-text">جهات الاتصال</div>
-            </Link>
+            </a>
           </div>
 
           {/* Reports Section */}
@@ -129,14 +128,14 @@ export const NetSuiteLayout: React.FC<NetSuiteLayoutProps> = ({
             <div className="netsuite-sidebar-section-header">
               <div className="netsuite-sidebar-section-title-advanced">التقارير</div>
             </div>
-            <Link href="/reports" className="netsuite-sidebar-link-advanced">
+            <a href="/netsuite/reports" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">📊</div>
               <div className="netsuite-sidebar-link-text">التقارير المالية</div>
-            </Link>
-            <Link href="/reports" className="netsuite-sidebar-link-advanced">
+            </a>
+            <a href="/netsuite/sales-reports" className="netsuite-sidebar-link-advanced">
               <div className="netsuite-sidebar-icon-advanced">📋</div>
               <div className="netsuite-sidebar-link-text">تقارير المبيعات</div>
-            </Link>
+            </a>
           </div>
         </div>
 
