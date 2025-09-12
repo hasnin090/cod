@@ -176,7 +176,6 @@
   .submenu-item-pro.active {
     @apply bg-primary/10 text-primary font-semibold border-r-2 border-primary;
   }
-}
 
 /* =============================================
    Unified size utilities (controls & modals)
