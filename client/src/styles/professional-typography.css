@@ -1,0 +1,296 @@
+/* Professional Arabic Typography System */
+/* Optimized for RTL accounting interfaces */
+
+@layer base {
+  /* Professional Font Setup */
+  body {
+    font-family: 'Cairo', 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    direction: rtl;
+    text-align: right;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Arabic Text Optimization */
+  * {
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Professional Heading System */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: hsl(var(--text-primary));
+    margin: 0;
+  }
+  
+  h1 {
+    font-size: 2.25rem; /* 36px */
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.875rem; /* 30px */
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  
+  h3 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+  }
+  
+  h4 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+  }
+  
+  h5 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+  }
+  
+  h6 {
+    font-size: 1rem; /* 16px */
+    font-weight: 600;
+  }
+  
+  /* Professional Paragraph Styling */
+  p {
+    margin: 0 0 1rem 0;
+    color: hsl(var(--text-primary));
+    line-height: 1.6;
+  }
+  
+  /* Financial Numbers - Tabular Figures */
+  .financial-number {
+    font-family: 'Cairo', monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  
+  /* Professional Links */
+  a {
+    color: hsl(var(--brand-primary));
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  a:hover {
+    color: hsl(var(--brand-primary-dark));
+    text-decoration: underline;
+  }
+  
+  /* Responsive Typography */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+    
+    h1 { font-size: 1.875rem; /* 30px */ }
+    h2 { font-size: 1.5rem; /* 24px */ }
+    h3 { font-size: 1.25rem; /* 20px */ }
+    h4 { font-size: 1.125rem; /* 18px */ }
+    h5 { font-size: 1rem; /* 16px */ }
+    h6 { font-size: 0.875rem; /* 14px */ }
+  }
+  
+  @media (max-width: 480px) {
+    body {
+      font-size: 13px;
+    }
+    
+    h1 { font-size: 1.5rem; /* 24px */ }
+    h2 { font-size: 1.25rem; /* 20px */ }
+    h3 { font-size: 1.125rem; /* 18px */ }
+  }
+}
+
+@layer components {
+  /* Professional Text Classes */
+  .text-display {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  
+  .text-headline {
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  
+  .text-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  
+  .text-body-large {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+  
+  .text-body {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .text-body-small {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .text-caption {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  
+  /* Professional Color Classes */
+  .text-primary {
+    color: hsl(var(--text-primary));
+  }
+  
+  .text-secondary {
+    color: hsl(var(--text-secondary));
+  }
+  
+  .text-tertiary {
+    color: hsl(var(--text-tertiary));
+  }
+  
+  .text-success {
+    color: hsl(var(--status-positive));
+  }
+  
+  .text-error {
+    color: hsl(var(--status-negative));
+  }
+  
+  .text-warning {
+    color: hsl(var(--status-warning));
+  }
+  
+  .text-info {
+    color: hsl(var(--status-info));
+  }
+  
+  /* Professional Weight Classes */
+  .font-light { font-weight: 300; }
+  .font-normal { font-weight: 400; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+  .font-extrabold { font-weight: 800; }
+  
+  /* Professional List Styling */
+  ul, ol {
+    padding-right: 1.5rem;
+    margin: 0 0 1rem 0;
+  }
+  
+  li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+  
+  /* Professional Code and Monospace */
+  code, pre {
+    font-family: 'Courier New', monospace;
+    background: hsl(var(--surface-raised));
+    border: 1px solid hsl(var(--border-subtle));
+    border-radius: 0.25rem;
+  }
+  
+  code {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.875em;
+  }
+  
+  pre {
+    padding: 1rem;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  
+  /* Professional Blockquote */
+  blockquote {
+    border-right: 4px solid hsl(var(--brand-primary));
+    padding-right: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: hsl(var(--text-secondary));
+  }
+  
+  /* Professional Tables Typography */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.875rem;
+  }
+  
+  td {
+    font-size: 0.875rem;
+  }
+  
+  /* Professional Form Typography */
+  label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: hsl(var(--text-primary));
+  }
+  
+  input, textarea, select {
+    font-family: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  /* Professional Button Typography */
+  button {
+    font-family: inherit;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  
+  /* Arabic Number Formatting */
+  .arabic-numbers {
+    font-variant-numeric: normal;
+    unicode-bidi: bidi-override;
+    direction: ltr;
+    text-align: left;
+    display: inline-block;
+  }
+  
+  /* Professional Status Text */
+  .status-text {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  /* Professional Badge Text */
+  .badge-text {
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+}

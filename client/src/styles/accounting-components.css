@@ -1,0 +1,408 @@
+/* Professional Accounting Components - Enterprise Grade UI */
+/* Cards, Tables, Forms, and Data Display Components */
+
+@layer components {
+  /* === PROFESSIONAL CARD SYSTEM === */
+  .accounting-card {
+    @apply rounded-lg border bg-card shadow-sm transition-all duration-200;
+    border-color: hsl(var(--border-subtle));
+    box-shadow: var(--card-shadow);
+  }
+  
+  .accounting-card:hover {
+    box-shadow: var(--card-shadow-lg);
+    transform: translateY(-1px);
+  }
+  
+  .accounting-card-header {
+    @apply p-6 border-b;
+    border-color: hsl(var(--border-subtle));
+    background: linear-gradient(135deg, hsl(var(--surface-base)) 0%, hsl(var(--surface-raised)) 100%);
+  }
+  
+  .accounting-card-title {
+    @apply text-lg font-semibold;
+    color: hsl(var(--text-primary));
+  }
+  
+  .accounting-card-description {
+    @apply text-sm mt-1;
+    color: hsl(var(--text-secondary));
+  }
+  
+  .accounting-card-content {
+    @apply p-6;
+  }
+  
+  .accounting-card-footer {
+    @apply p-6 pt-0;
+  }
+  
+  /* === STATISTICS CARDS === */
+  .accounting-stats-card {
+    @apply accounting-card relative overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--surface-base)) 0%, hsl(var(--surface-raised)) 100%);
+  }
+  
+  .accounting-stats-card::before {
+    content: '';
+    @apply absolute top-0 right-0 w-1 h-full;
+    background: linear-gradient(to bottom, hsl(var(--brand-primary)), hsl(var(--brand-primary-dark)));
+  }
+  
+  .accounting-stats-icon {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center text-xl shadow-lg;
+    background: linear-gradient(135deg, hsl(var(--brand-primary-light)) 0%, hsl(var(--brand-primary) / 0.1) 100%);
+    color: hsl(var(--brand-primary));
+  }
+  
+  .accounting-stats-value {
+    @apply text-3xl font-bold mt-4 mb-2;
+    color: hsl(var(--text-primary));
+    font-family: 'Cairo', sans-serif;
+  }
+  
+  .accounting-stats-label {
+    @apply text-sm font-medium;
+    color: hsl(var(--text-secondary));
+  }
+  
+  .accounting-stats-change {
+    @apply text-xs font-medium mt-2 flex items-center gap-1;
+  }
+  
+  .accounting-stats-change.positive {
+    color: hsl(var(--status-positive));
+  }
+  
+  .accounting-stats-change.negative {
+    color: hsl(var(--status-negative));
+  }
+  
+  /* === PROFESSIONAL TABLES === */
+  .accounting-table-container {
+    @apply accounting-card overflow-hidden;
+  }
+  
+  .accounting-table {
+    @apply w-full border-collapse;
+  }
+  
+  .accounting-table-header {
+    background: linear-gradient(135deg, hsl(var(--surface-raised)) 0%, hsl(var(--brand-neutral-100)) 100%);
+  }
+  
+  .accounting-table-header th {
+    @apply px-6 py-4 text-right text-sm font-semibold border-b;
+    color: hsl(var(--text-primary));
+    border-color: hsl(var(--border-standard));
+  }
+  
+  .accounting-table-row {
+    @apply transition-colors duration-150;
+    border-bottom: 1px solid hsl(var(--border-subtle));
+  }
+  
+  .accounting-table-row:hover {
+    background: hsl(var(--surface-hover));
+  }
+  
+  .accounting-table-row:nth-child(even) {
+    background: hsl(var(--surface-raised) / 0.3);
+  }
+  
+  .accounting-table-row:nth-child(even):hover {
+    background: hsl(var(--surface-hover));
+  }
+  
+  .accounting-table-cell {
+    @apply px-6 py-4 text-sm;
+    color: hsl(var(--text-primary));
+  }
+  
+  .accounting-table-cell-secondary {
+    color: hsl(var(--text-secondary));
+  }
+  
+  .accounting-table-cell-number {
+    font-family: 'Cairo', 'Courier New', monospace;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* === FINANCIAL STATUS INDICATORS === */
+  .financial-amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: 'Cairo', sans-serif;
+  }
+  
+  .financial-amount.positive {
+    color: hsl(var(--status-positive));
+  }
+  
+  .financial-amount.negative {
+    color: hsl(var(--status-negative));
+  }
+  
+  .financial-amount.neutral {
+    color: hsl(var(--text-primary));
+  }
+  
+  .financial-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .financial-badge.income {
+    background: hsl(var(--status-positive-light));
+    color: hsl(var(--status-positive-dark));
+  }
+  
+  .financial-badge.expense {
+    background: hsl(var(--status-negative-light));
+    color: hsl(var(--status-negative-dark));
+  }
+  
+  .financial-badge.pending {
+    background: hsl(var(--status-warning-light));
+    color: hsl(var(--status-warning-dark));
+  }
+  
+  .financial-badge.completed {
+    background: hsl(var(--status-positive-light));
+    color: hsl(var(--status-positive-dark));
+  }
+  
+  /* === ACTION BUTTONS === */
+  .accounting-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .accounting-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--brand-primary) / 0.2);
+  }
+  
+  .accounting-btn-primary {
+    @apply accounting-btn text-white shadow-md hover:shadow-lg;
+    background: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-dark)) 100%);
+    border: 1px solid hsl(var(--brand-primary));
+  }
+  
+  .accounting-btn-primary:hover {
+    background: linear-gradient(135deg, hsl(var(--brand-primary-dark)) 0%, hsl(var(--brand-primary)) 100%);
+    transform: translateY(-1px);
+  }
+  
+  .accounting-btn-secondary {
+    border: 1px solid hsl(var(--border-standard));
+    background: hsl(var(--surface-base));
+    color: hsl(var(--text-primary));
+  }
+  
+  .accounting-btn-secondary:hover {
+    background: hsl(var(--surface-hover));
+    border-color: hsl(var(--border-strong));
+  }
+  
+  .accounting-btn-danger {
+    background: hsl(var(--status-negative));
+    border: 1px solid hsl(var(--status-negative));
+    color: white;
+  }
+  
+  .accounting-btn-danger:hover {
+    background: hsl(var(--status-negative-dark));
+    transform: translateY(-1px);
+  }
+  
+  /* === FORM COMPONENTS === */
+  .accounting-form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .accounting-form-group > * + * {
+    margin-top: 0.5rem;
+  }
+  
+  .accounting-form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--text-primary));
+  }
+  
+  .accounting-form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border-standard));
+    background: hsl(var(--surface-base));
+    color: hsl(var(--text-primary));
+    transition: all 0.2s ease;
+  }
+  
+  .accounting-form-input:focus {
+    outline: none;
+    border-color: hsl(var(--brand-primary));
+    box-shadow: 0 0 0 3px hsl(var(--brand-primary) / 0.1);
+  }
+  
+  .accounting-form-select {
+    @apply accounting-form-input appearance-none bg-no-repeat bg-right;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: left 0.75rem center;
+    background-size: 1.25rem 1.25rem;
+    padding-left: 2.75rem;
+  }
+  
+  /* === BREADCRUMB NAVIGATION === */
+  .accounting-breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    direction: ltr; /* Keep breadcrumb LTR for proper arrow direction */
+  }
+  
+  .accounting-breadcrumb > * + * {
+    margin-right: 0.5rem;
+  }
+  
+  .accounting-breadcrumb-item {
+    display: flex;
+    align-items: center;
+    color: hsl(var(--text-secondary));
+  }
+  
+  .accounting-breadcrumb-item.active {
+    color: hsl(var(--text-primary));
+    font-weight: 500;
+  }
+  
+  .accounting-breadcrumb-separator {
+    margin: 0 0.5rem;
+    color: hsl(var(--text-tertiary));
+  }
+  
+  /* === PAGE LAYOUTS === */
+  .accounting-page {
+    min-height: 100vh;
+    background: hsl(var(--surface-base));
+  }
+  
+  .accounting-page-header {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid hsl(var(--border-subtle));
+    background: linear-gradient(135deg, hsl(var(--surface-base)) 0%, hsl(var(--surface-raised)) 100%);
+  }
+  
+  .accounting-page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--text-primary));
+  }
+  
+  .accounting-page-description {
+    font-size: 1rem;
+    color: hsl(var(--text-secondary));
+  }
+  
+  .accounting-page-content {
+    padding: 1.5rem;
+  }
+  
+  .accounting-page-content > * + * {
+    margin-top: 1.5rem;
+  }
+  
+  /* === DASHBOARD GRID === */
+  .accounting-dashboard-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .accounting-dashboard-stats {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  /* === RESPONSIVE DESIGN === */
+  @media (max-width: 768px) {
+    .accounting-card-header,
+    .accounting-card-content,
+    .accounting-card-footer {
+      @apply p-4;
+    }
+    
+    .accounting-table-header th,
+    .accounting-table-cell {
+      @apply px-4 py-3 text-xs;
+    }
+    
+    .accounting-page-header {
+      @apply px-4 py-6;
+    }
+    
+    .accounting-page-content {
+      @apply p-4 space-y-4;
+    }
+    
+    .accounting-page-title {
+      @apply text-xl;
+    }
+  }
+  
+  /* === ANIMATION ENHANCEMENTS === */
+  .accounting-card {
+    animation: fadeInUp 0.5s ease-out;
+  }
+  
+  .accounting-stats-card:hover {
+    animation: pulse 2s infinite;
+  }
+  
+  .accounting-table-row {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  
+  /* === PROFESSIONAL SHADOWS === */
+  .accounting-elevation-1 { box-shadow: var(--card-shadow-sm); }
+  .accounting-elevation-2 { box-shadow: var(--card-shadow); }
+  .accounting-elevation-3 { box-shadow: var(--card-shadow-lg); }
+  .accounting-elevation-4 { box-shadow: var(--card-shadow-xl); }
+}

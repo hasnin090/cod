@@ -6,6 +6,18 @@ import { Charts } from '@/components/charts';
 import Chart from 'chart.js/auto';
 import { formatCurrency } from '@/lib/chart-utils';
 import { Button } from '@/components/ui/button';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Building2, 
+  Eye,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  PieChart
+} from 'lucide-react';
 
 interface Transaction {
   id: number;
@@ -49,6 +61,7 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
+  // Professional Dashboard with Enterprise Design
   // تهيئة متزامنة لمنع وميض اختفاء/ظهور زر التبديل عند تحميل الصفحة
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {

@@ -1,0 +1,235 @@
+/* Professional Accounting Sidebar Components */
+/* Inspired by SAP Fiori, Oracle Cloud, QuickBooks Enterprise */
+
+@layer components {
+  /* === ENTERPRISE SIDEBAR DESIGN === */
+  .accounting-sidebar {
+    @apply fixed top-0 right-0 h-full w-80 z-40 transform transition-transform duration-300 ease-in-out;
+    background: hsl(var(--sidebar-background));
+    border-left: 1px solid hsl(var(--sidebar-border));
+    box-shadow: var(--card-shadow-xl);
+  }
+  
+  .accounting-sidebar.closed {
+    @apply translate-x-full;
+  }
+  
+  .accounting-sidebar-overlay {
+    @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-30;
+  }
+  
+  /* === SIDEBAR HEADER === */
+  .accounting-sidebar-header {
+    @apply px-6 py-5 border-b;
+    border-color: hsl(var(--sidebar-border));
+    background: linear-gradient(135deg, hsl(var(--sidebar-background)) 0%, hsl(var(--brand-neutral-700)) 100%);
+  }
+  
+  .accounting-brand {
+    @apply flex items-center gap-3;
+  }
+  
+  .accounting-brand-icon {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg;
+    background: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-dark)) 100%);
+    color: hsl(var(--text-on-primary));
+  }
+  
+  .accounting-brand-text {
+    @apply text-lg font-bold;
+    color: hsl(var(--sidebar-foreground));
+  }
+  
+  /* === NAVIGATION SECTIONS === */
+  .accounting-nav-section {
+    @apply px-4 py-3;
+  }
+  
+  .accounting-nav-title {
+    @apply px-3 py-2 text-xs font-semibold uppercase tracking-wider;
+    color: hsl(var(--sidebar-muted));
+    border-bottom: 1px solid hsl(var(--sidebar-border));
+    margin-bottom: 8px;
+  }
+  
+  .accounting-nav-list {
+    @apply space-y-1;
+  }
+  
+  /* === NAVIGATION ITEMS === */
+  .accounting-nav-item {
+    @apply relative flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer;
+    color: hsl(var(--sidebar-foreground));
+  }
+  
+  .accounting-nav-item:hover {
+    background: hsl(var(--sidebar-hover));
+    transform: translateX(-2px);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+  
+  .accounting-nav-item.active {
+    background: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-dark)) 100%);
+    color: hsl(var(--sidebar-active-text));
+    box-shadow: 0 4px 12px hsl(var(--brand-primary) / 0.3);
+  }
+  
+  .accounting-nav-item.active::before {
+    content: '';
+    @apply absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full;
+  }
+  
+  .accounting-nav-icon {
+    @apply w-5 h-5 transition-transform duration-200;
+  }
+  
+  .accounting-nav-item:hover .accounting-nav-icon {
+    @apply scale-110;
+  }
+  
+  .accounting-nav-item.active .accounting-nav-icon {
+    @apply scale-105;
+  }
+  
+  /* === SUBMENU SYSTEM === */
+  .accounting-submenu {
+    @apply mt-2 mr-6 border-r-2 transition-all duration-300 overflow-hidden;
+    border-color: hsl(var(--sidebar-border));
+    max-height: 0;
+  }
+  
+  .accounting-submenu.expanded {
+    max-height: 500px;
+  }
+  
+  .accounting-submenu-list {
+    @apply space-y-1 py-2 pr-4;
+  }
+  
+  .accounting-submenu-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer;
+    color: hsl(var(--sidebar-muted));
+  }
+  
+  .accounting-submenu-item:hover {
+    color: hsl(var(--sidebar-foreground));
+    background: hsl(var(--sidebar-hover) / 0.5);
+    transform: translateX(-1px);
+  }
+  
+  .accounting-submenu-item.active {
+    color: hsl(var(--brand-primary));
+    background: hsl(var(--brand-primary-light));
+    font-weight: 600;
+  }
+  
+  .accounting-submenu-icon {
+    @apply w-4 h-4;
+  }
+  
+  /* === USER PROFILE SECTION === */
+  .accounting-user-section {
+    @apply mt-auto p-4 border-t;
+    border-color: hsl(var(--sidebar-border));
+    background: hsl(var(--sidebar-background) / 0.8);
+  }
+  
+  .accounting-user-card {
+    @apply flex items-center gap-3 p-3 rounded-lg;
+    background: hsl(var(--sidebar-hover));
+  }
+  
+  .accounting-user-avatar {
+    @apply w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold;
+    background: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-dark)) 100%);
+    color: hsl(var(--text-on-primary));
+  }
+  
+  .accounting-user-info {
+    @apply flex-1 min-w-0;
+  }
+  
+  .accounting-user-name {
+    @apply text-sm font-semibold truncate;
+    color: hsl(var(--sidebar-foreground));
+  }
+  
+  .accounting-user-role {
+    @apply text-xs truncate;
+    color: hsl(var(--sidebar-muted));
+  }
+  
+  /* === RESPONSIVE DESIGN === */
+  @media (max-width: 768px) {
+    .accounting-sidebar {
+      @apply w-full;
+    }
+    
+    .accounting-nav-item {
+      @apply text-base py-4;
+    }
+    
+    .accounting-nav-icon {
+      @apply w-6 h-6;
+    }
+  }
+  
+  /* === COMPACT VARIANT === */
+  .accounting-sidebar.compact {
+    @apply w-20;
+  }
+  
+  .accounting-sidebar.compact .accounting-brand-text,
+  .accounting-sidebar.compact .accounting-nav-title,
+  .accounting-sidebar.compact .accounting-submenu,
+  .accounting-sidebar.compact .accounting-user-info {
+    @apply hidden;
+  }
+  
+  .accounting-sidebar.compact .accounting-nav-item {
+    @apply justify-center px-2;
+  }
+  
+  .accounting-sidebar.compact .accounting-user-card {
+    @apply justify-center;
+  }
+  
+  /* === ANIMATION ENHANCEMENTS === */
+  .accounting-nav-item {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .accounting-nav-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: right 0.5s;
+  }
+  
+  .accounting-nav-item:hover::after {
+    right: 100%;
+  }
+  
+  /* === STATUS INDICATORS === */
+  .accounting-nav-badge {
+    @apply absolute -top-1 -left-1 w-3 h-3 rounded-full border-2;
+    border-color: hsl(var(--sidebar-background));
+  }
+  
+  .accounting-nav-badge.notification {
+    background: hsl(var(--status-negative));
+  }
+  
+  .accounting-nav-badge.success {
+    background: hsl(var(--status-positive));
+  }
+  
+  .accounting-nav-badge.warning {
+    background: hsl(var(--status-warning));
+  }
+}
