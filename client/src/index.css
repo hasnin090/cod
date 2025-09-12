@@ -1,12 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
-
-/* === NETSUITE DESIGN SYSTEM - ENTERPRISE GRADE === */
-/* NetSuite Core Design System */
-@import './styles/netsuite-design-system.css';
-@import './styles/netsuite-sidebar.css';
-@import './styles/netsuite-header.css';
-@import './styles/netsuite-cards-tables.css';
 
 /* === PROFESSIONAL ACCOUNTING SYSTEM - ENTERPRISE GRADE === */
 /* Core Professional Design System */

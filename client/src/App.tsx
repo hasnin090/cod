@@ -25,10 +25,6 @@ import DeferredPayments from './pages/deferred-payments';
 import WhatsAppIntegration from './pages/whatsapp-integration';
 import SystemManagement from './pages/system-management';
 import CompletedWorks from './pages/completed-works';
-import NetSuiteDashboard from '@/components/NetSuiteDashboard';
-import NetSuiteTransactions from '@/components/NetSuiteTransactions';
-import NetSuiteReports from '@/components/NetSuiteReports';
-import NetSuiteCustomers from '@/components/NetSuiteCustomers';
 
 
 
@@ -167,10 +163,7 @@ function AppRoutes() {
               <Route path="/completed-works">
                 {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
               </Route>
-              <Route path="/netsuite" component={NetSuiteDashboard} />
-              <Route path="/netsuite/transactions" component={NetSuiteTransactions} />
-              <Route path="/netsuite/reports" component={NetSuiteReports} />
-              <Route path="/netsuite/customers" component={NetSuiteCustomers} />
+
 
               <Route component={NotFound} />
             </Switch>
