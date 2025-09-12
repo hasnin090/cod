@@ -115,56 +115,71 @@ function AppRoutes() {
   }
   
   return (
-    <Switch>
-      <Route path="/" component={NetSuiteDashboard} />
-      <Route path="/transactions" component={NetSuiteTransactions} />
-      <Route path="/projects" component={Projects} />
-      <Route path="/projects/details/:id" component={Projects} />
-      <Route path="/users" component={NetSuiteCustomers} />
-      <Route path="/employees">
-        {user?.role === 'admin' ? <Employees /> : <NotFound />}
-      </Route>
-      <Route path="/documents" component={Documents} />
-      <Route path="/archive" component={Archive} />
-      <Route path="/reports">
-        {user?.role === 'admin' ? <NetSuiteReports /> : <NotFound />}
-      </Route>
-      <Route path="/activities" component={Activities} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/ledger" component={NetSuiteReports} />
-      <Route path="/receivables" component={Receivables} />
-      <Route path="/database-management">
-        {user?.role === 'admin' ? <DatabaseManagement /> : <NotFound />}
-      </Route>
-      <Route path="/hybrid-storage">
-        {user?.role === 'admin' ? <HybridStorage /> : <NotFound />}
-      </Route>
-      <Route path="/supabase-status">
-        {user?.role === 'admin' ? <SupabaseStatus /> : <NotFound />}
-      </Route>
-      <Route path="/file-migration">
-        {user?.role === 'admin' ? <FileMigration /> : <NotFound />}
-      </Route>
-      <Route path="/cloud-migration">
-        {user?.role === 'admin' ? <CloudStorageMigration /> : <NotFound />}
-      </Route>
-      <Route path="/deferred-payments" component={DeferredPayments} />
-      <Route path="/whatsapp-integration">
-        {user?.role === 'admin' ? <WhatsAppIntegration /> : <NotFound />}
-      </Route>
-      <Route path="/system-management">
-        {user?.role === 'admin' ? <SystemManagement /> : <NotFound />}
-      </Route>
-      <Route path="/completed-works">
-        {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
-      </Route>
-      <Route path="/netsuite" component={NetSuiteDashboard} />
-      <Route path="/netsuite/transactions" component={NetSuiteTransactions} />
-      <Route path="/netsuite/reports" component={NetSuiteReports} />
-      <Route path="/netsuite/customers" component={NetSuiteCustomers} />
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 transition-all duration-300 mr-0 md:mr-72 lg:mr-80 overflow-y-auto">
+        {/* شريط علوي للتباعد المناسب مع الشريط الجانبي */}
+        <div className="h-20 md:h-16 lg:h-18 w-full"></div>
+        
+        {/* حاوية المحتوى الرئيسي المحسنة */}
+        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-screen-2xl mx-auto w-full">
+          <div className="min-h-[calc(100vh-8rem)] bg-card/50 backdrop-blur-sm rounded-xl border shadow-lg p-6 lg:p-8">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/transactions" component={Transactions} />
+              <Route path="/projects" component={Projects} />
+              <Route path="/projects/details/:id" component={Projects} />
+              <Route path="/users" component={Users} />
+              <Route path="/employees">
+                {user?.role === 'admin' ? <Employees /> : <NotFound />}
+              </Route>
+              <Route path="/documents" component={Documents} />
+              <Route path="/archive" component={Archive} />
+              <Route path="/reports">
+                {user?.role === 'admin' ? <Reports /> : <NotFound />}
+              </Route>
+              <Route path="/activities" component={Activities} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/ledger" component={Reports} />
+              <Route path="/receivables" component={Receivables} />
+              <Route path="/database-management">
+                {user?.role === 'admin' ? <DatabaseManagement /> : <NotFound />}
+              </Route>
+              <Route path="/hybrid-storage">
+                {user?.role === 'admin' ? <HybridStorage /> : <NotFound />}
+              </Route>
+              <Route path="/supabase-status">
+                {user?.role === 'admin' ? <SupabaseStatus /> : <NotFound />}
+              </Route>
+              <Route path="/file-migration">
+                {user?.role === 'admin' ? <FileMigration /> : <NotFound />}
+              </Route>
+              <Route path="/cloud-migration">
+                {user?.role === 'admin' ? <CloudStorageMigration /> : <NotFound />}
+              </Route>
+              <Route path="/deferred-payments" component={DeferredPayments} />
+              <Route path="/whatsapp-integration">
+                {user?.role === 'admin' ? <WhatsAppIntegration /> : <NotFound />}
+              </Route>
+              <Route path="/system-management">
+                {user?.role === 'admin' ? <SystemManagement /> : <NotFound />}
+              </Route>
+              <Route path="/completed-works">
+                {user?.role === 'admin' || user?.role === 'manager' ? <CompletedWorks /> : <NotFound />}
+              </Route>
+              <Route path="/netsuite" component={NetSuiteDashboard} />
+              <Route path="/netsuite/transactions" component={NetSuiteTransactions} />
+              <Route path="/netsuite/reports" component={NetSuiteReports} />
+              <Route path="/netsuite/customers" component={NetSuiteCustomers} />
 
-      <Route component={NotFound} />
-    </Switch>
+              <Route component={NotFound} />
+            </Switch>
+          </div>
+        </div>
+        
+        {/* لم نعد بحاجة إلى مساحة إضافية هنا بسبب استخدام pb-mobile-nav */}
+      </main>
+    </div>
   );
 }
 
