@@ -22,240 +22,15 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* نظام ألوان أزرق فاتح موحد */
-    --background: 218 100% 98%;
-    --foreground: 215 16% 47%;
-    --card: 217 100% 97%;
-    --card-foreground: 215 16% 47%;
-    --popover: 217 100% 97%;
-    --popover-foreground: 215 16% 47%;
-    
-    /* الألوان الأساسية - أزرق فاتح موحد */
-  /* primary was too light for text in light mode; darken for better contrast */
-  --primary: 210 90% 55%;
-  --primary-foreground: 215 100% 20%;
-    --secondary: 215 100% 95%;
-    --secondary-foreground: 215 60% 35%;
-    --muted: 215 100% 96%;
-    --muted-foreground: 215 30% 55%;
-  --accent: 210 90% 68%;
-  --accent-foreground: 215 100% 20%;
-    
-    /* ألوان التحكم والحدود */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 215 100% 90%;
-    --input: 215 100% 92%;
-    --ring: 210 100% 60%;
-    
-    /* متغيرات إضافية للتصميم */
-    --success: 142 71% 45%;
-    --warning: 45 93% 47%;
-    --info: 210 100% 70%;
-    --light-blue-bg: 210 100% 95%;
-    --light-blue-hover: 210 100% 85%;
-    --text-primary: 215 100% 25%;
-    --text-secondary: 215 40% 45%;
-    --sidebar-bg: 215 100% 97%;
-    --header-bg: 210 100% 94%;
-    
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    /* نظام ألوان الوضع المظلم - متوازن ومريح للعين */
-    --background: 225 30% 8%;
-    --foreground: 210 40% 85%;
-    --card: 225 25% 12%;
-    --card-foreground: 210 40% 85%;
-    --popover: 225 25% 12%;
-    --popover-foreground: 210 40% 85%;
-    
-    /* الألوان الأساسية في الوضع المظلم */
-    --primary: 210 100% 75%;
-    --primary-foreground: 225 30% 8%;
-    --secondary: 225 20% 20%;
-    --secondary-foreground: 210 40% 85%;
-    --muted: 225 20% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 210 100% 70%;
-    --accent-foreground: 225 30% 8%;
-    
-    /* ألوان التحكم والحدود */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 225 20% 25%;
-    --input: 225 20% 20%;
-    --ring: 210 100% 70%;
-    
-    /* متغيرات إضافية للوضع المظلم */
-    --success: 142 71% 55%;
-    --warning: 45 93% 57%;
-    --info: 210 100% 80%;
-    --light-blue-bg: 225 25% 15%;
-    --light-blue-hover: 225 25% 25%;
-    --text-primary: 210 40% 90%;
-    --text-secondary: 215 20% 70%;
-    --sidebar-bg: 225 25% 10%;
-    --header-bg: 225 25% 12%;
-  }
+  /* Base tokens come from professional-accounting-system.css. Avoid redefining them here. */
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  
-  body {
-    @apply bg-background text-foreground font-sans;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  html {
-    scroll-behavior: smooth;
-  }
+  /* Note: Removed duplicate base color tokens to rely on the unified system */
 }
-
-@layer components {
-  /* ==============================================================
-     مكونات التخطيط الاحترافي الموحد
-     ============================================================== */
-  
-  /* حاوية النافذة المحسنة للنوافذ والحوارات */
-  .app-window {
-    @apply rounded-xl border border-border bg-card/95 backdrop-blur-sm shadow-xl;
-  }
-  
-  /* حاوية الصفحة المعيارية مع التباعد المحسن */
-  .page-container {
-    @apply p-4 sm:p-6 lg:p-8 xl:p-10 space-y-6;
-  }
-  
-  /* رأس الصفحة المدمج والمحسن */
-  .page-header-compact {
-    @apply app-window p-4 sm:p-6 lg:p-8 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 lg:gap-6 mb-6;
-  }
-  
-  /* كتل الأقسام الموحدة */
-  .section-block {
-    @apply app-window p-6 sm:p-8 lg:p-10 space-y-4;
-  }
-  
-  /* عناوين الأقسام المحسنة */
-  .section-title {
-    @apply text-xl sm:text-2xl lg:text-3xl font-bold text-foreground leading-tight;
-  }
-  
-  .section-subtitle {
-    @apply text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed;
-  }
-  
-  /* شريط الأدوات المحسن */
-  .toolbar {
-    @apply flex flex-wrap items-center gap-3 sm:gap-4;
-  }
-  
-  /* بطاقات الإحصائيات المحترفة */
-  .stats-card-pro {
-    @apply bg-gradient-to-br from-card/90 to-card border border-border/50 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden;
-  }
-  
-  .stats-card-pro::before {
-    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none;
-    content: '';
-  }
-
-  /* Creative aura glow for stats cards */
-  .stats-card-pro::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: radial-gradient(200px 120px at 85% -20%, hsl(var(--primary)/0.12), transparent 60%),
-                radial-gradient(180px 100px at 10% 110%, hsl(var(--accent)/0.10), transparent 60%);
-    filter: blur(14px);
-    opacity: 0.6;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Dashboard header accent divider */
-  .header-accent-divider {
-    position: relative;
-    height: 8px;
-    border-radius: 9999px;
-    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    overflow: hidden;
-  }
-  .header-accent-divider::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-    transform: translateX(-100%);
-    animation: divider-shimmer 2.8s linear infinite;
-  }
-  @keyframes divider-shimmer {
-    to { transform: translateX(100%); }
-  }
-  
-  .stats-value-pro {
-    @apply text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2 relative z-10;
-  }
-  
-  .stats-label-pro {
-    @apply text-sm sm:text-base text-muted-foreground font-medium relative z-10;
-  }
-  
-  /* جداول محسنة */
-  .table-pro {
-    @apply w-full border-collapse bg-card rounded-lg overflow-hidden shadow-sm;
-  }
-  
-  .table-pro th {
-    @apply bg-muted/50 px-4 sm:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border;
-  }
-  
-  .table-pro td {
-    @apply px-4 sm:px-6 py-3 sm:py-4 text-sm text-foreground border-b border-border/50 last:border-b-0;
-  }
-  
-  .table-pro tbody tr:hover {
-    @apply bg-muted/30 transition-colors duration-200;
-  }
-  
-  /* أزرار محسنة */
-  .btn-pro {
-    @apply inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
-  }
-  
-  .btn-primary-pro {
-    @apply btn-pro bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg;
-  }
-  
-  .btn-secondary-pro {
-    @apply btn-pro bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border;
-  }
-  
-  /* حاويات النماذج المحسنة */
-  .form-container-pro {
-    @apply space-y-6 sm:space-y-8;
-  }
-  
-  .form-group-pro {
-    @apply space-y-2;
-  }
-  
-  .form-label-pro {
-    @apply block text-sm font-medium text-foreground mb-1;
-  }
-  
-  .form-input-pro {
-    @apply w-full px-3 sm:px-4 py-2 sm:py-3 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 transition-all duration-200;
-  }
   
   /* نوافذ منبثقة محسنة */
   .modal-overlay-pro {
@@ -263,7 +38,9 @@
   }
   
   .modal-content-pro {
-    @apply bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto;
+    @apply bg-card border border-border shadow-2xl w-full max-h-[90vh] overflow-y-auto;
+    border-radius: var(--modal-radius);
+    max-width: var(--modal-width-md);
   }
   
   .modal-header-pro {
@@ -399,6 +176,42 @@
   .submenu-item-pro.active {
     @apply bg-primary/10 text-primary font-semibold border-r-2 border-primary;
   }
+}
+
+/* =============================================
+   Unified size utilities (controls & modals)
+   ============================================= */
+@layer components {
+  /* App window base styling */
+  .app-window {
+    @apply bg-card border border-border shadow-xl;
+    border-radius: var(--window-radius);
+  }
+
+  /* Control size helpers */
+  .control-sm { height: var(--control-height-sm); font-size: var(--control-font-sm); padding-inline: var(--control-padding-x-sm); }
+  .control-md { height: var(--control-height-md); font-size: var(--control-font-md); padding-inline: var(--control-padding-x-md); }
+  .control-lg { height: var(--control-height-lg); font-size: var(--control-font-lg); padding-inline: var(--control-padding-x-lg); }
+
+  /* Apply to inputs/selects */
+  input.control-sm, select.control-sm, .form-input-pro.control-sm { height: var(--control-height-sm); font-size: var(--control-font-sm); padding-inline: var(--control-padding-x-sm); }
+  input.control-md, select.control-md, .form-input-pro.control-md { height: var(--control-height-md); font-size: var(--control-font-md); padding-inline: var(--control-padding-x-md); }
+  input.control-lg, select.control-lg, .form-input-pro.control-lg { height: var(--control-height-lg); font-size: var(--control-font-lg); padding-inline: var(--control-padding-x-lg); }
+
+  /* Select caret spacing */
+  .accounting-form-select.control-sm { padding-left: calc(var(--control-padding-x-sm) + 1.5rem); }
+  .accounting-form-select.control-md { padding-left: calc(var(--control-padding-x-md) + 1.5rem); }
+  .accounting-form-select.control-lg { padding-left: calc(var(--control-padding-x-lg) + 1.5rem); }
+
+  /* Modal width helpers */
+  .modal-sm { max-width: var(--modal-width-sm); }
+  .modal-md { max-width: var(--modal-width-md); }
+  .modal-lg { max-width: var(--modal-width-lg); }
+
+  /* App window helpers */
+  .app-window-sm { border-radius: var(--window-radius); padding: var(--window-padding-sm); max-width: var(--window-max-w-sm); }
+  .app-window-md { border-radius: var(--window-radius); padding: var(--window-padding-md); max-width: var(--window-max-w-md); }
+  .app-window-lg { border-radius: var(--window-radius); padding: var(--window-padding-lg); max-width: var(--window-max-w-lg); }
 }
 
 /* ==============================================================

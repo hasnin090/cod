@@ -247,11 +247,13 @@
   
   .accounting-form-input {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
+    height: var(--control-height-md);
+    padding-inline: var(--control-padding-x-md);
+    border-radius: var(--control-radius);
     border: 1px solid hsl(var(--border-standard));
     background: hsl(var(--surface-base));
     color: hsl(var(--text-primary));
+    font-size: var(--control-font-md);
     transition: all 0.2s ease;
   }
   
@@ -266,8 +268,14 @@
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
     background-position: left 0.75rem center;
     background-size: 1.25rem 1.25rem;
-    padding-left: 2.75rem;
+    padding-left: calc(var(--control-padding-x-md) + 1.5rem);
   }
+
+  /* Control size variants */
+  .accounting-form-input.control-sm { height: var(--control-height-sm); font-size: var(--control-font-sm); padding-inline: var(--control-padding-x-sm); }
+  .accounting-form-input.control-lg { height: var(--control-height-lg); font-size: var(--control-font-lg); padding-inline: var(--control-padding-x-lg); }
+  .accounting-form-select.control-sm { padding-left: calc(var(--control-padding-x-sm) + 1.5rem); }
+  .accounting-form-select.control-lg { padding-left: calc(var(--control-padding-x-lg) + 1.5rem); }
   
   /* === BREADCRUMB NAVIGATION === */
   .accounting-breadcrumb {

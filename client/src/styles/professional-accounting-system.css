@@ -119,6 +119,45 @@
     --financial-loss: var(--status-negative);
     --financial-pending: var(--status-warning);
     --financial-neutral: var(--brand-neutral-500);
+
+    /* === LEGACY/COMPATIBILITY ALIASES === */
+    /* Maintain compatibility with older theme variables used across the app */
+  --light-blue: var(--brand-primary);
+  --light-blue-text: var(--brand-primary-dark);
+    --light-blue-bg: var(--brand-primary-light);
+    --light-blue-hover: var(--brand-neutral-100);
+    --sidebar-bg: var(--sidebar-background);
+    --header-bg: var(--surface-overlay);
+
+    /* === CONTROL AND LAYOUT SIZE TOKENS === */
+    /* Unified sizes for inputs, selects, and modals */
+    --control-height-sm: 2.25rem;   /* 36px */
+    --control-height-md: 2.75rem;   /* 44px */
+    --control-height-lg: 3.25rem;   /* 52px */
+
+    --control-padding-x-sm: 0.75rem;
+    --control-padding-x-md: 1rem;
+    --control-padding-x-lg: 1.25rem;
+
+    --control-font-sm: 0.875rem;    /* 14px */
+    --control-font-md: 1rem;        /* 16px */
+    --control-font-lg: 1.125rem;    /* 18px */
+
+    --control-radius: var(--radius);
+
+    /* Modals/windows */
+    --modal-width-sm: 28rem;  /* 448px */
+    --modal-width-md: 36rem;  /* 576px */
+    --modal-width-lg: 48rem;  /* 768px */
+    --modal-radius: 0.75rem;
+
+    --window-radius: var(--radius);
+    --window-padding-sm: 1rem;
+    --window-padding-md: 1.5rem;
+    --window-padding-lg: 2rem;
+    --window-max-w-sm: 32rem;  /* 512px */
+    --window-max-w-md: 48rem;  /* 768px */
+    --window-max-w-lg: 72rem;  /* 1152px */
   }
 
   .dark {
