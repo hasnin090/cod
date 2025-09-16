@@ -534,7 +534,7 @@ export default function Projects() {
                     ) : (
                       <ProjectList 
                         projects={filteredProjects} 
-                        onProjectUpdate={handleProjectUpdated}
+                        onProjectUpdated={handleProjectUpdated}
                         isLoading={isLoading}
                       />
                     )}
@@ -545,7 +545,7 @@ export default function Projects() {
               <TabsContent value="all" className="p-6">
                 <ProjectList 
                   projects={filteredProjects} 
-                  onProjectUpdate={handleProjectUpdated}
+                  onProjectUpdated={handleProjectUpdated}
                   isLoading={isLoading}
                 />
               </TabsContent>
@@ -553,7 +553,7 @@ export default function Projects() {
               <TabsContent value="active" className="p-6">
                 <ProjectList 
                   projects={filteredProjects.filter(p => p.status === 'active')} 
-                  onProjectUpdate={handleProjectUpdated}
+                  onProjectUpdated={handleProjectUpdated}
                   isLoading={isLoading}
                 />
               </TabsContent>
@@ -561,7 +561,7 @@ export default function Projects() {
               <TabsContent value="completed" className="p-6">
                 <ProjectList 
                   projects={filteredProjects.filter(p => p.status === 'completed')} 
-                  onProjectUpdate={handleProjectUpdated}
+                  onProjectUpdated={handleProjectUpdated}
                   isLoading={isLoading}
                 />
               </TabsContent>

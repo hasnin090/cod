@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  Loader2, Upload, File, FileImage, FileText, FileIcon, 
+  Loader2, Upload, File as FileIcon, FileImage, FileText, 
   AlertCircle, CheckCircle, Trash2, UploadCloud, Info 
 } from 'lucide-react';
 import { getFileType, getReadableFileSize } from '@/lib/file-utils';
@@ -367,7 +367,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
                             ) : getFileType(file.type) === 'pdf' ? (
                               <FileText className="h-10 w-10 text-red-500" />
                             ) : (
-                              <File className="h-10 w-10 text-gray-500" />
+                              <FileIcon className="h-10 w-10 text-gray-500" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
