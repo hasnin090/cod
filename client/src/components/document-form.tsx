@@ -20,12 +20,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface Project {
   id: number;
@@ -36,59 +30,32 @@ interface DocumentFormProps {
   projects: Project[];
   onSubmit: () => void;
   isLoading: boolean;
-  isManagerDocument?: boolean; // إضافة خاصية لتحديد ما إذا كان المستند إدارياً
+  isManagerDocument?: boolean;
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ACCEPTED_FILE_TYPES = [
-  // PDF files
   "application/pdf", 
-  // Image files
-  "image/jpeg", 
-  "image/png", 
-  "image/jpg", 
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  // Document files
-  "application/msword", 
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-  "text/plain",
-  "text/rtf",
-  "application/rtf",
-  // Spreadsheet files
-  "application/vnd.ms-excel",
+  "image/jpeg", "image/png", "image/jpg", "image/gif",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  // Presentation files
-  "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  // Compressed files
-  "application/zip",
-  "application/x-zip-compressed",
-  "application/x-rar-compressed",
-  // Audio files
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  // Video files
-  "video/mp4",
-  "video/mpeg",
-  "video/quicktime"
+  "text/plain", "application/rtf",
+  "application/zip", "application/x-rar-compressed",
+  "audio/mpeg", "audio/wav", "video/mp4"
 ];
 
-const ACCEPTED_FILE_EXTENSIONS = ".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,.doc,.docx,.txt,.rtf,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp3,.wav,.mp4,.mpeg,.mov";
+const ACCEPTED_FILE_EXTENSIONS = ".pdf,.jpg,.jpeg,.png,.gif,.docx,.xlsx,.pptx,.txt,.rtf,.zip,.rar,.mp3,.wav,.mp4";
 
 const documentSchema = z.object({
-  name: z.string().min(3, "اسم المستند يجب أن يحتوي على الأقل 3 أحرف"),
+  name: z.string().min(1, "اسم المستند مطلوب"),
   description: z.string().optional(),
   projectId: z.string().optional(),
-  file: z
-    .any()
-    .refine((file) => !!file, "الملف مطلوب")
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `حجم الملف يجب أن يكون أقل من ${MAX_FILE_SIZE / 1024 / 1024} ميجابايت`)
+  file: z.instanceof(File, { message: "يرجى اختيار ملف" })
+    .refine((file) => file.size <= MAX_FILE_SIZE, `حجم الملف يجب أن يكون أقل من ${MAX_FILE_SIZE / 1024 / 1024} ميجابايت`)
     .refine(
-      (file) => ACCEPTED_FILE_TYPES.includes(file?.type),
-      `صيغة الملف غير مدعومة. الصيغ المدعومة: ${ACCEPTED_FILE_EXTENSIONS.replaceAll(',', ', ')}`
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      "نوع الملف غير مدعوم"
     ),
 });
 
@@ -115,9 +82,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
     setFile(selectedFile);
     form.setValue("file", selectedFile);
     
-    // محاولة استخدام اسم الملف كاسم للمستند إذا كان حقل الاسم فارغًا
     if (!form.getValues("name")) {
-      // إزالة الامتداد من اسم الملف
       const fileName = selectedFile.name.split('.').slice(0, -1).join('.');
       form.setValue("name", fileName);
     }
@@ -150,103 +115,36 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
     e.stopPropagation();
     setIsDragging(false);
   }, []);
-  
-  const updateUploadProgress = (progress: number) => {
-    setUploadProgress(progress);
-  };
-  
-  const getFileIcon = (fileType?: string) => {
-    if (!fileType) return <FileIcon className="h-12 w-12 text-muted-foreground" />;
-    
-    if (fileType.includes('pdf')) {
-      return <File className="h-12 w-12 text-destructive" />;
-    } else if (fileType.includes('image')) {
-      return <FileImage className="h-12 w-12 text-primary" />;
-    } else if (fileType.includes('word') || fileType.includes('document')) {
-      return <FileText className="h-12 w-12 text-primary-light" />;
-    } else {
-      return <FileIcon className="h-12 w-12 text-muted-foreground" />;
-    }
-  };
-  
-  const getFileTypeBadge = (fileType?: string) => {
-    if (!fileType) return null;
-    
-    const type = getFileType(fileType);
-    
-    let color = "";
-    switch(type) {
-      case 'pdf':
-        color = "bg-destructive/10 text-destructive border-destructive/20";
-        break;
-      case 'image':
-        color = "bg-primary/10 text-primary border-primary/20";
-        break;
-      case 'document':
-        color = "bg-primary-light/10 text-primary-light border-primary-light/20";
-        break;
-      default:
-        color = "bg-muted/10 text-muted-foreground border-muted/20";
-    }
-    
-    return (
-      <Badge variant="outline" className={`${color} capitalize`}>
-        {type}
-      </Badge>
-    );
-  };
-  
+
   const mutation = useMutation({
     mutationFn: async (data: DocumentFormValues) => {
-      if (!file) {
-        throw new Error("يرجى اختيار ملف للتحميل");
-      }
+      if (!file) throw new Error('لم يتم تحديد ملف');
+      
+      let stopSimulation: (() => void) | null = null;
       
       try {
-        // تحديث شريط التقدم للإشعار بأن العملية بدأت
-        setUploadProgress(5);
-        console.log("تحديث نسبة التقدم إلى 5% قبل بدء التحميل");
-        
-        // إنشاء FormData لرفع الملف عبر REST API
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('name', data.name);
-        formData.append('description', data.description || "");
-        if (data.projectId && data.projectId !== "all") {
-          formData.append('projectId', data.projectId);
-        }
-        formData.append('isManagerDocument', isManagerDocument.toString());
-        
-
-        
-        // محاكاة تقدم التحميل
+        // محاكاة تقدم الرفع
         const simulateProgress = () => {
-          let progress = 5;
+          let currentProgress = 0;
           const interval = setInterval(() => {
-            // زيادة التقدم تدريجياً حتى 90% (سنترك 10% للمعالجة النهائية)
-            if (progress < 90) {
-              progress += Math.floor(Math.random() * 5) + 1;
-              progress = Math.min(progress, 90);
-              setUploadProgress(progress);
-            } else {
-              clearInterval(interval);
-            }
-          }, 300);
+            currentProgress += Math.random() * 15;
+            if (currentProgress > 90) currentProgress = 90;
+            setUploadProgress(currentProgress);
+          }, 200);
           
-          return () => clearInterval(interval);
+          stopSimulation = () => clearInterval(interval);
+          return stopSimulation;
         };
         
-        // بدء محاكاة التقدم
-        const stopSimulation = simulateProgress();
+        stopSimulation = simulateProgress();
         
         try {
-          // الطريقة الجديدة: رفع مباشر إلى Supabase بدون مرور عبر Netlify
-          setUploadProgress(5); // تحديث نسبة التقدم إلى 5% قبل بدء التحميل
-          
-          // 1. الحصول على رابط رفع موقّع
-          const urlResponse = await fetch(`${getApiBase()}/get-upload-url`, {
+          // 1. طلب رابط الرفع
+          const urlResponse = await fetch(`${getApiBase()}/api/upload-url`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
             credentials: 'include',
             body: JSON.stringify({
               fileName: file.name,
@@ -258,18 +156,13 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             throw new Error('فشل في الحصول على رابط الرفع');
           }
           
-          const { uploadUrl, filePath, method, headers, simplified, classic, base64, simple, external, infoOnly, supabase } = await urlResponse.json();
-          console.log('[DEBUG] Upload config:', { uploadUrl, classic, simplified, base64, simple, external, infoOnly, supabase, apiBase: getApiBase() });
+          const { uploadUrl, supabase } = await urlResponse.json();
           setUploadProgress(20);
           
-          // 2. رفع الملف - طريقة مختلفة حسب النوع
+          // 2. رفع الملف
           let uploadResponse;
           
           if (supabase) {
-            // الطريقة الصحيحة: Supabase Storage
-            console.log('[DEBUG] Using Supabase Storage method');
-            
-            // تحويل الملف إلى base64
             const reader = new FileReader();
             const fileData = await new Promise<string>((resolve) => {
               reader.onload = () => resolve(reader.result as string);
@@ -279,7 +172,6 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             setUploadProgress(40);
             
             const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] Supabase upload URL:', finalUrl);
             
             uploadResponse = await fetch(finalUrl, {
               method: 'POST',
@@ -298,236 +190,27 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
               })
             });
             
-            console.log('[DEBUG] Supabase upload response status:', uploadResponse.status);
-            
-            // إضافة تشخيص أفضل للأخطاء
             if (!uploadResponse.ok) {
               const errorText = await uploadResponse.text();
-              console.error('[ERROR] Upload failed:', {
-                status: uploadResponse.status,
-                statusText: uploadResponse.statusText,
-                body: errorText
-              });
               throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
             }
-          } else if (infoOnly) {
-            // الطريقة الجديدة: حفظ معلومات فقط بدون ملفات
-            console.log('[DEBUG] Using info-only method - no actual file upload');
-            setUploadProgress(40);
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] Info-only URL:', finalUrl);
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                fileName: file.name,
-                fileType: file.type,
-                fileSize: file.size,
-                name: data.name,
-                description: data.description || '',
-                projectId: data.projectId || '',
-                isManagerDocument
-              })
-            });
-            
-            console.log('[DEBUG] Info-only response status:', uploadResponse.status);
-          } else if (external) {
-            // الطريقة الخارجية: رفع بدون مرور عبر Netlify Functions
-            console.log('[DEBUG] Using external upload method');
-            
-            // بدلاً من رفع فعلي، نحفظ فقط معلومات الملف
-            // وننشئ رابط محلي مؤقت
-            const mockFileUrl = URL.createObjectURL(file);
-            setUploadProgress(40);
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] External upload URL:', finalUrl);
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                fileDataUrl: mockFileUrl,
-                fileName: file.name,
-                fileType: file.type,
-                name: data.name,
-                description: data.description || '',
-                projectId: data.projectId || '',
-                isManagerDocument
-              })
-            });
-            
-            console.log('[DEBUG] External upload response status:', uploadResponse.status);
-          } else if (simple) {
-            // الطريقة الأبسط: multer عادي
-            console.log('[DEBUG] Using simple upload method');
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
-            uploadFormData.append('name', data.name);
-            uploadFormData.append('description', data.description || '');
-            uploadFormData.append('projectId', data.projectId || '');
-            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] Simple upload URL:', finalUrl);
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: method || 'POST',
-              body: uploadFormData,
-              credentials: 'include'
-            });
-            
-            console.log('[DEBUG] Simple upload response status:', uploadResponse.status);
-          } else if (base64) {
-            // الطريقة الجديدة: رفع باستخدام base64
-            console.log('[DEBUG] Starting base64 upload, file size:', file.size);
-            
-            // التحقق من حجم الملف (حد أقصى 10MB للـ base64)
-            const maxSize = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxSize) {
-              throw new Error('حجم الملف كبير جداً للرفع بهذه الطريقة (الحد الأقصى 10MB)');
-            }
-            
-            const reader = new FileReader();
-            const fileDataPromise = new Promise<string>((resolve) => {
-              reader.onload = () => resolve(reader.result as string);
-              reader.readAsDataURL(file);
-            });
-            
-            const fileData = await fileDataPromise;
-            console.log('[DEBUG] Base64 conversion complete, data length:', fileData.length);
-            setUploadProgress(40);
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] Base64 upload URL:', finalUrl);
-            
-            const payload = {
-              fileData,
-              fileName: file.name,
-              fileType: file.type,
-              name: data.name,
-              description: data.description || '',
-              projectId: data.projectId || '',
-              isManagerDocument
-            };
-            
-            console.log('[DEBUG] Payload prepared, size:', JSON.stringify(payload).length);
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: method || 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify(payload)
-            });
-            
-            console.log('[DEBUG] Upload response status:', uploadResponse.status);
-          } else if (classic) {
-            // الطريقة الكلاسيكية: استخدام endpoint الموجود
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
-            uploadFormData.append('name', data.name);
-            uploadFormData.append('description', data.description || '');
-            uploadFormData.append('projectId', data.projectId || '');
-            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            console.log('[DEBUG] Final upload URL:', finalUrl);
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: method || 'POST',
-              body: uploadFormData,
-              credentials: 'include'
-            });
-          } else if (simplified) {
-            // الطريقة المبسطة: رفع مباشر إلى الخادم
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
-            uploadFormData.append('name', data.name);
-            uploadFormData.append('description', data.description || '');
-            uploadFormData.append('projectId', data.projectId || '');
-            uploadFormData.append('isManagerDocument', isManagerDocument.toString());
-            
-            uploadResponse = await fetch(`${getApiBase()}${uploadUrl}`, {
-              method: method || 'POST',
-              body: uploadFormData,
-              credentials: 'include'
-            });
-          } else {
-            // الطريقة الأصلية: رفع إلى Supabase
-            uploadResponse = await fetch(uploadUrl, {
-              method: 'PUT',
-              body: file,
-              headers: {
-                'Content-Type': file.type,
-                ...headers
-              }
-            });
           }
           
-          if (!uploadResponse.ok) {
-            throw new Error('فشل في رفع الملف');
-          }
+          setUploadProgress(100);
+          const result = await uploadResponse!.json();
           
-          setUploadProgress(80);
-          
-          let result;
-          
-          if (infoOnly || external || simple || base64 || classic || simplified) {
-            // في الطرق المباشرة، الرفع مكتمل بالفعل
-            result = await uploadResponse.json();
-            setUploadProgress(100);
-          } else {
-            // في الطريقة الأصلية، نحتاج خطوة التأكيد
-            const confirmResponse = await fetch(`${getApiBase()}/confirm-upload`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                filePath,
-                name: data.name,
-                description: data.description,
-                projectId: data.projectId,
-                isManagerDocument,
-                fileSize: file.size,
-                fileType: file.type
-              })
-            });
-            
-            if (!confirmResponse.ok) {
-              const errorData = await confirmResponse.json().catch(() => ({ message: 'فشل في تأكيد الرفع' }));
-              throw new Error(errorData.message || 'فشل في تأكيد الرفع');
-            }
-            
-            result = await confirmResponse.json();
-            setUploadProgress(100);
-          }
-          
+          stopSimulation?.();
           return result;
         } catch (error) {
-          // إيقاف محاكاة التقدم في حالة حدوث خطأ
-          stopSimulation();
-
+          stopSimulation?.();
           throw error;
         }
       } catch (error) {
-        // إعادة تعيين شريط التقدم في حالة وجود خطأ
-
         setUploadProgress(0);
         throw error;
       }
     },
     onSuccess: (result) => {
-      // رسالة مخصصة حسب نوع الرفع
       let title = "تمت العملية بنجاح";
       let description = "تم رفع المستند بنجاح";
       
@@ -540,6 +223,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
         title,
         description,
       });
+      
       form.reset({
         name: "",
         description: "",
@@ -564,199 +248,205 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
   }
   
   return (
-    <div className="bg-secondary-light rounded-xl shadow-card p-3 xs:p-4 sm:p-5 w-full max-w-full">
-      <h3 className="text-sm xs:text-base sm:text-lg font-bold text-primary-light mb-2 xs:mb-3 sm:mb-4">رفع مستند جديد</h3>
+    <div className="bg-secondary-light rounded-xl shadow-card p-6 w-full max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h3 className="text-xl font-bold text-primary-light mb-2">رفع مستند جديد</h3>
+        <p className="text-sm text-muted-foreground">يمكنك رفع المستندات المختلفة مثل PDF، الصور، والمستندات النصية</p>
+      </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-3 xs:space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="space-y-1 xs:space-y-1.5 sm:space-y-2">
-                  <FormLabel className="text-xs xs:text-sm">اسم المستند</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="أدخل اسم المستند"
-                      className="w-full px-3 py-1.5 xs:px-4 xs:py-2 text-xs xs:text-sm rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light"
+        <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-6">
+          {/* معلومات المستند */}
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <FileText className="h-5 w-5 ml-2 text-primary" />
+              معلومات المستند
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">اسم المستند *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="أدخل اسم المستند"
+                        className="w-full px-4 py-3 text-sm rounded-lg bg-white border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                        disabled={isLoading || mutation.isPending}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">المشروع</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
                       disabled={isLoading || mutation.isPending}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[10px] xs:text-xs" />
-                </FormItem>
-              )}
-            />
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full px-4 py-3 text-sm rounded-lg bg-white border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20">
+                          <SelectValue placeholder="اختر المشروع (اختياري)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">بدون مشروع</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}
-              name="projectId"
+              name="description"
               render={({ field }) => (
-                <FormItem className="space-y-1 xs:space-y-1.5 sm:space-y-2">
-                  <FormLabel className="text-xs xs:text-sm">المشروع</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value} 
-                    disabled={isLoading || mutation.isPending}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full px-3 py-1.5 xs:px-4 xs:py-2 text-xs xs:text-sm h-auto rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light">
-                        <SelectValue placeholder="اختر المشروع" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="text-xs xs:text-sm">
-                      <SelectItem value="all">عام</SelectItem>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="text-[10px] xs:text-xs" />
+                <FormItem className="mt-4">
+                  <FormLabel className="text-sm font-medium text-gray-700">الوصف</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="أضف وصفاً للمستند (اختياري)"
+                      className="w-full px-4 py-3 text-sm rounded-lg bg-white border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none min-h-[80px] resize-none"
+                      disabled={isLoading || mutation.isPending}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-600" />
                 </FormItem>
               )}
             />
           </div>
-          
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="space-y-1 xs:space-y-1.5 sm:space-y-2">
-                <FormLabel className="text-xs xs:text-sm">وصف المستند</FormLabel>
-                <FormControl>
-                  <Textarea
-                    {...field}
-                    rows={2}
-                    placeholder="أدخل وصف المستند (اختياري)"
-                    className="w-full px-3 py-1.5 xs:px-4 xs:py-2 text-xs xs:text-sm rounded-lg bg-secondary border border-secondary-light focus:border-primary-light focus:outline-none text-neutral-light"
-                    disabled={isLoading || mutation.isPending}
-                  />
-                </FormControl>
-                <FormMessage className="text-[10px] xs:text-xs" />
-              </FormItem>
-            )}
-          />
-          
+
+          {/* قسم رفع الملف */}
           <FormField
             control={form.control}
             name="file"
-            render={({ field: { onChange, value, ...rest } }) => (
+            render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
-                <FormLabel className="flex items-center text-xs xs:text-sm">
-                  الملف
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="inline-flex">
-                          <Info className="h-3 w-3 xs:h-4 xs:w-4 mr-1 text-muted-foreground cursor-help" />
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Upload className="h-5 w-5 ml-2 text-primary" />
+                    رفع الملف
+                  </h4>
+                  
+                  <div
+                    className={`relative border-2 border-dashed rounded-lg p-6 transition-all ${
+                      isDragging 
+                        ? 'border-primary bg-primary/5' 
+                        : file 
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-300 hover:border-primary hover:bg-gray-50'
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                  >
+                    {file ? (
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200">
+                          <div className="flex-shrink-0">
+                            {getFileType(file.type) === 'image' ? (
+                              <FileImage className="h-10 w-10 text-blue-500" />
+                            ) : getFileType(file.type) === 'pdf' ? (
+                              <FileText className="h-10 w-10 text-red-500" />
+                            ) : (
+                              <File className="h-10 w-10 text-gray-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {getReadableFileSize(file.size)} • {getFileType(file.type)}
+                            </p>
+                            <div className="flex items-center mt-2">
+                              <CheckCircle className="h-4 w-4 text-green-500 ml-1" />
+                              <span className="text-xs text-green-600">جاهز للرفع</span>
+                            </div>
+                          </div>
                         </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs text-[10px] xs:text-xs p-2 xs:p-3">
-                        <p>
-                          يمكنك رفع ملفات بصيغة PDF أو صور (JPG, PNG) أو مستندات (DOC, DOCX) أو ملفات نصية (TXT).
-                          الحد الأقصى لحجم الملف هو {MAX_FILE_SIZE / 1024 / 1024} ميجابايت.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </FormLabel>
-                
-                <div 
-                  className={`border-2 border-dashed rounded-lg p-2 xs:p-3 sm:p-4 md:p-5 text-center transition-colors
-                    ${isDragging 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/50 hover:bg-secondary/80'
-                    } 
-                    ${mutation.isPending ? 'opacity-60' : ''}
-                  `}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                >
-                  {file ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-center mb-2">
-                        {getFileIcon(file.type)}
+                        
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setFile(null);
+                              onChange(null);
+                            }}
+                            disabled={isLoading || mutation.isPending}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <Trash2 className="ml-1 h-4 w-4" />
+                            حذف
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isLoading || mutation.isPending}
+                          >
+                            <Upload className="ml-1 h-4 w-4" />
+                            تغيير الملف
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{file.name}</p>
-                        <div className="flex items-center justify-center gap-2">
-                          <p className="text-xs text-muted-foreground">
-                            {getReadableFileSize(file.size)}
+                    ) : (
+                      <div className="text-center space-y-4">
+                        <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="space-y-2">
+                          <p className="text-base font-medium text-gray-900">اختر ملفاً أو اسحبه هنا</p>
+                          <p className="text-sm text-gray-500">
+                            PDF، صور، مستندات، جداول بيانات، عروض تقديمية
                           </p>
-                          {getFileTypeBadge(file.type)}
+                          <p className="text-xs text-gray-400">
+                            أقصى حجم {MAX_FILE_SIZE / 1024 / 1024} ميجابايت
+                          </p>
                         </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap justify-center gap-2 mt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setFile(null);
-                            onChange(null);
+                        
+                        <input
+                          type="file"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={(e) => {
+                            handleInputChange(e);
+                            onChange(e.target.files?.[0] || null);
                           }}
+                          accept={ACCEPTED_FILE_EXTENSIONS}
                           disabled={isLoading || mutation.isPending}
-                          className="w-full xs:w-auto"
-                        >
-                          <Trash2 className="ml-1 h-4 w-4" />
-                          حذف
-                        </Button>
+                        />
+                        
                         <Button
                           type="button"
                           variant="outline"
-                          size="sm"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isLoading || mutation.isPending}
-                          className="w-full xs:w-auto"
+                          className="bg-white hover:bg-gray-50"
                         >
-                          <Upload className="ml-1 h-4 w-4" />
-                          تغيير
+                          <Upload className="ml-2 h-4 w-4" />
+                          اختيار ملف
                         </Button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <UploadCloud className="mx-auto h-8 w-8 xs:h-10 xs:w-10 md:h-12 md:w-12 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm xs:text-base font-medium">اضغط لاختيار ملف أو قم بسحب الملف وإفلاته هنا</p>
-                        <p className="text-xs xs:text-sm text-muted-foreground mt-1">
-                          <span className="hidden xs:inline">PDF، صور (JPG, PNG, GIF, SVG)، مستندات (DOC, DOCX, TXT, RTF)، أوراق عمل (XLS, XLSX)، عروض تقديمية (PPT, PPTX)، ملفات مضغوطة (ZIP, RAR)، وسائط (MP3, WAV, MP4) - </span>
-                          <span className="xs:hidden">ملفات PDF، صور، مستندات - </span>
-                          أقصى حجم {MAX_FILE_SIZE / 1024 / 1024} ميجابايت
-                        </p>
-                      </div>
-                      
-                      <input
-                        id="file-upload"
-                        type="file"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={(e) => {
-                          handleInputChange(e);
-                          onChange(e.target.files?.[0] || null);
-                        }}
-                        accept={ACCEPTED_FILE_EXTENSIONS}
-                        disabled={isLoading || mutation.isPending}
-                      />
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="relative w-full xs:w-auto"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isLoading || mutation.isPending}
-                      >
-                        <Upload className="ml-2 h-4 w-4" />
-                        اختيار ملف
-                      </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 <FormMessage />
@@ -774,19 +464,20 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             )}
           />
           
+          {/* شريط التقدم */}
           {mutation.isPending && (
-            <div className="space-y-1.5 xs:space-y-2 border-2 border-primary/10 rounded-lg p-2 xs:p-3 bg-primary/5">
-              <div className="flex items-center justify-between mb-0.5 xs:mb-1">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <Loader2 className="h-3.5 w-3.5 xs:h-4 xs:w-4 ml-1.5 xs:ml-2 animate-spin text-primary" />
-                  <span className="text-xs xs:text-sm font-medium text-primary-light">جاري رفع الملف...</span>
+                  <Loader2 className="h-5 w-5 ml-2 animate-spin text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">جاري رفع الملف...</span>
                 </div>
-                <span className="text-xs xs:text-sm font-bold text-primary bg-white px-2 xs:px-3 py-0.5 xs:py-1 rounded-full shadow-sm border border-primary/10">
+                <span className="text-sm font-bold text-blue-600 bg-white px-3 py-1 rounded-full">
                   {uploadProgress}%
                 </span>
               </div>
-              <Progress value={uploadProgress} className="h-2 xs:h-2.5 sm:h-3 bg-white" />
-              <p className="text-[10px] xs:text-xs text-center text-muted-foreground mt-0.5 xs:mt-1">
+              <Progress value={uploadProgress} className="h-3 bg-white border border-blue-200" />
+              <p className="text-xs text-center text-blue-600 mt-2">
                 {uploadProgress < 20 ? 'بدء التحميل...' : 
                  uploadProgress < 60 ? 'جاري رفع الملف، يرجى الانتظار...' : 
                  uploadProgress < 90 ? 'اقترب التحميل من الانتهاء...' : 
@@ -795,24 +486,29 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
             </div>
           )}
           
-          <div className="text-center pt-2">
+          {/* زر الإرسال */}
+          <div className="bg-gray-50 rounded-lg p-4 text-center">
             <Button 
               type="submit" 
-              className="w-full xs:w-auto h-9 xs:h-10 text-xs xs:text-sm px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2"
+              className="w-full md:w-auto h-12 text-base px-8 bg-primary hover:bg-primary/90"
               disabled={isLoading || mutation.isPending || !file}
             >
               {mutation.isPending ? (
                 <>
-                  <Loader2 className="ml-1.5 xs:ml-2 h-3.5 w-3.5 xs:h-4 xs:w-4 animate-spin" />
+                  <Loader2 className="ml-2 h-5 w-5 animate-spin" />
                   جاري الرفع...
                 </>
               ) : (
                 <>
-                  <UploadCloud className="ml-1.5 xs:ml-2 h-3.5 w-3.5 xs:h-4 xs:w-4" />
+                  <UploadCloud className="ml-2 h-5 w-5" />
                   رفع المستند
                 </>
               )}
             </Button>
+            
+            {!file && (
+              <p className="text-xs text-gray-500 mt-2">يرجى اختيار ملف للمتابعة</p>
+            )}
           </div>
         </form>
       </Form>

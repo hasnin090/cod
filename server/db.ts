@@ -1,4 +1,4 @@
-// استيراد المكتبات اللازمة
+// تم تعديل هذا الملف لاستخدام Supabase فقط في الإنتاج
 import dotenv from 'dotenv';
 dotenv.config({ override: true });
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -6,12 +6,12 @@ import postgres from 'postgres';
 import * as schema from '../shared/schema';
 import { logger } from '../shared/logger';
 
-// إنشاء دالة للاتصال بقاعدة البيانات
+// إنشاء دالة للاتصال بقاعدة البيانات (للبيئات التي تحتاج اتصال مباشر فقط)
 function createDatabaseConnection() {
   const url = process.env.DATABASE_URL;
   
   if (!url) {
-    logger.warn('DATABASE_URL is not set. Running in limited mode. DB calls will throw if invoked.');
+    logger.warn('DATABASE_URL is not set. This is expected when using Supabase client API only.');
     return null;
   }
   

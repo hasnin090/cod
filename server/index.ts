@@ -62,7 +62,19 @@ async function startServer() {
   app.use("/uploads", express.static(uploadsDir));
 
   // تسجيل الراوترات أولاً (يتضمن تهيئة الجلسات داخلياً)
-  await registerRoutes(app);
+  console.log('Starting registerRoutes...');
+  try {
+    await registerRoutes(app);
+    console.log('registerRoutes completed successfully');
+  } catch (error) {
+    console.error('❌ Error in registerRoutes:', error);
+    throw error;
+  }
+
+  // إضافة endpoint للصحة
+  app.get('/api/health', (req: Request, res: Response) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
 
 // مسار إنشاء المعاملة - يُسجل بعد الراوترات الافتراضية ليكون هو المُقدّم
 app.post(
@@ -159,9 +171,17 @@ app.use(
   const PORT = Number(process.env.PORT || 3000);
 
   // تشغيل الخادم بشكل مباشر للاختبار
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server successfully listening on port ${PORT}`);
     console.log(`🌐 Server running at http://localhost:${PORT}`);
+    console.log(`🔍 Server bind address: 0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (error: any) => {
+    console.error('❌ Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use`);
+    }
   });
 }
 

@@ -17,7 +17,7 @@ import {
   transactionEditPermissions, type TransactionEditPermission, type InsertTransactionEditPermission
 } from "../shared/schema";
 import bcrypt from "bcryptjs";
-import { PgStorage } from './pg-storage.js';
+// import { PgStorage } from './pg-storage.js'; // تعطيل مؤقت لسلامة الإنتاج
 import { SupabaseStorage } from './supabase-storage-class.js';
 
 // Flexible input for granting transaction edit permissions from routes (expiresAt computed in DB)
@@ -1210,7 +1210,7 @@ let _storageType: string | null = null;
 
 function createStorage(): IStorage {
   if (_storage) {
-    logger.log(`Reusing existing storage type: ${_storageType}`);
+    logger.log(`📌 Reusing existing storage type: ${_storageType}`);
     return _storage;
   }
 
@@ -1218,49 +1218,60 @@ function createStorage(): IStorage {
   const hasDatabaseUrl = !!process.env.DATABASE_URL && !!process.env.DATABASE_URL.trim();
   const preferDirectDb = (process.env.USE_DIRECT_DB || '').toLowerCase() === 'true';
 
-  // 1) Direct Postgres storage via DATABASE_URL (when explicitly preferred)
-  if (preferDirectDb && hasDatabaseUrl) {
-    try {
-      logger.log('USE_DIRECT_DB=true: Initializing PgStorage (direct DB)');
-      _storage = new PgStorage();
-      _storageType = 'PostgreSQL';
-      return _storage as IStorage;
-    } catch (error) {
-      logger.error('❌ Failed to initialize PgStorage (direct). Falling back...', error);
-    }
-  }
+  logger.log(`🔍 Storage initialization check:
+    - SUPABASE_URL: ${hasSupabaseEnv ? '✅ Present' : '❌ Missing'}
+    - DATABASE_URL: ${hasDatabaseUrl ? '✅ Present' : '❌ Missing'}  
+    - USE_DIRECT_DB: ${preferDirectDb}`);
 
-  // 2) Supabase (PostgREST) storage
+  // 1) Supabase (PostgREST) storage - الأولوية الأولى
   if (hasSupabaseEnv) {
     try {
-      logger.log('Attempting to initialize SupabaseStorage...');
+      logger.log('🚀 Supabase environment variables found. Initializing SupabaseStorage...');
       _storage = new SupabaseStorage();
       _storageType = 'Supabase';
       logger.log('✅ Successfully initialized SupabaseStorage for data persistence');
+      logger.log(`🎯 ACTIVE STORAGE TYPE: ${_storageType}`);
       return _storage as IStorage;
     } catch (error) {
       logger.error('❌ Failed to initialize SupabaseStorage, will try PgStorage next:', error);
     }
+  } else {
+    logger.warn('⚠️ Supabase environment variables not found (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
   }
 
-  // 3) Direct Postgres storage via DATABASE_URL
-  if (hasDatabaseUrl) {
-    try {
-      logger.log('Attempting to initialize PgStorage with database connection...');
-      _storage = new PgStorage();
-      _storageType = 'PostgreSQL';
-      logger.log('✅ Successfully initialized PgStorage with database connection');
-      return _storage as IStorage;
-    } catch (error) {
-      logger.error('❌ Failed to initialize PgStorage, falling back to MemStorage:', error);
-    }
-  }
+  // 2) PostgreSQL DISABLED for production safety (تعطيل مؤقتاً لسلامة الإنتاج)
+  // if (preferDirectDb && hasDatabaseUrl) {
+  //   try {
+  //     logger.log('USE_DIRECT_DB=true: Initializing PgStorage (direct DB)');
+  //     _storage = new PgStorage();
+  //     _storageType = 'PostgreSQL';
+  //     return _storage as IStorage;
+  //   } catch (error) {
+  //     logger.error('❌ Failed to initialize PgStorage (direct). Falling back...', error);
+  //   }
+  // }
+
+  // 3) PostgreSQL DISABLED for production safety (تعطيل مؤقتاً لسلامة الإنتاج)
+  // if (hasDatabaseUrl) {
+  //   try {
+  //     logger.log('Attempting to initialize PgStorage with database connection...');
+  //     _storage = new PgStorage();
+  //     _storageType = 'PostgreSQL';
+  //     logger.log('✅ Successfully initialized PgStorage with database connection');
+  //     return _storage as IStorage;
+  //   } catch (error) {
+  //     logger.error('❌ Failed to initialize PgStorage, falling back to MemStorage:', error);
+  //   }
+  // } else {
+  //   logger.warn('⚠️ DATABASE_URL not configured');
+  // }
 
   // 4) Fallback to in-memory (non-persistent)
   const warningMsg = 'No persistent storage configured (missing SUPABASE_* or DATABASE_URL). Using MemStorage (ephemeral). Data will be lost on server restart.';
   logger.warn(`⚠️ ${warningMsg}`);
   _storage = new MemStorage();
   _storageType = 'Memory';
+  logger.log(`🎯 ACTIVE STORAGE TYPE: ${_storageType} (FALLBACK)`);
   return _storage as IStorage;
 }
 
@@ -1270,17 +1281,18 @@ export const storage: IStorage = new Proxy({} as IStorage, {
       const actualStorage = createStorage();
       const value = (actualStorage as any)[prop];
       
-      // تسجيل الوصول إلى الطرق الرئيسية
+      // تسجيل الوصول إلى الطرق الرئيسية مع نوع التخزين
       if (typeof value === 'function' && [
         'createUser', 'createProject', 'createTransaction', 
-        'updateUser', 'updateProject', 'updateTransaction'
+        'updateUser', 'updateProject', 'updateTransaction',
+        'listTransactions', 'getTransaction'
       ].includes(prop.toString())) {
-        logger.log(`Accessing storage method: ${prop.toString()}`);
+        logger.log(`🔄 ${_storageType} Storage: Accessing method ${prop.toString()}`);
       }
       
       return typeof value === 'function' ? value.bind(actualStorage) : value;
     } catch (error) {
-      logger.error(`Error accessing storage property ${String(prop)}:`, error);
+      logger.error(`❌ Error accessing storage property ${String(prop)}:`, error);
       throw new Error(`Storage operation failed for ${String(prop)}. Please check server logs for details.`);
     }
   },
