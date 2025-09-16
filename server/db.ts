@@ -20,7 +20,14 @@ function createDatabaseConnection() {
     const maskedUrl = url.replace(/:[^:]*@/, ':****@');
     logger.log(`Connecting to database (direct)… URL: ${maskedUrl.substring(0, 60)}...`);
 
-    const sql = postgres(url, { ssl: 'require' });
+    const sql = postgres(url, { 
+      ssl: 'require',
+      prepare: false,
+      transform: {
+        undefined: null,
+      },
+      connect_timeout: 10
+    });
     const db = drizzle(sql, { schema });
 
     // اختبار الاتصال
