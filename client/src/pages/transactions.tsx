@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, Plus, Filter, Search, Download, FileSpreadsheet, 
-  TrendingUp, TrendingDown, Eye, Calendar, Archive, Users,
-  BarChart3, Wallet, Target, AlertCircle, CheckCircle2
+  Eye, Calendar, Archive, Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -106,28 +105,6 @@ export default function Transactions() {
     });
   }, [transactions, filter, showArchived]);
 
-  // إحصائيات
-  const statistics = useMemo(() => {
-    if (!filteredTransactions.length) {
-      return { totalIncome: 0, totalExpenses: 0, netAmount: 0, transactionCount: 0 };
-    }
-
-    const income = filteredTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    const expenses = filteredTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    return {
-      totalIncome: income,
-      totalExpenses: expenses,
-      netAmount: income - expenses,
-      transactionCount: filteredTransactions.length
-    };
-  }, [filteredTransactions]);
-
   // إضافة معاملة جديدة
   const handleFormSubmit = () => {
     refreshTransactions();
@@ -209,85 +186,16 @@ export default function Transactions() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* إحصائيات سريعة */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-700">إجمالي الإيرادات</p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {formatCurrency(statistics.totalIncome)}
-                  </p>
-                </div>
-                <div className="bg-green-200 p-3 rounded-full">
-                  <TrendingUp className="h-6 w-6 text-green-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-700">إجمالي المصروفات</p>
-                  <p className="text-2xl font-bold text-red-900">
-                    {formatCurrency(statistics.totalExpenses)}
-                  </p>
-                </div>
-                <div className="bg-red-200 p-3 rounded-full">
-                  <TrendingDown className="h-6 w-6 text-red-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">صافي المبلغ</p>
-                  <p className={`text-2xl font-bold ${
-                    statistics.netAmount >= 0 ? 'text-green-900' : 'text-red-900'
-                  }`}>
-                    {formatCurrency(statistics.netAmount)}
-                  </p>
-                </div>
-                <div className="bg-blue-200 p-3 rounded-full">
-                  <Wallet className="h-6 w-6 text-blue-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">عدد المعاملات</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {statistics.transactionCount}
-                  </p>
-                </div>
-                <div className="bg-purple-200 p-3 rounded-full">
-                  <BarChart3 className="h-6 w-6 text-purple-700" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* نموذج إضافة معاملة جديدة */}
         {user?.role !== 'viewer' && (
-          <Card className="mb-8 shadow-lg border-primary/20">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-primary/20">
-              <CardTitle className="flex items-center gap-3 text-xl text-primary">
-                <Plus className="h-6 w-6" />
+          <Card className="mb-8 shadow-sm border border-gray-200">
+            <CardHeader className="bg-white border-b border-gray-200 py-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
+                <Plus className="h-5 w-5" />
                 إضافة معاملة جديدة
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <TransactionForm 
                 projects={projects || []} 
                 onSubmit={handleFormSubmit} 
@@ -428,21 +336,18 @@ export default function Transactions() {
                   value="all"
                   className="data-[state=active]:bg-white data-[state=active]:text-primary"
                 >
-                  <BarChart3 className="h-4 w-4 ml-2" />
                   جميع المعاملات
                 </TabsTrigger>
                 <TabsTrigger 
                   value="income"
                   className="data-[state=active]:bg-white data-[state=active]:text-green-600"
                 >
-                  <TrendingUp className="h-4 w-4 ml-2" />
                   الإيرادات
                 </TabsTrigger>
                 <TabsTrigger 
                   value="expense"
                   className="data-[state=active]:bg-white data-[state=active]:text-red-600"
                 >
-                  <TrendingDown className="h-4 w-4 ml-2" />
                   المصروفات
                 </TabsTrigger>
               </TabsList>
@@ -452,55 +357,14 @@ export default function Transactions() {
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
               <TabsContent value="overview" className="p-6">
-                <div className="space-y-6">
-                  {/* مؤشرات الأداء */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-lg border border-emerald-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-emerald-700">معدل النمو</p>
-                          <p className="text-lg font-bold text-emerald-900">+12.5%</p>
-                        </div>
-                        <TrendingUp className="h-8 w-8 text-emerald-600" />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-lg border border-amber-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-amber-700">معاملات هذا الشهر</p>
-                          <p className="text-lg font-bold text-amber-900">{statistics.transactionCount}</p>
-                        </div>
-                        <Calendar className="h-8 w-8 text-amber-600" />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-4 rounded-lg border border-cyan-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-cyan-700">الوضع المالي</p>
-                          <p className="text-lg font-bold text-cyan-900">
-                            {statistics.netAmount >= 0 ? 'مستقر' : 'يحتاج مراجعة'}
-                          </p>
-                        </div>
-                        {statistics.netAmount >= 0 ? 
-                          <CheckCircle2 className="h-8 w-8 text-cyan-600" /> :
-                          <AlertCircle className="h-8 w-8 text-cyan-600" />
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* قائمة المعاملات الأخيرة */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">آخر المعاملات</h3>
-                    <TransactionList 
-                      transactions={filteredTransactions.slice(0, 10)} 
-                      projects={projects || []}
-                      onTransactionUpdate={refreshTransactions}
-                      isLoading={transactionsLoading}
-                    />
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">آخر المعاملات</h3>
+                  <TransactionList 
+                    transactions={filteredTransactions.slice(0, 10)} 
+                    projects={projects || []}
+                    onTransactionUpdate={refreshTransactions}
+                    isLoading={transactionsLoading}
+                  />
                 </div>
               </TabsContent>
 
