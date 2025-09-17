@@ -1390,14 +1390,15 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       const document = await storage.createDocument(documentData as any);
 
+      // تسجيل النشاط
       await storage.createActivityLog({
-        action: "create_document",
+        action: "create",
         entityType: "document",
         entityId: document.id,
-        details: `تم رفع مستند جديد: ${document.name}`,
+        details: `إضافة مستند جديد: ${document.name}`,
         userId: userId
       });
-
+      
       res.status(201).json(document);
     } catch (error: any) {
       console.error("Error creating document:", error);
@@ -2510,8 +2511,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('[DEBUG] Download request for document:', documentId);
       
       // الحصول على بيانات المستند
-      const documents = await storage.listDocuments();
-      const document = documents.find(doc => doc.id === documentId);
+      const document = await storage.getDocument(documentId);
       
       if (!document) {
         return res.status(404).json({ message: "المستند غير موجود" });
@@ -2560,7 +2560,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       // إرسال الملف
       return res.send(buffer);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('[ERROR] Download failed:', error);
       return res.status(500).json({ 
         message: "فشل في تحميل الملف", 
@@ -2575,30 +2575,28 @@ export async function registerRoutes(app: Express): Promise<void> {
       const documentId = parseInt(req.params.documentId);
       
       // الحصول على بيانات المستند
-      const documents = await storage.listDocuments();
-      const document = documents.find(doc => doc.id === documentId);
+      const document = await storage.getDocument(documentId);
       
       if (!document) {
+        return res.status(404).json({ message: "المستند غير موجود" });
+      }
+      
+      // تسجيل النشاط
+      await storage.createActivityLog({
+        action: "delete",
         entityType: "document",
         entityId: document.id,
-        details: `إضافة مستند جديد: ${document.name} (معلومات فقط)`,
+        details: `حذف مستند: ${document.name}`,
         userId: userId
       });
       
-      return res.status(201).json({
-        ...document,
-        success: true,
-        infoOnly: true,
-        message: "تم حفظ معلومات المستند بنجاح",
-        note: "الملف محفوظ كمعلومات فقط - سيتم إضافة نظام الرفع لاحقاً"
-      });
+      // حذف المستند من قاعدة البيانات
+      await storage.deleteDocument(documentId);
       
-    } catch (error: any) {
-      console.error('[ERROR] Save document info failed:', error);
-      return res.status(500).json({ 
-        message: "خطأ في حفظ معلومات المستند", 
-        error: error.message 
-      });
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "خطأ في حذف المستند" });
     }
   });
 
@@ -2641,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       console.log('[DEBUG] Creating document with external URL');
       const document = await storage.createDocument(documentData as any);
       
-      // إنشاء سجل النشاط
+      // تسجيل النشاط
       await storage.createActivityLog({
         action: "create",
         entityType: "document",
@@ -2650,8 +2648,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         userId: userId
       });
       
-      console.log('[DEBUG] External upload completed successfully');
-      return res.status(201).json({
+      res.status(201).json({
         ...document,
         success: true,
         externalUpload: true,
@@ -2685,58 +2682,61 @@ export async function registerRoutes(app: Express): Promise<void> {
         const file = req.file;
         const { name, description, projectId, isManagerDocument } = req.body;
         const userId = (req as any).user.id as number;
-        
-        if (!file) {
-          console.log('[ERROR] No file received');
-          return res.status(400).json({ message: "لم يتم رفع أي ملف" });
+        const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        // Log basic file info (لا تسجل بيانات حساسة)
+        try {
+          console.log('[upload-document] file received', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: (file as any).size,
+            memory: !!(file as any).buffer && !(file as any).path,
+            hasSupabase,
+          });
+        } catch {}
+
+        // وضع إقرار سريع اختياري لتجنب أي عمليات قد تسبب timeout في Netlify (تشخيص)
+        if (process.env.QUICK_UPLOAD_ACK === '1') {
+          return res.status(201).json({
+            quickAck: true,
+            name: name || file.originalname,
+            size: (file as any).size,
+            note: "تم الاستلام بنجاح (QUICK_UPLOAD_ACK مفعّل) ولم يتم الرفع للسحابة بعد."
+          });
         }
 
-        console.log('[DEBUG] File received:', file.originalname, 'size:', file.size);
-
-        // حفظ معلومات المستند في قاعدة البيانات
-        const documentData = {
-          name: name || file.originalname.replace(/\.[^/.]+$/, ""),
-          description: description || "",
-          projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
-          fileUrl: file.path || `/uploads/${file.filename}`,
-          fileType: file.mimetype || 'application/octet-stream',
-          uploadDate: new Date(),
-          uploadedBy: userId,
-          isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
-        };
-
-        console.log('[DEBUG] Creating document with data:', documentData);
-        const document = await storage.createDocument(documentData as any);
-        console.log('[DEBUG] Document created:', document.id);
+        // نمط رفع سريع لتعطيل رفع السحابة لتشخيص 502 (اضبط FAST_UPLOAD_MODE=1 في البيئة)
+        if (process.env.FAST_UPLOAD_MODE === '1') {
+          const fname = (file as any).originalname;
+          console.log('[upload-document][fast-mode] skipping cloud + db write, returning 202');
+          return res.status(202).json({
+            success: true,
+            fastMode: true,
+            message: 'تم استلام الملف (وضع التشخيص السريع فعال)',
+            originalName: fname,
+            size: (file as any).size,
+          });
+        }
         
-        // إنشاء سجل النشاط
-        await storage.createActivityLog({
-          action: "create",
-          entityType: "document",
-          entityId: document.id,
-          details: `إضافة مستند جديد: ${document.name}`,
-          userId: userId
-        });
+        // التحقق من صلاحية المستخدم للمستندات الإدارية
+        const userRole = (req as any).user.role as string;
+        if (isManagerDocument === 'true' && userRole !== "admin" && userRole !== "manager") {
+          // حذف الملف المؤقت
+          if ((file as any).path && fs.existsSync((file as any).path)) {
+            fs.unlinkSync(file.path);
+          }
+          return res.status(403).json({ 
+            message: "غير مصرح لك بإنشاء مستندات إدارية" 
+          });
+        }
         
-        console.log('[DEBUG] Simple upload completed successfully');
-        return res.status(201).json({
-          ...document,
-          success: true,
-          simpleUpload: true,
-          message: "تم رفع المستند بنجاح"
-        });
-        
-      } catch (error: any) {
-        console.error('[ERROR] Simple upload failed:', error);
-        return res.status(500).json({ 
-          message: "خطأ في رفع الملف", 
-          error: error.message 
-        });
-      }
-    });
-  });
-
-  // نقطة تشخيص بسيطة لاختبار base64
+        // التحقق من صلاحية المستخدم للوصول للمشروع إذا تم تحديده
+        if (projectId && projectId !== "all") {
+          const projectIdNumber = Number(projectId);
+          if (userRole !== "admin" && userRole !== "manager") {
+            const hasAccess = await storage.checkUserProjectAccess(userId, projectIdNumber);
+            if (!hasAccess) {
+              // حذف الملف المؤقت
   app.post("/api/test-base64", authenticate, async (req: Request, res: Response) => {
     try {
       console.log('[DEBUG] Test base64 endpoint hit');
