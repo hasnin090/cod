@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import {
@@ -755,12 +754,36 @@ export class SupabaseStorage {
     }
   }
 
-  async listDocuments(): Promise<Document[]> {
+  async listDocuments(filters: {
+    projectId?: number;
+    isManagerDocument?: boolean;
+    fileType?: string;
+    searchQuery?: string;
+    dateRange?: { from?: Date; to?: Date };
+  } = {}): Promise<Document[]> {
     this.checkConnection();
     try {
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('documents')
         .select('*');
+
+      if (filters.projectId) {
+        query = query.eq('project_id', filters.projectId);
+      }
+      if (filters.isManagerDocument !== undefined) {
+        query = query.eq('is_manager_document', filters.isManagerDocument);
+      }
+      if (filters.searchQuery) {
+        query = query.ilike('name', `%${filters.searchQuery}%`);
+      }
+      if (filters.dateRange?.from) {
+        query = query.gte('upload_date', filters.dateRange.from.toISOString());
+      }
+      if (filters.dateRange?.to) {
+        query = query.lte('upload_date', filters.dateRange.to.toISOString());
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('SupabaseStorage: Error listing documents:', error);

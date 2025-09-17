@@ -1132,7 +1132,7 @@ export class MemStorage implements IStorage {
       fileUrl: document.fileUrl,
       fileType: document.fileType,
       category: document.category || null,
-      tags: document.tags || [],
+      tags: document.tags || null,
       uploadDate: now,
       completedWorkId: document.completedWorkId || null,
       uploadedBy: document.uploadedBy,

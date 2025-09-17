@@ -51,7 +51,8 @@ const documentSchema = z.object({
   name: z.string().min(1, "اسم المستند مطلوب"),
   description: z.string().optional(),
   projectId: z.string().optional(),
-  file: z.instanceof(File, { message: "يرجى اختيار ملف" })
+  file: z.any()
+    .refine((file): file is File => file instanceof File, "يرجى اختيار ملف")
     .refine((file) => file.size <= MAX_FILE_SIZE, `حجم الملف يجب أن يكون أقل من ${MAX_FILE_SIZE / 1024 / 1024} ميجابايت`)
     .refine(
       (file) => ACCEPTED_FILE_TYPES.includes(file.type),
@@ -64,7 +65,6 @@ type DocumentFormValues = z.infer<typeof documentSchema>;
 export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument = false }: DocumentFormProps) {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
@@ -75,23 +75,23 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
       name: "",
       description: "",
       projectId: "",
+      file: undefined,
     },
   });
   
-  const handleFileChange = (selectedFile: File) => {
+  const handleFileChange = (selectedFile: File | null) => {
     setFile(selectedFile);
-    form.setValue("file", selectedFile);
+    form.setValue("file", selectedFile, { shouldValidate: true });
     
-    if (!form.getValues("name")) {
+    if (selectedFile && !form.getValues("name")) {
       const fileName = selectedFile.name.split('.').slice(0, -1).join('.');
       form.setValue("name", fileName);
     }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileChange(e.target.files[0]);
-    }
+    const file = e.target.files?.[0] || null;
+    handleFileChange(file);
   };
   
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -102,7 +102,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFileChange(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [form]);
   
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -118,127 +118,48 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
 
   const mutation = useMutation({
     mutationFn: async (data: DocumentFormValues) => {
-      if (!file) throw new Error('لم يتم تحديد ملف');
-      
-      let stopSimulation: (() => void) | null = null;
-      
-      try {
-        // محاكاة تقدم الرفع
-        const simulateProgress = () => {
-          let currentProgress = 0;
-          const interval = setInterval(() => {
-            currentProgress += Math.random() * 15;
-            if (currentProgress > 90) currentProgress = 90;
-            setUploadProgress(currentProgress);
-          }, 200);
-          
-          stopSimulation = () => clearInterval(interval);
-          return stopSimulation;
-        };
-        
-        stopSimulation = simulateProgress();
-        
-        try {
-          // 1. طلب رابط الرفع
-          const urlResponse = await fetch(`${getApiBase()}/api/upload-url`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              fileName: file.name,
-              fileType: file.type
-            })
-          });
-          
-          if (!urlResponse.ok) {
-            throw new Error('فشل في الحصول على رابط الرفع');
-          }
-          
-          const { uploadUrl, supabase } = await urlResponse.json();
-          setUploadProgress(20);
-          
-          // 2. رفع الملف
-          let uploadResponse;
-          
-          if (supabase) {
-            const reader = new FileReader();
-            const fileData = await new Promise<string>((resolve) => {
-              reader.onload = () => resolve(reader.result as string);
-              reader.readAsDataURL(file);
-            });
-            
-            setUploadProgress(40);
-            
-            const finalUrl = `${getApiBase()}${uploadUrl}`;
-            
-            uploadResponse = await fetch(finalUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({
-                fileData,
-                fileName: file.name,
-                fileType: file.type,
-                name: data.name,
-                description: data.description || '',
-                projectId: data.projectId || '',
-                isManagerDocument
-              })
-            });
-            
-            if (!uploadResponse.ok) {
-              const errorText = await uploadResponse.text();
-              throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
-            }
-          }
-          
-          setUploadProgress(100);
-          const result = await uploadResponse!.json();
-          
-          stopSimulation?.();
-          return result;
-        } catch (error) {
-          stopSimulation?.();
-          throw error;
-        }
-      } catch (error) {
-        setUploadProgress(0);
-        throw error;
+      if (!data.file) throw new Error('لم يتم تحديد ملف');
+
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description || '');
+      formData.append('projectId', data.projectId || '');
+      formData.append('file', data.file);
+      if (isManagerDocument) {
+        formData.append('isManagerDocument', 'true');
       }
+
+      const response = await fetch(`${getApiBase()}/api/documents`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'فشل في رفع المستند' }));
+        throw new Error(errorData.message || 'حدث خطأ غير متوقع');
+      }
+
+      return response.json();
     },
-    onSuccess: (result) => {
-      let title = "تمت العملية بنجاح";
-      let description = "تم رفع المستند بنجاح";
-      
-      if (result?.infoOnly) {
-        title = "تم حفظ المعلومات";
-        description = "تم حفظ معلومات المستند (نظام الرفع قيد التطوير)";
-      }
-      
+    onSuccess: () => {
       toast({
-        title,
-        description,
+        title: "تمت العملية بنجاح",
+        description: "تم رفع المستند بنجاح.",
       });
       
-      form.reset({
-        name: "",
-        description: "",
-        projectId: "",
-      });
+      form.reset();
       setFile(null);
-      setUploadProgress(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       onSubmit();
     },
-    onError: (error) => {
-      setUploadProgress(0);
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "خطأ",
-        description: error instanceof Error ? error.message : "فشل في رفع المستند",
+        title: "خطأ في الرفع",
+        description: error.message || "فشل في رفع المستند، يرجى المحاولة مرة أخرى.",
       });
     },
   });
@@ -338,7 +259,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           <FormField
             control={form.control}
             name="file"
-            render={({ field: { value, onChange, ...field } }) => (
+            render={({ field: { onChange } }) => (
               <FormItem>
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -388,8 +309,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setFile(null);
-                              onChange(null);
+                              handleFileChange(null);
                             }}
                             disabled={isLoading || mutation.isPending}
                             className="text-red-600 border-red-200 hover:bg-red-50"
@@ -426,10 +346,7 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
                           type="file"
                           className="hidden"
                           ref={fileInputRef}
-                          onChange={(e) => {
-                            handleInputChange(e);
-                            onChange(e.target.files?.[0] || null);
-                          }}
+                          onChange={handleInputChange}
                           accept={ACCEPTED_FILE_EXTENSIONS}
                           disabled={isLoading || mutation.isPending}
                         />
@@ -467,21 +384,15 @@ export function DocumentForm({ projects, onSubmit, isLoading, isManagerDocument 
           {/* شريط التقدم */}
           {mutation.isPending && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
                   <Loader2 className="h-5 w-5 ml-2 animate-spin text-blue-600" />
                   <span className="text-sm font-medium text-blue-900">جاري رفع الملف...</span>
                 </div>
-                <span className="text-sm font-bold text-blue-600 bg-white px-3 py-1 rounded-full">
-                  {uploadProgress}%
-                </span>
               </div>
-              <Progress value={uploadProgress} className="h-3 bg-white border border-blue-200" />
+              <Progress value={undefined} className="h-2 w-full" />
               <p className="text-xs text-center text-blue-600 mt-2">
-                {uploadProgress < 20 ? 'بدء التحميل...' : 
-                 uploadProgress < 60 ? 'جاري رفع الملف، يرجى الانتظار...' : 
-                 uploadProgress < 90 ? 'اقترب التحميل من الانتهاء...' : 
-                 'جاري إكمال العملية...'}
+                قد تستغرق العملية بعض الوقت حسب حجم الملف وسرعة الاتصال.
               </p>
             </div>
           )}
