@@ -3964,8 +3964,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
 
       // التحقق من أن المستخدم يطلب صلاحياته الخاصة أو هو مدير
-  const isAdmin = (req as any).user?.role === 'admin' || (req as any).user?.permissions?.includes('manage_users');
-  if ((req as any).user.id !== userId && !isAdmin) {
+      const isAdmin = (req as any).user?.role === 'admin' || (req as any).user?.permissions?.includes('manage_users');
+      if ((req as any).user.id !== userId && !isAdmin) {
         return res.status(403).json({ message: "ليس لديك صلاحية لعرض صلاحيات هذا المستخدم" });
       }
 
