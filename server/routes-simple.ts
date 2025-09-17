@@ -2737,6 +2737,26 @@ export async function registerRoutes(app: Express): Promise<void> {
             const hasAccess = await storage.checkUserProjectAccess(userId, projectIdNumber);
             if (!hasAccess) {
               // حذف الملف المؤقت
+              if ((file as any).path && fs.existsSync((file as any).path)) {
+                fs.unlinkSync(file.path);
+              }
+              return res.status(403).json({ message: "ليس لديك صلاحية للوصول لهذا المشروع" });
+            }
+          }
+        }
+
+        // الآن نتابع رفع المستند...
+        // TODO: إكمال منطق رفع المستند
+        
+        res.status(200).json({ message: "تم تحميل المستند بنجاح (مؤقت)" });
+        
+      } catch (error) {
+        console.error("Error uploading document:", error);
+        res.status(500).json({ message: "خطأ في رفع المستند" });
+      }
+    });
+  });
+
   app.post("/api/test-base64", authenticate, async (req: Request, res: Response) => {
     try {
       console.log('[DEBUG] Test base64 endpoint hit');
