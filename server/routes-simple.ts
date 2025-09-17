@@ -1303,39 +1303,99 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Documents routes
   app.get("/api/documents", authenticate, async (req: Request, res: Response) => {
     try {
-      const { isManagerDocument } = req.query;
-      let documents;
-      
-      if (isManagerDocument !== undefined) {
-        const isManager = isManagerDocument === 'true';
-        documents = await storage.listDocuments();
-        documents = documents.filter(doc => (doc as any).isManagerDocument === isManager);
-      } else {
-        documents = await storage.listDocuments();
+      const { 
+        projectId, isManagerDocument, fileType, searchQuery, 
+        page, pageSize, sortBy, sortOrder 
+      } = req.query;
+
+      const filters = {
+        projectId: projectId ? parseInt(projectId as string) : undefined,
+        isManagerDocument: isManagerDocument !== undefined ? (isManagerDocument === 'true') : undefined,
+        fileType: fileType as string | undefined,
+        searchQuery: searchQuery as string | undefined,
+        page: page ? parseInt(page as string) : 1,
+        pageSize: pageSize ? parseInt(pageSize as string) : 20,
+        sortBy: sortBy as string | undefined,
+        sortOrder: sortOrder as 'asc' | 'desc' | undefined,
+      };
+
+      // Ensure only admins/managers can see manager documents
+      const userRole = (req as any).user.role;
+      if (filters.isManagerDocument && userRole !== 'admin' && userRole !== 'manager') {
+        return res.status(403).json({ message: "غير مصرح لك بالوصول لهذه المستندات" });
       }
+
+      const { documents, total } = await storage.listDocuments(filters);
       
-      res.status(200).json(documents);
+      res.status(200).json({ documents, total });
     } catch (error: any) {
       console.error("Error getting documents:", error);
-      return res.status(200).json([]);
+      return res.status(500).json({ message: "خطأ في جلب المستندات" });
     }
   });
 
-  app.post("/api/documents", authenticate, authorize(["admin", "manager"]), async (req: Request, res: Response) => {
+  app.post("/api/documents", authenticate, documentUpload.single('file'), async (req: Request, res: Response) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ message: "لم يتم رفع أي ملف" });
+      }
+
+      const { name, description, projectId, isManagerDocument } = req.body;
+      const file = req.file;
+      const userId = (req as any).user.id as number;
+      const userRole = (req as any).user.role as string;
+
+      // Authorization checks
+      if (isManagerDocument === 'true' && userRole !== 'admin' && userRole !== 'manager') {
+        return res.status(403).json({ message: "غير مصرح لك برفع مستندات إدارية" });
+      }
+      if (projectId) {
+        const hasAccess = await storage.checkUserProjectAccess(userId, parseInt(projectId));
+        if (!hasAccess) {
+          return res.status(403).json({ message: "ليس لديك صلاحية للرفع في هذا المشروع" });
+        }
+      }
+
+      // Upload to Supabase or fallback to local
+      let fileUrl = '';
+      const hasSupabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (hasSupabase) {
+        const buffer = fs.readFileSync(file.path);
+        const result = await uploadToSupabase(buffer, file.originalname, 'documents');
+        if (result.success && result.url) {
+          fileUrl = result.url;
+        } else {
+          console.warn('Supabase upload failed, falling back to local.', result.error);
+        }
+      }
+      
+      if (!fileUrl) {
+        fileUrl = `/uploads/documents/${file.filename}`;
+      }
+
+      // Clean up temp file
+      fs.unlinkSync(file.path);
+
       const documentData = {
-        ...req.body,
-  createdBy: (req as any).user.id as number,
+        name: name || file.originalname,
+        description: description || '',
+        projectId: projectId ? parseInt(projectId) : undefined,
+        fileUrl,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        uploadDate: new Date(),
+        uploadedBy: userId,
+        isManagerDocument: isManagerDocument === 'true',
       };
       
-      const document = await storage.createDocument(documentData);
+      const document = await storage.createDocument(documentData as any);
 
       await storage.createActivityLog({
         action: "create_document",
         entityType: "document",
         entityId: document.id,
-        details: `تم إنشاء مستند جديد: ${document.name}`,
-  userId: (req as any).user.id as number
+        details: `تم رفع مستند جديد: ${document.name}`,
+        userId: userId
       });
 
       res.status(201).json(document);
@@ -2519,66 +2579,6 @@ export async function registerRoutes(app: Express): Promise<void> {
       const document = documents.find(doc => doc.id === documentId);
       
       if (!document) {
-        return res.status(404).json({ message: "المستند غير موجود" });
-      }
-      
-      // اختبار الوصول للرابط
-      const testResponse = await fetch(document.fileUrl);
-      
-      return res.status(200).json({
-        document: document.name,
-        fileUrl: document.fileUrl,
-        urlStatus: testResponse.status,
-        urlStatusText: testResponse.statusText,
-        accessible: testResponse.ok
-      });
-      
-    } catch (error: any) {
-      console.error('[ERROR] URL test failed:', error);
-      return res.status(500).json({ 
-        message: "فشل في اختبار الرابط", 
-        error: error.message 
-      });
-    }
-  });
-
-  // حل نهائي بسيط: حفظ معلومات المستند بدون ملفات
-  app.post("/api/save-document-info", authenticate, async (req: Request, res: Response) => {
-    try {
-      console.log('[DEBUG] Save document info started');
-      const { fileName, fileType, name, description, projectId, isManagerDocument, fileSize } = req.body;
-      const userId = (req as any).user.id as number;
-      
-      console.log('[DEBUG] Document info received:', { fileName, name, userId });
-      
-      if (!fileName || !name) {
-        return res.status(400).json({ message: "اسم الملف والمستند مطلوبان" });
-      }
-
-      // إنشاء رابط وهمي للملف (مؤقتاً)
-      const timestamp = Date.now();
-      const uniqueFileName = `${timestamp}_${userId}_${fileName}`;
-      const mockFileUrl = `/documents/placeholder/${uniqueFileName}`;
-      
-      // حفظ معلومات المستند في قاعدة البيانات
-      const documentData = {
-        name: name,
-        description: description || `ملف ${fileName} - تم الحفظ مؤقتاً`,
-        projectId: projectId && projectId !== "all" && projectId !== "" ? Number(projectId) : undefined,
-        fileUrl: mockFileUrl,
-        fileType: fileType || 'application/octet-stream',
-        uploadDate: new Date(),
-        uploadedBy: userId,
-        isManagerDocument: isManagerDocument === 'true' || isManagerDocument === true
-      };
-
-      console.log('[DEBUG] Creating document in database');
-      const document = await storage.createDocument(documentData as any);
-      console.log('[DEBUG] Document created successfully:', document.id);
-      
-      // إنشاء سجل النشاط
-      await storage.createActivityLog({
-        action: "create",
         entityType: "document",
         entityId: document.id,
         details: `إضافة مستند جديد: ${document.name} (معلومات فقط)`,

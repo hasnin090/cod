@@ -760,12 +760,17 @@ export class SupabaseStorage {
     fileType?: string;
     searchQuery?: string;
     dateRange?: { from?: Date; to?: Date };
-  } = {}): Promise<Document[]> {
+    // Add pagination and sorting
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}): Promise<{ documents: Document[], total: number }> {
     this.checkConnection();
     try {
       let query = this.supabase
         .from('documents')
-        .select('*');
+        .select('*', { count: 'exact' });
 
       if (filters.projectId) {
         query = query.eq('project_id', filters.projectId);
@@ -774,7 +779,8 @@ export class SupabaseStorage {
         query = query.eq('is_manager_document', filters.isManagerDocument);
       }
       if (filters.searchQuery) {
-        query = query.ilike('name', `%${filters.searchQuery}%`);
+        // Search in name and description
+        query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
       }
       if (filters.dateRange?.from) {
         query = query.gte('upload_date', filters.dateRange.from.toISOString());
@@ -782,12 +788,28 @@ export class SupabaseStorage {
       if (filters.dateRange?.to) {
         query = query.lte('upload_date', filters.dateRange.to.toISOString());
       }
+      if (filters.fileType) {
+        // This is a simple filter. For more complex mapping (e.g., 'image' -> 'image/jpeg', 'image/png'),
+        // it would need to be handled here or in the route.
+        query = query.like('file_type', `${filters.fileType}/%`);
+      }
 
-      const { data, error } = await query;
+      // Sorting
+      const sortBy = filters.sortBy || 'upload_date';
+      const sortOrder = filters.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Pagination
+      const page = filters.page || 1;
+      const pageSize = filters.pageSize || 20;
+      const offset = (page - 1) * pageSize;
+      query = query.range(offset, offset + pageSize - 1);
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('SupabaseStorage: Error listing documents:', error);
-        return [];
+        return { documents: [], total: 0 };
       }
       
       // تحويل البيانات من snake_case إلى camelCase للتوافق مع العميل
@@ -797,6 +819,7 @@ export class SupabaseStorage {
         description: doc.description,
         fileUrl: doc.file_url,
         fileType: doc.file_type,
+        fileSize: doc.file_size,
         uploadDate: doc.upload_date,
         projectId: doc.project_id,
         uploadedBy: doc.uploaded_by,
@@ -805,10 +828,10 @@ export class SupabaseStorage {
         tags: doc.tags
       })) || [];
       
-      return convertedData as Document[];
+      return { documents: convertedData as Document[], total: count || 0 };
     } catch (error) {
       console.error('SupabaseStorage: Exception listing documents:', error);
-      return [];
+      return { documents: [], total: 0 };
     }
   }
 

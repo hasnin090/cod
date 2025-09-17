@@ -84,7 +84,17 @@ export interface IStorage {
   getDocument(id: number): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: number, document: Partial<Document>): Promise<Document | undefined>;
-  listDocuments(): Promise<Document[]>;
+  listDocuments(filters: {
+    projectId?: number;
+    isManagerDocument?: boolean;
+    fileType?: string;
+    searchQuery?: string;
+    dateRange?: { from?: Date; to?: Date };
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ documents: Document[], total: number }>;
   getDocumentsByProject(projectId: number): Promise<Document[]>;
   deleteDocument(id: number): Promise<boolean>;
 
@@ -550,8 +560,64 @@ export class MemStorage implements IStorage {
     return updatedDocument;
   }
 
-  async listDocuments(): Promise<Document[]> {
-    return Array.from(this.documentsData.values());
+  async listDocuments(filters: {
+    projectId?: number;
+    isManagerDocument?: boolean;
+    fileType?: string;
+    searchQuery?: string;
+    dateRange?: { from?: Date; to?: Date };
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<{ documents: Document[], total: number }> {
+    let results = Array.from(this.documentsData.values());
+
+    // Apply filters
+    if (filters.projectId != null) {
+      results = results.filter(doc => doc.projectId === filters.projectId);
+    }
+    if (filters.isManagerDocument) {
+      results = results.filter(doc => doc.uploadedBy === 1); // Assuming 1 is the admin user ID
+    }
+    if (filters.fileType) {
+      results = results.filter(doc => doc.fileType === filters.fileType);
+    }
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      results = results.filter(doc => 
+        (doc.title && doc.title.toLowerCase().includes(query)) ||
+        (doc.description && doc.description.toLowerCase().includes(query))
+      );
+    }
+    if (filters.dateRange?.from) {
+      results = results.filter(doc => new Date(doc.createdAt) >= new Date(filters.dateRange.from));
+    }
+    if (filters.dateRange?.to) {
+      results = results.filter(doc => new Date(doc.createdAt) <= new Date(filters.dateRange.to));
+    }
+
+    // Sort results
+    if (filters.sortBy) {
+      results.sort((a, b) => {
+        const aVal = a[filters.sortBy as keyof Document];
+        const bVal = b[filters.sortBy as keyof Document];
+        
+        if (aVal < bVal) return filters.sortOrder === 'asc' ? -1 : 1;
+        if (aVal > bVal) return filters.sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // Pagination
+    const total = results.length;
+    if (filters.page != null && filters.pageSize != null) {
+      const start = (filters.page - 1) * filters.pageSize;
+      const end = start + filters.pageSize;
+      results = results.slice(start, end);
+    }
+
+    return { documents: results, total };
   }
 
   async getDocumentsByProject(projectId: number): Promise<Document[]> {
