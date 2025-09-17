@@ -9,7 +9,16 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
   # Increase resources for uploads
-  external_node_modules = ["@supabase/supabase-js", "multer"]
+  external_node_modules = [
+    "@supabase/supabase-js", 
+    "multer", 
+    "bcryptjs", 
+    "express", 
+    "express-session",
+    "drizzle-orm",
+    "@neondatabase/serverless",
+    "postgres"
+  ]
   included_files = ["server/**", "shared/**", "netlify/functions/**"]
 
 [functions."api"]
